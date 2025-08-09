@@ -84,6 +84,7 @@
 * [Performance](#-performance)
 * [Code Standards](#-code-standards)
 * [AI Compliance](#-ai-compliance)
+* [Claude Code Sub-Agents](#-claude-code-sub-agents)
 * [Maintainers](#-maintainers)
 * [Contributing](#-contributing)
 * [License](#-license)
@@ -561,6 +562,92 @@ This project documents expectations for AI assistants using a few dedicated file
 - [sweep.yaml](.github/sweep.yaml) — rules for [Sweep](https://github.com/sweepai/sweep), a tool for code review and pull request management.
 
 Edit `AGENTS.md` first when adjusting these policies, and keep the other files in sync within the same pull request.
+
+<br/>
+
+## 🤖 Claude Code Sub-Agents
+
+This project leverages a comprehensive team of specialized Claude Code sub-agents to manage development, testing, and deployment workflows. Each agent has specific expertise and can work independently or collaboratively to maintain the go-coverage system.
+
+### Available Sub-Agents
+
+| Agent | Specialization | Primary Tools | Proactive Triggers |
+|-------|---------------|---------------|-------------------|
+| **[go-test-runner](.claude/agents/go-test-runner.md)** | Test execution, coverage analysis, failure resolution | Bash, Read, Edit, Task | After code changes, before PRs |
+| **[go-linter](.claude/agents/go-linter.md)** | Code formatting, linting, standards enforcement | Bash, Edit, Glob | After any Go file modification |
+| **[coverage-analyzer](.claude/agents/coverage-analyzer.md)** | Coverage reports, badges, GitHub Pages deployment | Bash, Write, WebFetch | After successful test runs |
+| **[github-integration](.claude/agents/github-integration.md)** | PR management, status checks, API operations | Bash, WebFetch | PR events, deployments |
+| **[dependency-manager](.claude/agents/dependency-manager.md)** | Module updates, vulnerability scanning | Bash, Edit, WebFetch | go.mod changes, weekly scans |
+| **[ci-workflow](.claude/agents/ci-workflow.md)** | GitHub Actions, pipeline optimization | Read, Edit, Bash | Workflow failures, CI updates |
+| **[code-reviewer](.claude/agents/code-reviewer.md)** | Code quality, security review, best practices | Read, Grep, Glob | After code writing/modification |
+| **[documentation-manager](.claude/agents/documentation-manager.md)** | README, API docs, changelog maintenance | Read, Edit, WebFetch | API changes, new features |
+| **[release-manager](.claude/agents/release-manager.md)** | Versioning, releases, deployment coordination | Bash, Edit, Task | Version bumps, release prep |
+| **[performance-optimizer](.claude/agents/performance-optimizer.md)** | Benchmarking, profiling, optimization | Bash, Edit, Grep | Performance issues, benchmarks |
+| **[security-scanner](.claude/agents/security-scanner.md)** | Vulnerability detection, compliance checks | Bash, Grep, WebFetch | Security advisories, scans |
+| **[debugger](.claude/agents/debugger.md)** | Error analysis, test debugging, issue resolution | Read, Edit, Bash | Test failures, errors, panics |
+
+### Using Sub-Agents
+
+Sub-agents can be invoked in two ways:
+
+1. **Automatic Delegation**: Claude Code automatically delegates tasks based on context and the agent's specialization
+2. **Explicit Invocation**: Request a specific agent by name:
+   ```
+   > Use the code-reviewer agent to review my recent changes
+   > Have the debugger investigate this test failure
+   > Ask the coverage-analyzer to generate a new report
+   ```
+
+### Agent Coordination
+
+Sub-agents work together cohesively:
+- **go-test-runner** → triggers **coverage-analyzer** after successful tests
+- **code-reviewer** → invokes **go-linter** for style issues
+- **dependency-manager** → calls **security-scanner** for vulnerability checks
+- **release-manager** → coordinates with multiple agents for release preparation
+
+### Configuration
+
+Sub-agent configurations are stored in `.claude/agents/` and can be customized:
+- Edit agent prompts to adjust behavior
+- Modify tool access for security constraints
+- Add project-specific instructions
+
+### Benefits
+
+- **🎯 Specialized Expertise**: Each agent excels in its domain
+- **⚡ Parallel Processing**: Multiple agents can work simultaneously
+- **🔒 Isolated Contexts**: Agents maintain separate contexts to prevent pollution
+- **🔄 Consistent Workflows**: Standardized approaches across the team
+- **📈 Improved Efficiency**: Faster task completion with focused agents
+
+For detailed information about each sub-agent's capabilities and configuration, see the individual agent files in `.claude/agents/`.
+
+### 🚀 Claude Code Commands
+
+The project includes **20 powerful slash commands** that orchestrate our sub-agents for common development tasks. These commands provide quick access to complex workflows:
+
+#### Quick Examples
+
+```bash
+/fix              # Automatically fix test failures and linter issues
+/test parser.go   # Create comprehensive tests for a file
+/coverage         # Analyze and improve test coverage to 90%+
+/pr-ready        # Make your code PR-ready with all checks
+/review          # Get comprehensive code review
+/secure          # Run security vulnerability scan
+/health          # Complete project health check
+```
+
+#### Command Categories
+
+- **Quality & Testing**: `/fix`, `/test`, `/coverage`, `/dedupe`
+- **Documentation**: `/doc-update`, `/doc-review`, `/explain`, `/prd`
+- **Development**: `/review`, `/optimize`, `/refactor`
+- **Maintenance**: `/deps`, `/secure`, `/health`, `/clean`
+- **Workflow**: `/pr-ready`, `/debug-ci`, `/release-prep`, `/benchmark`, `/commit`
+
+See the complete [**Claude Code Commands Reference**](docs/claude-commands.md) for detailed usage, examples, and best practices.
 
 <br/>
 

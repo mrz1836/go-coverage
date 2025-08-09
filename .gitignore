@@ -37,9 +37,6 @@ coverage.out
 # Fuzz Tests (exclude fuzz testdata but allow unit test testdata)
 **/fuzz/testdata/
 
-# AI Models
-.claude
-
 # Node modules
 node_modules/
 
