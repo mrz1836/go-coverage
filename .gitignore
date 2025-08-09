@@ -42,3 +42,9 @@ testdata
 
 # Node modules
 node_modules/
+
+# Coverage history test data
+history/*.json
+
+# Build artifacts
+cmd/gofortress-coverage/gofortress-coverage
