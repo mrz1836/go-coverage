@@ -30,12 +30,12 @@ todo.md
 # Distribution
 dist
 
-# Code coverage
-coverage.txt
+# Code coverage (exclude root level coverage files but allow testdata)
+/coverage.txt
 coverage.out
 
-# Fuzz Tests
-testdata
+# Fuzz Tests (exclude fuzz testdata but allow unit test testdata)
+**/fuzz/testdata/
 
 # AI Models
 .claude

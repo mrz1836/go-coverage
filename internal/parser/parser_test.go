@@ -15,7 +15,10 @@ import (
 
 // getTestDataPath returns the absolute path to a file in the testdata directory
 func getTestDataPath(filename string) string {
-	_, currentFile, _, _ := runtime.Caller(1)
+	_, currentFile, _, ok := runtime.Caller(1)
+	if !ok {
+		panic("failed to get caller information")
+	}
 	testDataDir := filepath.Join(filepath.Dir(currentFile), "testdata")
 	return filepath.Join(testDataDir, filename)
 }

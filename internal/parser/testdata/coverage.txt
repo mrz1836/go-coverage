@@ -1,0 +1,7 @@
+mode: atomic
+github.com/example/project/pkg/utils/helper.go:10.2,12.16 2 5
+github.com/example/project/pkg/utils/helper.go:12.16,14.3 1 3
+github.com/example/project/pkg/utils/helper.go:14.3,16.3 1 2
+github.com/example/project/pkg/core/processor.go:25.2,27.16 2 10
+github.com/example/project/pkg/core/processor.go:27.16,29.3 1 0
+github.com/example/project/pkg/core/processor.go:29.3,31.3 1 10
