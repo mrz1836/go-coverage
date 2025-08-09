@@ -3,6 +3,7 @@ package parser
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -40,8 +41,9 @@ func TestParseFile(t *testing.T) {
 	parser := New()
 	ctx := context.Background()
 
-	// Test valid coverage file
-	coverage, err := parser.ParseFile(ctx, "testdata/coverage.txt")
+	// Test valid coverage file using filepath.Join for proper path resolution
+	testFile := filepath.Join("testdata", "coverage.txt")
+	coverage, err := parser.ParseFile(ctx, testFile)
 	require.NoError(t, err)
 	assert.NotNil(t, coverage)
 	assert.Equal(t, "atomic", coverage.Mode)
@@ -54,7 +56,7 @@ func TestParseFileNotExists(t *testing.T) {
 	parser := New()
 	ctx := context.Background()
 
-	_, err := parser.ParseFile(ctx, "testdata/nonexistent.txt")
+	_, err := parser.ParseFile(ctx, filepath.Join("testdata", "nonexistent.txt"))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to open coverage file")
 }
@@ -382,7 +384,7 @@ func TestParseComplexCoverage(t *testing.T) {
 	ctx := context.Background()
 
 	// Test with complex coverage file
-	coverage, err := parser.ParseFile(ctx, "testdata/complex.txt")
+	coverage, err := parser.ParseFile(ctx, filepath.Join("testdata", "complex.txt"))
 	require.NoError(t, err)
 
 	assert.Equal(t, "count", coverage.Mode)
