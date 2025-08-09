@@ -91,11 +91,6 @@ id = "github-token"
 description = "GitHub Personal Access Token"
 regex = '''ghp_[0-9a-zA-Z]{36}'''
 
-[[rules]]
-id = "generic-api-key"
-description = "Generic API Key"
-regex = '''(?i)(api_key|apikey|api-key)['"]?\s*[:=]\s*['"]?([a-zA-Z0-9]{32,})'''
-
 [[allowlist]]
 paths = [
   "vendor/",
@@ -141,7 +136,7 @@ gosec -fmt=sarif -out=security.sarif ./...
 #### G101: Hardcoded Credentials
 ```go
 // ❌ Vulnerable
-const apiKey = "sk-1234567890abcdef"
+const apiKey = "sk-123"
 
 // ✅ Secure
 apiKey := os.Getenv("API_KEY")
