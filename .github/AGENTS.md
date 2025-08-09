@@ -16,43 +16,6 @@ Additional `AGENTS.md` files **may exist in subdirectories** to provide more con
 
 <br/>
 
-## 🔍 Project Overview
-
-**go-template** is a production-ready scaffold for building new Go libraries with zero setup friction. 
-It ships with opinionated defaults that reflect current best practices—clean project layout, 
-module-aware dependency management, and Makefiles that automate everything from linting and race-condition 
-testing to snapshot releases. Out of the box, GitHub Actions orchestrate CI/CD: unit tests (with `testify`), 
-coverage upload to Codecov, static analysis via golangci-lint and CodeQL, vulnerability auditing with Nancy, 
-and one-command releases through GoReleaser.
-
-Beyond automation, the template supplies all the "undifferentiated heavy lifting" a maintainer usually 
-adds manually: standard README and license, issue and PR templates, CODEOWNERS, semantic version tagging helpers, 
-label synchronization, and optional Slack/Discord/Twitter release announcements. Example functions, fuzz tests and 
-benchmarks are already wired in, so you can focus on writing library code instead of plumbing. 
-Clone, rename a few placeholders, and you have a fully instrumented Go library that is ready for continuous 
-delivery and open-source collaboration from day one.
-
-<br/>
-
----
-
-<br/>
-
-## 📁 Directory Structure
-| Directory        | Description                                                                       |
-|------------------|-----------------------------------------------------------------------------------|
-| `.github/`       | Issue templates, workflows, and community documentation                           |
-| `.vscode/`       | VS Code settings and extensions for development                                   |
-| `.make/`         | Shared Makefile targets used by `Makefile`                                        |
-| `examples/`      | Example program demonstrating package usage                                       |
-| `.` (root)       | Source files and tests for the local package                                      |
-
-<br/>
-
----
-
-<br/>
-
 ### 📚 Related Governance Documents
 
 For more detailed guidance and supporting documentation, refer to the following project-level resources:
@@ -1316,24 +1279,3 @@ Before merging any workflow changes, verify:
 * [ ] Error handling covers expected failure scenarios
 * [ ] Workflow has been tested in a draft PR
 * [ ] Documentation reflects any new workflow dependencies or requirements
-
-<br/>
-
----
-
-<br/>
-
-## 🕓 Change Log (AGENTS.md)
-
-This section tracks notable updates to `AGENTS.md`, including the date, author, and purpose of each revision.
-All contributors are expected to append entries here when making meaningful changes to agent behavior, conventions, or policies.
-
-
-| Date       | Author   | Summary of Changes                                    |
-|------------|----------|-------------------------------------------------------|
-| 2025-07-10 | @mrz1836 | Go essentials section, labels, and more!              |
-| 2025-07-07 | @mrz1836 | Minor mods in formatting, linting, gitleaks           |
-| 2025-06-30 | @mrz1836 | Added pre-commit hook guidelines and config reference |
-| 2025-06-27 | @mrz1836 | Adapted to fix this project                           |
-> For minor edits (typos, formatting), this log update is optional. For all behavioral or structural changes, log entries are **required**.
-
