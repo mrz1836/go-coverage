@@ -159,24 +159,24 @@ The system uses a comprehensive environment-based configuration system with 45+ 
 
 #### Coverage Processing
 ```bash
-COVERAGE_FAIL_UNDER=80                    # Minimum acceptable coverage
-COVERAGE_EXCLUDE_PATHS=vendor/,test/      # Paths to exclude
-COVERAGE_EXCLUDE_FILES=*_test.go          # File patterns to exclude
-COVERAGE_THRESHOLD_EXCELLENT=90           # Green badge threshold
+GO_COVERAGE_FAIL_UNDER=80                    # Minimum acceptable coverage
+GO_COVERAGE_EXCLUDE_PATHS=vendor/,test/      # Paths to exclude
+GO_COVERAGE_EXCLUDE_FILES=*_test.go          # File patterns to exclude
+GO_COVERAGE_THRESHOLD_EXCELLENT=90           # Green badge threshold
 ```
 
 #### GitHub Integration
 ```bash
-COVERAGE_PR_COMMENT_ENABLED=true          # Enable PR comments
-COVERAGE_PR_COMMENT_BEHAVIOR=update       # Comment update strategy
-COVERAGE_PAGES_AUTO_CREATE=true           # Auto-create GitHub Pages
+GO_COVERAGE_PR_COMMENT_ENABLED=true          # Enable PR comments
+GO_COVERAGE_PR_COMMENT_BEHAVIOR=update       # Comment update strategy
+GO_COVERAGE_PAGES_AUTO_CREATE=true           # Auto-create GitHub Pages
 ```
 
 #### Analytics & Reporting
 ```bash
-COVERAGE_ENABLE_TREND_ANALYSIS=true       # Historical trend tracking
-COVERAGE_HISTORY_RETENTION_DAYS=90        # Data retention period
-COVERAGE_ENABLE_PACKAGE_BREAKDOWN=true    # Package-level analysis
+GO_COVERAGE_ENABLE_TREND_ANALYSIS=true       # Historical trend tracking
+GO_COVERAGE_HISTORY_RETENTION_DAYS=90        # Data retention period
+GO_COVERAGE_ENABLE_PACKAGE_BREAKDOWN=true    # Package-level analysis
 ```
 
 ## Security Considerations

@@ -25,10 +25,10 @@ github.com/mrz1836/go-coverage/internal/badge/generator.go:44.16,46.3 1 1
 
 func TestParseCommand(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("COVERAGE_CREATE_STATUSES", "false")
-	defer func() { _ = os.Unsetenv("COVERAGE_POST_COMMENTS") }()
-	defer func() { _ = os.Unsetenv("COVERAGE_CREATE_STATUSES") }()
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
 	// Create temporary directory
 	tempDir, err := os.MkdirTemp("", "integration_test_*")
@@ -134,10 +134,10 @@ func TestParseCommand(t *testing.T) {
 
 func TestHistoryCommand(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("COVERAGE_CREATE_STATUSES", "false")
-	defer func() { _ = os.Unsetenv("COVERAGE_POST_COMMENTS") }()
-	defer func() { _ = os.Unsetenv("COVERAGE_CREATE_STATUSES") }()
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
 	// Create temporary directory
 	tempDir, err := os.MkdirTemp("", "integration_test_*")
@@ -155,8 +155,8 @@ func TestHistoryCommand(t *testing.T) {
 	require.NoError(t, err)
 
 	// First, add some data to history for tests that need it
-	_ = os.Setenv("COVERAGE_HISTORY_PATH", historyDir)
-	defer func() { _ = os.Unsetenv("COVERAGE_HISTORY_PATH") }()
+	_ = os.Setenv("GO_COVERAGE_HISTORY_PATH", historyDir)
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_HISTORY_PATH") }()
 
 	// Add initial history entry
 	addCmd := &cobra.Command{Use: "test"}
@@ -207,7 +207,7 @@ func TestHistoryCommand(t *testing.T) {
 				"Commit: abc123",
 			},
 			envVars: map[string]string{
-				"COVERAGE_HISTORY_PATH": historyDir,
+				"GO_COVERAGE_HISTORY_PATH": historyDir,
 			},
 		},
 		{
@@ -222,8 +222,8 @@ func TestHistoryCommand(t *testing.T) {
 				"Total Entries:",
 			},
 			envVars: map[string]string{
-				"COVERAGE_HISTORY_PATH": historyDir,
-				"COVERAGE_INPUT_FILE":   "/nonexistent/file.txt",
+				"GO_COVERAGE_HISTORY_PATH": historyDir,
+				"GO_COVERAGE_INPUT_FILE":   "/nonexistent/file.txt",
 			},
 		},
 		{
@@ -241,8 +241,8 @@ func TestHistoryCommand(t *testing.T) {
 				"Period: 30 days",
 			},
 			envVars: map[string]string{
-				"COVERAGE_HISTORY_PATH": historyDir,
-				"COVERAGE_INPUT_FILE":   "/nonexistent/file.txt",
+				"GO_COVERAGE_HISTORY_PATH": historyDir,
+				"GO_COVERAGE_INPUT_FILE":   "/nonexistent/file.txt",
 			},
 		},
 		{
@@ -257,8 +257,8 @@ func TestHistoryCommand(t *testing.T) {
 				"Branch: master",
 			},
 			envVars: map[string]string{
-				"COVERAGE_HISTORY_PATH": historyDir,
-				"COVERAGE_INPUT_FILE":   "/nonexistent/file.txt",
+				"GO_COVERAGE_HISTORY_PATH": historyDir,
+				"GO_COVERAGE_INPUT_FILE":   "/nonexistent/file.txt",
 			},
 		},
 		{
@@ -272,8 +272,8 @@ func TestHistoryCommand(t *testing.T) {
 				"History cleanup completed successfully!",
 			},
 			envVars: map[string]string{
-				"COVERAGE_HISTORY_PATH": historyDir,
-				"COVERAGE_INPUT_FILE":   "/nonexistent/file.txt",
+				"GO_COVERAGE_HISTORY_PATH": historyDir,
+				"GO_COVERAGE_INPUT_FILE":   "/nonexistent/file.txt",
 			},
 		},
 	}
@@ -338,11 +338,11 @@ func TestHistoryCommand(t *testing.T) {
 
 func TestCommentCommand(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("COVERAGE_CREATE_STATUSES", "false")
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
 	_ = os.Unsetenv("GITHUB_PR_NUMBER") // Clear any leftover PR number
-	defer func() { _ = os.Unsetenv("COVERAGE_POST_COMMENTS") }()
-	defer func() { _ = os.Unsetenv("COVERAGE_CREATE_STATUSES") }()
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
 	// Create temporary directory
 	tempDir, err := os.MkdirTemp("", "integration_test_*")
@@ -518,9 +518,9 @@ func TestCompleteCommand(t *testing.T) {
 				"Mode: DRY RUN",
 			},
 			envVars: map[string]string{
-				"COVERAGE_AUTO_CREATE_DIRS": "true",
-				"COVERAGE_POST_COMMENTS":    "false",
-				"COVERAGE_CREATE_STATUSES":  "false",
+				"GO_COVERAGE_AUTO_CREATE_DIRS": "true",
+				"GO_COVERAGE_POST_COMMENTS":    "false",
+				"GO_COVERAGE_CREATE_STATUSES":  "false",
 			},
 		},
 		{
@@ -547,9 +547,9 @@ func TestCompleteCommand(t *testing.T) {
 				filepath.Join(outputDir, "coverage.svg"), // Also check root badge
 			},
 			envVars: map[string]string{
-				"COVERAGE_AUTO_CREATE_DIRS": "true",
-				"COVERAGE_POST_COMMENTS":    "false",
-				"COVERAGE_CREATE_STATUSES":  "false",
+				"GO_COVERAGE_AUTO_CREATE_DIRS": "true",
+				"GO_COVERAGE_POST_COMMENTS":    "false",
+				"GO_COVERAGE_CREATE_STATUSES":  "false",
 			},
 		},
 		{
@@ -569,14 +569,14 @@ func TestCompleteCommand(t *testing.T) {
 				"Pipeline Complete!",
 			},
 			envVars: map[string]string{
-				"COVERAGE_AUTO_CREATE_DIRS": "true",
-				"GITHUB_TOKEN":              "fake-token",
-				"GITHUB_REPOSITORY_OWNER":   "test-owner",
-				"GITHUB_REPOSITORY":         "test-owner/test-repo",
-				"GITHUB_SHA":                "abc123def456",
-				"GITHUB_PR_NUMBER":          "123",
-				"COVERAGE_POST_COMMENTS":    "true",
-				"COVERAGE_CREATE_STATUSES":  "true",
+				"GO_COVERAGE_AUTO_CREATE_DIRS": "true",
+				"GITHUB_TOKEN":                 "fake-token",
+				"GITHUB_REPOSITORY_OWNER":      "test-owner",
+				"GITHUB_REPOSITORY":            "test-owner/test-repo",
+				"GITHUB_SHA":                   "abc123def456",
+				"GITHUB_PR_NUMBER":             "123",
+				"GO_COVERAGE_POST_COMMENTS":    "true",
+				"GO_COVERAGE_CREATE_STATUSES":  "true",
 			},
 		},
 		{
@@ -591,8 +591,8 @@ func TestCompleteCommand(t *testing.T) {
 				"failed to parse coverage file",
 			},
 			envVars: map[string]string{
-				"COVERAGE_POST_COMMENTS":   "false",
-				"COVERAGE_CREATE_STATUSES": "false",
+				"GO_COVERAGE_POST_COMMENTS":   "false",
+				"GO_COVERAGE_CREATE_STATUSES": "false",
 			},
 		},
 	}
@@ -659,10 +659,10 @@ update history, and create GitHub PR comment if in PR context.`,
 
 func TestRootCommandHelp(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("COVERAGE_CREATE_STATUSES", "false")
-	defer func() { _ = os.Unsetenv("COVERAGE_POST_COMMENTS") }()
-	defer func() { _ = os.Unsetenv("COVERAGE_CREATE_STATUSES") }()
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
 	// Capture output
 	var buf bytes.Buffer
@@ -698,10 +698,10 @@ the simplicity and performance that Go developers expect.`,
 
 func TestCommandFlags(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("COVERAGE_CREATE_STATUSES", "false")
-	defer func() { _ = os.Unsetenv("COVERAGE_POST_COMMENTS") }()
-	defer func() { _ = os.Unsetenv("COVERAGE_CREATE_STATUSES") }()
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
+	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
 	tests := []struct {
 		name     string
@@ -775,8 +775,8 @@ func TestCommandFlags(t *testing.T) {
 // Helper function to clear environment variables
 func clearTestEnv() {
 	envVars := []string{
-		"COVERAGE_INPUT_FILE", "COVERAGE_OUTPUT_DIR", "COVERAGE_THRESHOLD",
-		"COVERAGE_AUTO_CREATE_DIRS", "COVERAGE_HISTORY_PATH",
+		"GO_COVERAGE_INPUT_FILE", "GO_COVERAGE_OUTPUT_DIR", "GO_COVERAGE_THRESHOLD",
+		"GO_COVERAGE_AUTO_CREATE_DIRS", "GO_COVERAGE_HISTORY_PATH",
 		"GITHUB_TOKEN", "GITHUB_REPOSITORY_OWNER", "GITHUB_REPOSITORY",
 		"GITHUB_SHA", "GITHUB_PR_NUMBER",
 	}

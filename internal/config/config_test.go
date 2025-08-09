@@ -75,50 +75,50 @@ func TestLoadWithEnvironmentVariables(t *testing.T) {
 	defer clearEnvironment()
 
 	// Set environment variables
-	_ = os.Setenv("COVERAGE_INPUT_FILE", "custom-coverage.txt")
-	_ = os.Setenv("COVERAGE_OUTPUT_DIR", "/tmp/coverage")
-	_ = os.Setenv("COVERAGE_THRESHOLD", "85.5")
-	_ = os.Setenv("COVERAGE_EXCLUDE_PATHS", "vendor/,build/,dist/")
-	_ = os.Setenv("COVERAGE_EXCLUDE_FILES", "*.test.go,*.mock.go")
-	_ = os.Setenv("COVERAGE_EXCLUDE_TESTS", "false")
-	_ = os.Setenv("COVERAGE_EXCLUDE_GENERATED", "false")
+	_ = os.Setenv("GO_COVERAGE_INPUT_FILE", "custom-coverage.txt")
+	_ = os.Setenv("GO_COVERAGE_OUTPUT_DIR", "/tmp/coverage")
+	_ = os.Setenv("GO_COVERAGE_THRESHOLD", "85.5")
+	_ = os.Setenv("GO_COVERAGE_EXCLUDE_PATHS", "vendor/,build/,dist/")
+	_ = os.Setenv("GO_COVERAGE_EXCLUDE_FILES", "*.test.go,*.mock.go")
+	_ = os.Setenv("GO_COVERAGE_EXCLUDE_TESTS", "false")
+	_ = os.Setenv("GO_COVERAGE_EXCLUDE_GENERATED", "false")
 
 	_ = os.Setenv("GITHUB_TOKEN", "test-token")
 	_ = os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner")
 	_ = os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo")
 	_ = os.Setenv("GITHUB_PR_NUMBER", "123")
 	_ = os.Setenv("GITHUB_SHA", "abc123def456")
-	_ = os.Setenv("COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("COVERAGE_CREATE_STATUSES", "false")
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
 	_ = os.Setenv("GITHUB_TIMEOUT", "60s")
 
-	_ = os.Setenv("COVERAGE_BADGE_STYLE", "flat-square")
-	_ = os.Setenv("COVERAGE_BADGE_LABEL", "test coverage")
-	_ = os.Setenv("COVERAGE_BADGE_LOGO", "go")
-	_ = os.Setenv("COVERAGE_BADGE_LOGO_COLOR", "blue")
-	_ = os.Setenv("COVERAGE_BADGE_OUTPUT", "test-coverage.svg")
-	_ = os.Setenv("COVERAGE_BADGE_TREND", "true")
+	_ = os.Setenv("GO_COVERAGE_BADGE_STYLE", "flat-square")
+	_ = os.Setenv("GO_COVERAGE_BADGE_LABEL", "test coverage")
+	_ = os.Setenv("GO_COVERAGE_BADGE_LOGO", "go")
+	_ = os.Setenv("GO_COVERAGE_BADGE_LOGO_COLOR", "blue")
+	_ = os.Setenv("GO_COVERAGE_BADGE_OUTPUT", "test-coverage.svg")
+	_ = os.Setenv("GO_COVERAGE_BADGE_TREND", "true")
 
-	_ = os.Setenv("COVERAGE_REPORT_OUTPUT", "test-coverage.html")
-	_ = os.Setenv("COVERAGE_REPORT_TITLE", "Test Coverage Report")
-	_ = os.Setenv("COVERAGE_REPORT_THEME", "light")
-	_ = os.Setenv("COVERAGE_REPORT_PACKAGES", "false")
-	_ = os.Setenv("COVERAGE_REPORT_FILES", "false")
-	_ = os.Setenv("COVERAGE_REPORT_MISSING", "false")
-	_ = os.Setenv("COVERAGE_REPORT_RESPONSIVE", "false")
-	_ = os.Setenv("COVERAGE_REPORT_INTERACTIVE", "false")
+	_ = os.Setenv("GO_COVERAGE_REPORT_OUTPUT", "test-coverage.html")
+	_ = os.Setenv("GO_COVERAGE_REPORT_TITLE", "Test Coverage Report")
+	_ = os.Setenv("GO_COVERAGE_REPORT_THEME", "light")
+	_ = os.Setenv("GO_COVERAGE_REPORT_PACKAGES", "false")
+	_ = os.Setenv("GO_COVERAGE_REPORT_FILES", "false")
+	_ = os.Setenv("GO_COVERAGE_REPORT_MISSING", "false")
+	_ = os.Setenv("GO_COVERAGE_REPORT_RESPONSIVE", "false")
+	_ = os.Setenv("GO_COVERAGE_REPORT_INTERACTIVE", "false")
 
-	_ = os.Setenv("COVERAGE_HISTORY_ENABLED", "false")
-	_ = os.Setenv("COVERAGE_HISTORY_PATH", "/tmp/history")
-	_ = os.Setenv("COVERAGE_HISTORY_RETENTION", "30")
-	_ = os.Setenv("COVERAGE_HISTORY_MAX_ENTRIES", "500")
-	_ = os.Setenv("COVERAGE_HISTORY_CLEANUP", "false")
-	_ = os.Setenv("COVERAGE_HISTORY_METRICS", "false")
+	_ = os.Setenv("GO_COVERAGE_HISTORY_ENABLED", "false")
+	_ = os.Setenv("GO_COVERAGE_HISTORY_PATH", "/tmp/history")
+	_ = os.Setenv("GO_COVERAGE_HISTORY_RETENTION", "30")
+	_ = os.Setenv("GO_COVERAGE_HISTORY_MAX_ENTRIES", "500")
+	_ = os.Setenv("GO_COVERAGE_HISTORY_CLEANUP", "false")
+	_ = os.Setenv("GO_COVERAGE_HISTORY_METRICS", "false")
 
-	_ = os.Setenv("COVERAGE_BASE_DIR", "/tmp/base")
-	_ = os.Setenv("COVERAGE_AUTO_CREATE_DIRS", "false")
-	_ = os.Setenv("COVERAGE_FILE_MODE", "420")
-	_ = os.Setenv("COVERAGE_DIR_MODE", "493")
+	_ = os.Setenv("GO_COVERAGE_BASE_DIR", "/tmp/base")
+	_ = os.Setenv("GO_COVERAGE_AUTO_CREATE_DIRS", "false")
+	_ = os.Setenv("GO_COVERAGE_FILE_MODE", "420")
+	_ = os.Setenv("GO_COVERAGE_DIR_MODE", "493")
 
 	config := Load()
 
@@ -877,18 +877,18 @@ func TestConfigurationEdgeCases(t *testing.T) {
 // Helper function to clear environment variables
 func clearEnvironment() {
 	envVars := []string{
-		"COVERAGE_INPUT_FILE", "COVERAGE_OUTPUT_DIR", "COVERAGE_THRESHOLD",
-		"COVERAGE_EXCLUDE_PATHS", "COVERAGE_EXCLUDE_FILES", "COVERAGE_EXCLUDE_TESTS", "COVERAGE_EXCLUDE_GENERATED",
+		"GO_COVERAGE_INPUT_FILE", "GO_COVERAGE_OUTPUT_DIR", "GO_COVERAGE_THRESHOLD",
+		"GO_COVERAGE_EXCLUDE_PATHS", "GO_COVERAGE_EXCLUDE_FILES", "GO_COVERAGE_EXCLUDE_TESTS", "GO_COVERAGE_EXCLUDE_GENERATED",
 		"GITHUB_TOKEN", "GITHUB_REPOSITORY_OWNER", "GITHUB_REPOSITORY", "GITHUB_PR_NUMBER", "GITHUB_SHA",
-		"COVERAGE_POST_COMMENTS", "COVERAGE_CREATE_STATUSES", "GITHUB_TIMEOUT",
-		"COVERAGE_BADGE_STYLE", "COVERAGE_BADGE_LABEL", "COVERAGE_BADGE_LOGO", "COVERAGE_BADGE_LOGO_COLOR",
-		"COVERAGE_BADGE_OUTPUT", "COVERAGE_BADGE_TREND",
-		"COVERAGE_REPORT_OUTPUT", "COVERAGE_REPORT_TITLE", "COVERAGE_REPORT_THEME",
-		"COVERAGE_REPORT_PACKAGES", "COVERAGE_REPORT_FILES", "COVERAGE_REPORT_MISSING",
-		"COVERAGE_REPORT_RESPONSIVE", "COVERAGE_REPORT_INTERACTIVE",
-		"COVERAGE_HISTORY_ENABLED", "COVERAGE_HISTORY_PATH", "COVERAGE_HISTORY_RETENTION",
-		"COVERAGE_HISTORY_MAX_ENTRIES", "COVERAGE_HISTORY_CLEANUP", "COVERAGE_HISTORY_METRICS",
-		"COVERAGE_BASE_DIR", "COVERAGE_AUTO_CREATE_DIRS", "COVERAGE_FILE_MODE", "COVERAGE_DIR_MODE",
+		"GO_COVERAGE_POST_COMMENTS", "GO_COVERAGE_CREATE_STATUSES", "GITHUB_TIMEOUT",
+		"GO_COVERAGE_BADGE_STYLE", "GO_COVERAGE_BADGE_LABEL", "GO_COVERAGE_BADGE_LOGO", "GO_COVERAGE_BADGE_LOGO_COLOR",
+		"GO_COVERAGE_BADGE_OUTPUT", "GO_COVERAGE_BADGE_TREND",
+		"GO_COVERAGE_REPORT_OUTPUT", "GO_COVERAGE_REPORT_TITLE", "GO_COVERAGE_REPORT_THEME",
+		"GO_COVERAGE_REPORT_PACKAGES", "GO_COVERAGE_REPORT_FILES", "GO_COVERAGE_REPORT_MISSING",
+		"GO_COVERAGE_REPORT_RESPONSIVE", "GO_COVERAGE_REPORT_INTERACTIVE",
+		"GO_COVERAGE_HISTORY_ENABLED", "GO_COVERAGE_HISTORY_PATH", "GO_COVERAGE_HISTORY_RETENTION",
+		"GO_COVERAGE_HISTORY_MAX_ENTRIES", "GO_COVERAGE_HISTORY_CLEANUP", "GO_COVERAGE_HISTORY_METRICS",
+		"GO_COVERAGE_BASE_DIR", "GO_COVERAGE_AUTO_CREATE_DIRS", "GO_COVERAGE_FILE_MODE", "GO_COVERAGE_DIR_MODE",
 		"TEST_STRING", "TEST_INT", "TEST_FLOAT", "TEST_BOOL", "TEST_DURATION", "TEST_SLICE",
 	}
 

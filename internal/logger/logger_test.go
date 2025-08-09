@@ -92,12 +92,12 @@ func TestNewFromEnv(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment variables
 			if tt.envLevel != "" {
-				_ = os.Setenv("COVERAGE_LOG_LEVEL", tt.envLevel)
-				defer func() { _ = os.Unsetenv("COVERAGE_LOG_LEVEL") }()
+				_ = os.Setenv("GO_COVERAGE_LOG_LEVEL", tt.envLevel)
+				defer func() { _ = os.Unsetenv("GO_COVERAGE_LOG_LEVEL") }()
 			}
 			if tt.envFormat != "" {
-				_ = os.Setenv("COVERAGE_LOG_FORMAT", tt.envFormat)
-				defer func() { _ = os.Unsetenv("COVERAGE_LOG_FORMAT") }()
+				_ = os.Setenv("GO_COVERAGE_LOG_FORMAT", tt.envFormat)
+				defer func() { _ = os.Unsetenv("GO_COVERAGE_LOG_FORMAT") }()
 			}
 
 			var buf bytes.Buffer

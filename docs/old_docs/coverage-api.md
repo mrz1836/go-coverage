@@ -660,8 +660,8 @@ jobs:
 ```yaml
 - name: Coverage Analysis
   env:
-    ENABLE_INTERNAL_COVERAGE: true
-    COVERAGE_FAIL_UNDER: 80
+    ENABLE_GO_COVERAGE: true
+    GO_COVERAGE_FAIL_UNDER: 80
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   run: |
     cd .github/coverage

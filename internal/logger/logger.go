@@ -111,7 +111,7 @@ func NewFromEnv() Logger {
 	}
 
 	// Parse log level from environment
-	if levelStr := os.Getenv("COVERAGE_LOG_LEVEL"); levelStr != "" {
+	if levelStr := os.Getenv("GO_COVERAGE_LOG_LEVEL"); levelStr != "" {
 		switch strings.ToUpper(levelStr) {
 		case "DEBUG":
 			config.Level = DebugLevel
@@ -125,7 +125,7 @@ func NewFromEnv() Logger {
 	}
 
 	// Parse format from environment
-	if format := os.Getenv("COVERAGE_LOG_FORMAT"); format != "" {
+	if format := os.Getenv("GO_COVERAGE_LOG_FORMAT"); format != "" {
 		if format == "json" || format == "text" {
 			config.Format = format
 		}

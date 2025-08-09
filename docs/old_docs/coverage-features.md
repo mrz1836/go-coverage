@@ -15,13 +15,13 @@ The system generates professional SVG badges compatible with GitHub's style guid
 
 #### Flat Square Style
 ```bash
-COVERAGE_BADGE_STYLE=flat-square
+GO_COVERAGE_BADGE_STYLE=flat-square
 ```
 ![Flat Square Badge Example](images/badge-flat-square.svg)
 
 #### For The Badge Style
 ```bash
-COVERAGE_BADGE_STYLE=for-the-badge
+GO_COVERAGE_BADGE_STYLE=for-the-badge
 ```
 ![For The Badge Example](images/badge-for-the-badge.svg)
 
