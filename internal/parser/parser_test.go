@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// getTestDataPath returns the absolute path to a file in the testdata directory
+func getTestDataPath(filename string) string {
+	_, currentFile, _, _ := runtime.Caller(1)
+	testDataDir := filepath.Join(filepath.Dir(currentFile), "testdata")
+	return filepath.Join(testDataDir, filename)
+}
 
 func TestNew(t *testing.T) {
 	parser := New()
@@ -41,8 +49,8 @@ func TestParseFile(t *testing.T) {
 	parser := New()
 	ctx := context.Background()
 
-	// Test valid coverage file using filepath.Join for proper path resolution
-	testFile := filepath.Join("testdata", "coverage.txt")
+	// Test valid coverage file using absolute path resolution
+	testFile := getTestDataPath("coverage.txt")
 	coverage, err := parser.ParseFile(ctx, testFile)
 	require.NoError(t, err)
 	assert.NotNil(t, coverage)
@@ -56,7 +64,7 @@ func TestParseFileNotExists(t *testing.T) {
 	parser := New()
 	ctx := context.Background()
 
-	_, err := parser.ParseFile(ctx, filepath.Join("testdata", "nonexistent.txt"))
+	_, err := parser.ParseFile(ctx, getTestDataPath("nonexistent.txt"))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to open coverage file")
 }
@@ -384,7 +392,7 @@ func TestParseComplexCoverage(t *testing.T) {
 	ctx := context.Background()
 
 	// Test with complex coverage file
-	coverage, err := parser.ParseFile(ctx, filepath.Join("testdata", "complex.txt"))
+	coverage, err := parser.ParseFile(ctx, getTestDataPath("complex.txt"))
 	require.NoError(t, err)
 
 	assert.Equal(t, "count", coverage.Mode)
