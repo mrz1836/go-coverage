@@ -25,7 +25,7 @@ func getDashboardTemplate() string {
                     <p class="subtitle">{{- if .PRTitle}}{{.PRTitle}} • {{end}}Coverage analysis for this pull request</p>
                     {{- else}}
                     <h1>{{.RepositoryName}} Coverage</h1>
-                    <p class="subtitle">Code coverage dashboard • Powered by 🏰 GoFortress</p>
+                    <p class="subtitle">Code coverage dashboard • Powered by 📊 Go Coverage</p>
                     {{- end}}
                 </div>
 

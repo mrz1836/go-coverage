@@ -27,7 +27,7 @@ func TestNewPRCommentManager(t *testing.T) {
 			expected: &PRCommentConfig{
 				MinUpdateIntervalMinutes: 5,
 				MaxCommentsPerPR:         1,
-				CommentSignature:         "gofortress-coverage-v1",
+				CommentSignature:         "go-coverage-v1",
 				IncludeTrend:             true,
 				IncludeCoverageDetails:   true,
 				IncludeFileAnalysis:      false,
@@ -221,7 +221,7 @@ func TestFindExistingCoverageComments(t *testing.T) {
 						comments := []map[string]interface{}{
 							{
 								"id":   1,
-								"body": "<!-- gofortress-coverage-v1 --> Some coverage comment",
+								"body": "<!-- go-coverage-v1 --> Some coverage comment",
 							},
 							{
 								"id":   2,
@@ -229,7 +229,7 @@ func TestFindExistingCoverageComments(t *testing.T) {
 							},
 							{
 								"id":   3,
-								"body": "<!-- gofortress-coverage-v1 --> Another coverage comment",
+								"body": "<!-- go-coverage-v1 --> Another coverage comment",
 							},
 						}
 						w.Header().Set("Content-Type", "application/json")
@@ -291,12 +291,12 @@ func TestIsCoverageComment(t *testing.T) {
 	}{
 		{
 			name:     "valid coverage comment",
-			body:     "<!-- gofortress-coverage-v1 --> Coverage report",
+			body:     "<!-- go-coverage-v1 --> Coverage report",
 			expected: true,
 		},
 		{
 			name:     "coverage comment with different content",
-			body:     "Some text\n<!-- gofortress-coverage-v1 -->\nMore content",
+			body:     "Some text\n<!-- go-coverage-v1 -->\nMore content",
 			expected: true,
 		},
 		{
@@ -352,7 +352,7 @@ func TestDetermineCommentAction(t *testing.T) {
 			existingComments: []Comment{
 				{
 					ID:        123,
-					Body:      "<!-- gofortress-coverage-v1 --> Previous comment",
+					Body:      "<!-- go-coverage-v1 --> Previous comment",
 					CreatedAt: recentTime.Format(time.RFC3339),
 					UpdatedAt: recentTime.Format(time.RFC3339),
 				},
@@ -365,7 +365,7 @@ func TestDetermineCommentAction(t *testing.T) {
 			existingComments: []Comment{
 				{
 					ID:        123,
-					Body:      "<!-- gofortress-coverage-v1 --> Previous comment",
+					Body:      "<!-- go-coverage-v1 --> Previous comment",
 					CreatedAt: oldTime.Format(time.RFC3339),
 					UpdatedAt: oldTime.Format(time.RFC3339),
 				},
@@ -527,7 +527,7 @@ func TestExtractCommentMetadata(t *testing.T) {
 	}{
 		{
 			name: "comment with JSON metadata",
-			body: `<!-- gofortress-coverage-v1 -->
+			body: `<!-- go-coverage-v1 -->
 Coverage Report
 <!-- metadata: {"version": "1.0", "created_at": "2023-12-25T12:00:00Z"} -->`,
 			expected: CommentMetadata{
@@ -544,7 +544,7 @@ Coverage Report
 		},
 		{
 			name: "comment with invalid JSON",
-			body: `<!-- gofortress-coverage-v1 -->
+			body: `<!-- go-coverage-v1 -->
 Coverage Report
 <!-- invalid json -->`,
 			expected: CommentMetadata{
@@ -583,7 +583,7 @@ func TestDeletePRComments(t *testing.T) {
 						comments := []map[string]interface{}{
 							{
 								"id":   1,
-								"body": "<!-- gofortress-coverage-v1 --> Coverage comment 1",
+								"body": "<!-- go-coverage-v1 --> Coverage comment 1",
 							},
 							{
 								"id":   2,
@@ -644,7 +644,7 @@ func TestGetPRCommentStats(t *testing.T) {
 						comments := []map[string]interface{}{
 							{
 								"id":   1,
-								"body": "<!-- gofortress-coverage-v1 --> Coverage comment 1",
+								"body": "<!-- go-coverage-v1 --> Coverage comment 1",
 							},
 							{
 								"id":   2,
@@ -652,7 +652,7 @@ func TestGetPRCommentStats(t *testing.T) {
 							},
 							{
 								"id":   3,
-								"body": "<!-- gofortress-coverage-v1 --> Coverage comment 2",
+								"body": "<!-- go-coverage-v1 --> Coverage comment 2",
 							},
 						}
 						w.Header().Set("Content-Type", "application/json")

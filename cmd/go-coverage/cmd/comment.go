@@ -144,7 +144,7 @@ Features:
 			BaseURL:    "https://api.github.com",
 			Timeout:    cfg.GitHub.Timeout,
 			RetryCount: 3,
-			UserAgent:  "gofortress-coverage/2.0",
+			UserAgent:  "go-coverage/2.0",
 		}
 		client := github.NewWithConfig(githubConfig)
 
@@ -164,7 +164,7 @@ Features:
 		prCommentConfig := &github.PRCommentConfig{
 			MinUpdateIntervalMinutes: 5,
 			MaxCommentsPerPR:         1,
-			CommentSignature:         "gofortress-coverage-v1",
+			CommentSignature:         "go-coverage-v1",
 			IncludeTrend:             true,
 			IncludeCoverageDetails:   true,
 			IncludeFileAnalysis:      enableAnalysis,

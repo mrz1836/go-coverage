@@ -1,4 +1,4 @@
-// Package cmd provides the command-line interface for the GoFortress coverage tool
+// Package cmd provides the command-line interface for the Go coverage tool
 package cmd
 
 import (
@@ -6,9 +6,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{ //nolint:gochecknoglobals // CLI command
-	Use:   "gofortress-coverage",
-	Short: "Go-native coverage system for GoFortress CI/CD",
-	Long: `GoFortress Coverage is a self-contained, Go-native coverage system that provides
+	Use:   "go-coverage",
+	Short: "Go-native coverage system for CI/CD",
+	Long: `Go Coverage is a self-contained, Go-native coverage system that provides
 professional coverage tracking, badge generation, and reporting while maintaining
 the simplicity and performance that Go developers expect.
 

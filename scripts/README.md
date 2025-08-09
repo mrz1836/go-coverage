@@ -1,14 +1,14 @@
-# GoFortress Coverage Scripts
+# Go Coverage Coverage Scripts
 
-This directory contains utility scripts specifically for the GoFortress coverage system setup and maintenance.
+This directory contains utility scripts specifically for the Go Coverage coverage system setup and maintenance.
 
 ## 🚀 setup-github-pages-env.sh
 
-Automatically configures GitHub Pages environment settings to enable GoFortress coverage system deployments.
+Automatically configures GitHub Pages environment settings to enable Go Coverage coverage system deployments.
 
 ### Purpose
 
-The GoFortress coverage system generates coverage reports, badges, and dashboards that are deployed to GitHub Pages. This script configures the necessary environment protection rules to allow deployments from the appropriate branches.
+The Go Coverage coverage system generates coverage reports, badges, and dashboards that are deployed to GitHub Pages. This script configures the necessary environment protection rules to allow deployments from the appropriate branches.
 
 ### Usage
 
@@ -32,7 +32,7 @@ The GoFortress coverage system generates coverage reports, badges, and dashboard
 
 ### When to use
 
-- **New Repository Setup**: First time enabling GoFortress coverage system
+- **New Repository Setup**: First time enabling Go Coverage coverage system
 - **Deployment Errors**: Resolving "Branch not allowed to deploy to github-pages" errors
 - **Environment Issues**: After encountering GitHub Pages environment protection rule failures
 - **Dependabot Support**: Enabling coverage reports for automated dependency updates
@@ -56,7 +56,7 @@ The GoFortress coverage system generates coverage reports, badges, and dashboard
 ### Output Example
 
 ```
-🏰 GoFortress Coverage - GitHub Pages Environment Setup
+🏰 Go Coverage Coverage - GitHub Pages Environment Setup
 =======================================================
 
 ℹ️  Checking GitHub CLI authentication...
@@ -89,13 +89,13 @@ Next steps:
      - master branch (main deployments)
      - gh-pages branch (GitHub Pages default)
      - dependabot/* branches (automated dependency updates)
-  2. The GoFortress coverage workflow should now deploy successfully
+  2. The Go Coverage coverage workflow should now deploy successfully
   3. Coverage reports will be available at: https://owner.github.io/repo/
 ```
 
 ### Integration with Coverage Workflow
 
-This script configures the environment that the GoFortress coverage workflow (`.github/workflows/fortress-coverage.yml`) uses for deployment. The workflow includes:
+This script configures the environment that the Go Coverage coverage workflow (`.github/workflows/fortress-coverage.yml`) uses for deployment. The workflow includes:
 
 - Coverage report generation (`dashboard.html`, `coverage.html`)
 - Badge creation (`coverage.svg`)

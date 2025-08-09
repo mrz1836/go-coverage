@@ -1,10 +1,10 @@
-# GoFortress Coverage Configuration Reference
+# Go Coverage Coverage Configuration Reference
 
-Complete configuration guide for the GoFortress Internal Coverage System with all 45+ environment variables, examples, and best practices.
+Complete configuration guide for the Go Coverage Internal Coverage System with all 45+ environment variables, examples, and best practices.
 
 ## Configuration Overview
 
-The GoFortress Coverage System uses environment variables defined in [`.github/.env.shared`](../../.github/.env.shared) for all configuration. This approach provides:
+The Go Coverage Coverage System uses environment variables defined in [`.github/.env.shared`](../../.github/.env.shared) for all configuration. This approach provides:
 
 - **Version Control**: All settings tracked in git
 - **Environment Isolation**: Different settings per deployment
@@ -196,11 +196,11 @@ GO_COVERAGE_BADGE_BRANCHES=master                   # Single branch only
 
 #### `GO_COVERAGE_REPORT_TITLE`
 **Type**: String
-**Default**: `GoFortress Coverage`
+**Default**: `Go Coverage Coverage`
 **Description**: Title displayed in HTML reports
 
 ```bash
-GO_COVERAGE_REPORT_TITLE="GoFortress Coverage"     # Default title
+GO_COVERAGE_REPORT_TITLE="Go Coverage Coverage"     # Default title
 GO_COVERAGE_REPORT_TITLE="My Project Coverage"    # Custom title
 GO_COVERAGE_REPORT_TITLE="Quality Dashboard"      # Alternative title
 ```
@@ -662,7 +662,7 @@ GO_COVERAGE_LOG_LEVEL=verbose  # Must be debug, info, warn, or error
 ### Validation Tools
 ```bash
 # Validate configuration (when CLI is available)
-gofortress-coverage validate --config
+go-coverage validate --config
 
 # Check environment variables
 env | grep GO_COVERAGE_ | sort

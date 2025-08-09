@@ -18,7 +18,7 @@ func TestMain(t *testing.T) {
 	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
 		// This is the subprocess that will run main()
 		// Set args to help to avoid side effects
-		os.Args = []string{"gofortress-coverage", "--help"}
+		os.Args = []string{"go-coverage", "--help"}
 		main()
 		return
 	}
@@ -48,7 +48,7 @@ func TestMainErrorHandling(t *testing.T) {
 
 	if os.Getenv("GO_TEST_SUBPROCESS_ERROR") == "1" {
 		// This is the subprocess that will run main() with invalid args
-		os.Args = []string{"gofortress-coverage", "--invalid-flag-that-does-not-exist"}
+		os.Args = []string{"go-coverage", "--invalid-flag-that-does-not-exist"}
 		main()
 		return
 	}

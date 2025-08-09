@@ -507,7 +507,7 @@ func TestCompleteCommand(t *testing.T) {
 			},
 			expectError: false,
 			contains: []string{
-				"Starting GoFortress Coverage Pipeline",
+				"Starting Go Coverage Pipeline",
 				"Step 1: Parsing coverage data",
 				"Step 2: Generating coverage badge",
 				"Step 3: Generating HTML report",
@@ -534,7 +534,7 @@ func TestCompleteCommand(t *testing.T) {
 			},
 			expectError: false,
 			contains: []string{
-				"Starting GoFortress Coverage Pipeline",
+				"Starting Go Coverage Pipeline",
 				"Pipeline Complete!",
 				"Badge:",
 				"Report:",
@@ -562,7 +562,7 @@ func TestCompleteCommand(t *testing.T) {
 			},
 			expectError: false,
 			contains: []string{
-				"Starting GoFortress Coverage Pipeline",
+				"Starting Go Coverage Pipeline",
 				"Step 6: GitHub integration",
 				"PR comment creation is deprecated in complete command",
 				"Would create commit status",
@@ -669,9 +669,9 @@ func TestRootCommandHelp(t *testing.T) {
 
 	// Create a new root command with all available subcommands
 	testCmd := &cobra.Command{
-		Use:   "gofortress-coverage",
-		Short: "Go-native coverage system for GoFortress CI/CD",
-		Long: `GoFortress Coverage is a self-contained, Go-native coverage system that provides
+		Use:   "go-coverage",
+		Short: "Go-native coverage system for Go CI/CD",
+		Long: `Go Coverage is a self-contained, Go-native coverage system that provides
 professional coverage tracking, badge generation, and reporting while maintaining
 the simplicity and performance that Go developers expect.`,
 	}

@@ -1,8 +1,8 @@
-# GoFortress Internal Coverage System
+# Go Coverage Internal Coverage System
 
 ## Overview
 
-The GoFortress Internal Coverage System is a comprehensive, self-hosted solution for code coverage tracking, visualization, and analysis. Built as a modern replacement for third-party services like Codecov, it provides complete control over your coverage data while delivering a superior user experience with advanced analytics, interactive dashboards, and seamless CI/CD integration.
+The Go Coverage Internal Coverage System is a comprehensive, self-hosted solution for code coverage tracking, visualization, and analysis. Built as a modern replacement for third-party services like Codecov, it provides complete control over your coverage data while delivering a superior user experience with advanced analytics, interactive dashboards, and seamless CI/CD integration.
 
 ## Key Benefits
 
@@ -43,7 +43,7 @@ The heart of the system, implemented as a separate Go module with isolated depen
 
 ```
 .github/coverage/
-├── cmd/gofortress-coverage/     # CLI tool and main entry point
+├── cmd/go-coverage/     # CLI tool and main entry point
 ├── internal/
 │   ├── parser/                  # Go coverage file parsing and analysis
 │   ├── badge/                   # SVG badge generation with multiple themes
@@ -270,7 +270,7 @@ The system provides automated migration tools and guides for:
 
 ## Getting Started
 
-Ready to implement the GoFortress Coverage System? Start with our guides:
+Ready to implement the Go Coverage Coverage System? Start with our guides:
 
 - [📚 Configuration Guide](coverage-configuration.md) - Complete setup instructions
 - [🎯 Feature Showcase](coverage-features.md) - Explore all available features

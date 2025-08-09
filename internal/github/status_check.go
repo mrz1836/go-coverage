@@ -207,7 +207,7 @@ type StatusResult struct {
 func NewStatusCheckManager(client *Client, config *StatusCheckConfig) *StatusCheckManager {
 	if config == nil {
 		config = &StatusCheckConfig{
-			ContextPrefix:          "gofortress",
+			ContextPrefix:          "go-coverage",
 			MainContext:            "coverage/total",
 			AdditionalContexts:     []string{"coverage/trend", "coverage/quality"},
 			EnableBlocking:         true,

@@ -433,9 +433,9 @@ func (c *Config) GetRepositoryRoot() (string, error) {
 		return repoRoot, nil
 	}
 
-	// Fallback: if we're in .github/coverage/cmd/gofortress-coverage, go up 4 levels
-	if strings.Contains(workingDir, ".github/coverage/cmd/gofortress-coverage") ||
-		strings.Contains(workingDir, ".github"+string(filepath.Separator)+"coverage"+string(filepath.Separator)+"cmd"+string(filepath.Separator)+"gofortress-coverage") {
+	// Fallback: if we're in .github/coverage/cmd/go-coverage, go up 4 levels
+	if strings.Contains(workingDir, ".github/coverage/cmd/go-coverage") ||
+		strings.Contains(workingDir, ".github"+string(filepath.Separator)+"coverage"+string(filepath.Separator)+"cmd"+string(filepath.Separator)+"go-coverage") {
 		repoRoot := filepath.Join(workingDir, "../../../../")
 		if absPath, err := filepath.Abs(repoRoot); err == nil {
 			// Verify this looks like a repo root

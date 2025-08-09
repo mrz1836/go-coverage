@@ -1,7 +1,7 @@
 # PR Comment Implementation Summary
 
 ## Overview
-Successfully implemented the PR comment feature for the GoFortress coverage system with anti-spam protection and beautiful, GitHub-style PR comments.
+Successfully implemented the PR comment feature for the Go Coverage coverage system with anti-spam protection and beautiful, GitHub-style PR comments.
 
 ## Key Features Implemented
 
@@ -11,7 +11,7 @@ Successfully implemented the PR comment feature for the GoFortress coverage syst
 - **Smart Update Logic**:
   - Minimum 5-minute interval between updates
   - Only updates on significant changes (>1% coverage difference)
-  - Uses metadata signature `gofortress-coverage-v1` to identify comments
+  - Uses metadata signature `go-coverage-v1` to identify comments
 
 ### 2. Beautiful Template System
 - **Multiple Templates**:
@@ -66,7 +66,7 @@ Successfully implemented the PR comment feature for the GoFortress coverage syst
 ## Usage Example
 
 ```bash
-./gofortress-coverage comment \
+./go-coverage comment \
   --pr 123 \
   --coverage coverage.out \
   --base-coverage main-coverage.out \

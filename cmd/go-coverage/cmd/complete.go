@@ -1,4 +1,4 @@
-// Package cmd provides CLI commands for the GoFortress coverage tool
+// Package cmd provides CLI commands for the Go coverage tool
 package cmd
 
 import (
@@ -99,7 +99,7 @@ update history, and create GitHub PR comment if in PR context.`,
 			return fmt.Errorf("configuration validation failed: %w", err)
 		}
 
-		cmd.Printf("Starting GoFortress Coverage Pipeline\n")
+		cmd.Printf("Starting Go Coverage Pipeline\n")
 		cmd.Printf("====================================\n")
 		cmd.Printf("Input: %s\n", inputFile)
 		cmd.Printf("Output Directory: %s\n", outputDir)
@@ -187,11 +187,18 @@ update history, and create GitHub PR comment if in PR context.`,
 		}
 
 		if !dryRun {
+			// Ensure target directory exists before writing badge
+			if mkdirErr := os.MkdirAll(filepath.Dir(badgeFile), cfg.Storage.DirMode); mkdirErr != nil {
+				return fmt.Errorf("failed to create badge directory: %w", mkdirErr)
+			}
 			if writeErr := os.WriteFile(badgeFile, svgContent, cfg.Storage.FileMode); writeErr != nil {
 				return fmt.Errorf("failed to write badge file: %w", writeErr)
 			}
+
 			// Also write badge to root for easy access
-			if writeErr := os.WriteFile(rootBadgeFile, svgContent, cfg.Storage.FileMode); writeErr != nil {
+			if rootMkdirErr := os.MkdirAll(filepath.Dir(rootBadgeFile), cfg.Storage.DirMode); rootMkdirErr != nil {
+				cmd.Printf("   ⚠️  Failed to create root badge directory: %v\n", rootMkdirErr)
+			} else if writeErr := os.WriteFile(rootBadgeFile, svgContent, cfg.Storage.FileMode); writeErr != nil {
 				cmd.Printf("   ⚠️  Failed to write root badge file: %v\n", writeErr)
 			}
 		}
@@ -269,7 +276,7 @@ update history, and create GitHub PR comment if in PR context.`,
 		}
 
 		// Discover all eligible Go files to get accurate total count
-		// Get repository root path - we're in .github/coverage/cmd/gofortress-coverage
+		// Get repository root path - we're in .github/coverage/cmd/go-coverage
 		workingDir, wdErr := os.Getwd()
 		if wdErr != nil {
 			cmd.Printf("   ⚠️  Failed to get working directory: %v\n", wdErr)
@@ -681,14 +688,14 @@ update history, and create GitHub PR comment if in PR context.`,
 					BaseURL:    "https://api.github.com",
 					Timeout:    cfg.GitHub.Timeout,
 					RetryCount: 3,
-					UserAgent:  "gofortress-coverage/1.0",
+					UserAgent:  "go-coverage/1.0",
 				}
 				client := github.NewWithConfig(githubConfig)
 
 				// Create PR comment if in PR context - this is deprecated in favor of the comment command
 				if cfg.IsPullRequestContext() && cfg.GitHub.PostComments {
 					cmd.Printf("   ℹ️  PR comment creation is deprecated in complete command\n")
-					cmd.Printf("   💡 Use 'gofortress-coverage comment' command for advanced PR comments\n")
+					cmd.Printf("   💡 Use 'go-coverage comment' command for advanced PR comments\n")
 				}
 
 				// Create commit status

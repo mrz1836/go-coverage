@@ -47,5 +47,5 @@ node_modules/
 history/*.json
 
 # Build artifacts
-cmd/gofortress-coverage/gofortress-coverage
-/cmd/gofortress-coverage/cmd/.github
+cmd/go-coverage/go-coverage
+/cmd/go-coverage/cmd/.github

@@ -1,10 +1,10 @@
-# GoFortress Coverage API & CLI Documentation
+# Go Coverage Coverage API & CLI Documentation
 
-Complete reference for the GoFortress Internal Coverage System CLI tools, API endpoints, and automation capabilities.
+Complete reference for the Go Coverage Internal Coverage System CLI tools, API endpoints, and automation capabilities.
 
 ## CLI Reference
 
-The `gofortress-coverage` CLI tool provides comprehensive coverage processing, analytics, and automation capabilities.
+The `go-coverage` CLI tool provides comprehensive coverage processing, analytics, and automation capabilities.
 
 ### Installation & Build
 
@@ -12,7 +12,7 @@ The CLI tool is built from the `.github/coverage/` directory:
 
 ```bash
 cd .github/coverage
-go build -o gofortress-coverage ./cmd/gofortress-coverage/
+go build -o go-coverage ./cmd/go-coverage/
 ```
 
 ### Global Options
@@ -20,7 +20,7 @@ go build -o gofortress-coverage ./cmd/gofortress-coverage/
 All commands support these global flags:
 
 ```bash
-gofortress-coverage [command] [flags]
+go-coverage [command] [flags]
 
 Global Flags:
   --config string     Configuration file path (default: ".github/.env.shared")
@@ -38,7 +38,7 @@ Global Flags:
 Executes the complete coverage processing pipeline in a single command.
 
 ```bash
-gofortress-coverage complete [flags]
+go-coverage complete [flags]
 
 Flags:
   --input string      Input coverage file (default: "coverage.out")
@@ -51,17 +51,17 @@ Flags:
 
 Examples:
   # Basic usage
-  gofortress-coverage complete --input coverage.out
+  go-coverage complete --input coverage.out
 
   # With branch and commit info
-  gofortress-coverage complete \
+  go-coverage complete \
     --input coverage.out \
     --branch main \
     --commit abc123def \
     --threshold 80
 
   # For pull request
-  gofortress-coverage complete \
+  go-coverage complete \
     --input coverage.out \
     --pr 123 \
     --fail-under
@@ -84,7 +84,7 @@ The `complete` command executes these steps in order:
 Parses Go coverage files and extracts detailed metrics.
 
 ```bash
-gofortress-coverage parse [flags]
+go-coverage parse [flags]
 
 Flags:
   --file string       Coverage file to parse (default: "coverage.out")
@@ -95,16 +95,16 @@ Flags:
 
 Examples:
   # Parse and output to stdout
-  gofortress-coverage parse --file coverage.out
+  go-coverage parse --file coverage.out
 
   # Save to file with custom exclusions
-  gofortress-coverage parse \
+  go-coverage parse \
     --file coverage.out \
     --output metrics.json \
     --exclude "test/*,mock/*"
 
   # Human-readable table format
-  gofortress-coverage parse \
+  go-coverage parse \
     --file coverage.out \
     --format table
 ```
@@ -146,7 +146,7 @@ Examples:
 Creates professional SVG badges for coverage visualization.
 
 ```bash
-gofortress-coverage badge [flags]
+go-coverage badge [flags]
 
 Flags:
   --coverage float    Coverage percentage (required)
@@ -160,10 +160,10 @@ Flags:
 
 Examples:
   # Basic badge
-  gofortress-coverage badge --coverage 87.2 --output badge.svg
+  go-coverage badge --coverage 87.2 --output badge.svg
 
   # Custom style and branding
-  gofortress-coverage badge \
+  go-coverage badge \
     --coverage 92.5 \
     --style for-the-badge \
     --label "quality" \
@@ -171,7 +171,7 @@ Examples:
     --logo-color blue
 
   # With trend indicator
-  gofortress-coverage badge \
+  go-coverage badge \
     --coverage 89.1 \
     --trend up \
     --output trending-badge.svg
@@ -192,30 +192,30 @@ The system generates multiple badge types:
 Creates interactive HTML coverage reports.
 
 ```bash
-gofortress-coverage report [flags]
+go-coverage report [flags]
 
 Flags:
   --data string       JSON data file from parse command (required)
   --output string     Output directory (default: "report")
   --template string   Report template: standard, minimal, detailed (default: "standard")
   --theme string      Color theme: github-dark, github-light (default: "github-dark")
-  --title string      Report title (default: "GoFortress Coverage")
+  --title string      Report title (default: "Go Coverage Coverage")
   --include-history   Include historical trend charts
   --branch string     Branch name for report organization
 
 Examples:
   # Basic report generation
-  gofortress-coverage report --data metrics.json
+  go-coverage report --data metrics.json
 
   # Custom themed report
-  gofortress-coverage report \
+  go-coverage report \
     --data metrics.json \
     --output reports/main \
     --theme github-light \
     --title "Main Branch Coverage"
 
   # Detailed report with history
-  gofortress-coverage report \
+  go-coverage report \
     --data metrics.json \
     --template detailed \
     --include-history \
@@ -238,7 +238,7 @@ Generated reports include:
 Manages historical coverage data and trend analysis.
 
 ```bash
-gofortress-coverage history [subcommand] [flags]
+go-coverage history [subcommand] [flags]
 
 Subcommands:
   add         Add coverage data point to history
@@ -249,18 +249,18 @@ Subcommands:
 
 Examples:
   # Add current coverage to history
-  gofortress-coverage history add \
+  go-coverage history add \
     --coverage 87.2 \
     --branch main \
     --commit abc123
 
   # Analyze recent trends
-  gofortress-coverage history analyze \
+  go-coverage history analyze \
     --branch main \
     --days 30
 
   # Generate predictions
-  gofortress-coverage history predict \
+  go-coverage history predict \
     --branch main \
     --horizon 7 \
     --output predictions.json
@@ -302,7 +302,7 @@ Flags:
 Manages pull request coverage comments with comprehensive analysis and templates.
 
 ```bash
-gofortress-coverage comment [flags]
+go-coverage comment [flags]
 
 Flags:
   -p, --pr int              Pull request number (defaults to GITHUB_PR_NUMBER)
@@ -319,12 +319,12 @@ Flags:
 
 Examples:
   # Basic coverage comment
-  gofortress-coverage comment \
+  go-coverage comment \
     --pr 123 \
     --coverage coverage.json
 
   # Comment with analysis
-  gofortress-coverage comment \
+  go-coverage comment \
     --pr 123 \
     --coverage pr-coverage.json \
     --base-coverage main-coverage.json \
@@ -332,14 +332,14 @@ Examples:
     --generate-badges
 
   # Comment with status checks
-  gofortress-coverage comment \
+  go-coverage comment \
     --pr 123 \
     --coverage coverage.json \
     --status \
     --block-merge
 
   # Dry run preview
-  gofortress-coverage comment \
+  go-coverage comment \
     --pr 123 \
     --coverage coverage.json \
     --dry-run
@@ -360,7 +360,7 @@ Examples:
 Provides comprehensive analytics and insights.
 
 ```bash
-gofortress-coverage analytics [subcommand] [flags]
+go-coverage analytics [subcommand] [flags]
 
 Subcommands:
   dashboard   Generate interactive analytics dashboard
@@ -375,7 +375,7 @@ Subcommands:
 
 #### `analytics dashboard`
 ```bash
-gofortress-coverage analytics dashboard [flags]
+go-coverage analytics dashboard [flags]
 
 Flags:
   --output string     Output directory (default: "analytics")
@@ -387,7 +387,7 @@ Flags:
 
 Examples:
   # Generate comprehensive dashboard
-  gofortress-coverage analytics dashboard \
+  go-coverage analytics dashboard \
     --output dashboard \
     --days 90 \
     --include-team \
@@ -396,7 +396,7 @@ Examples:
 
 #### `analytics trends`
 ```bash
-gofortress-coverage analytics trends [flags]
+go-coverage analytics trends [flags]
 
 Flags:
   --branch string     Branch to analyze (default: "master")
@@ -407,7 +407,7 @@ Flags:
 
 Examples:
   # Analyze main branch trends
-  gofortress-coverage analytics trends \
+  go-coverage analytics trends \
     --branch main \
     --days 60 \
     --chart \
@@ -416,7 +416,7 @@ Examples:
 
 #### `analytics team`
 ```bash
-gofortress-coverage analytics team [flags]
+go-coverage analytics team [flags]
 
 Flags:
   --output string     Output directory (default: "team-analytics")
@@ -427,7 +427,7 @@ Flags:
 
 Examples:
   # Generate team analytics report
-  gofortress-coverage analytics team \
+  go-coverage analytics team \
     --days 60 \
     --include-individual \
     --include-collaboration
@@ -441,7 +441,7 @@ Examples:
 Validates and manages configuration settings.
 
 ```bash
-gofortress-coverage config [subcommand] [flags]
+go-coverage config [subcommand] [flags]
 
 Subcommands:
   validate    Validate current configuration
@@ -451,13 +451,13 @@ Subcommands:
 
 Examples:
   # Validate configuration
-  gofortress-coverage config validate
+  go-coverage config validate
 
   # Show current settings
-  gofortress-coverage config show --format table
+  go-coverage config show --format table
 
   # Initialize with defaults
-  gofortress-coverage config init --output .github/.env.shared
+  go-coverage config init --output .github/.env.shared
 ```
 
 ## API Endpoints
@@ -650,7 +650,7 @@ jobs:
       - name: Process Coverage
         run: |
           cd .github/coverage
-          go run ./cmd/gofortress-coverage complete \
+          go run ./cmd/go-coverage complete \
             --input ../../coverage.out \
             --branch ${{ github.ref_name }} \
             --commit ${{ github.sha }}
@@ -665,7 +665,7 @@ jobs:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   run: |
     cd .github/coverage
-    go run ./cmd/gofortress-coverage complete \
+    go run ./cmd/go-coverage complete \
       --input ../../coverage.out \
       --branch ${{ github.ref_name }} \
       --commit ${{ github.sha }} \
@@ -689,7 +689,7 @@ echo "Processing coverage..."
 cd .github/coverage
 
 echo "Generating reports..."
-go run ./cmd/gofortress-coverage complete \
+go run ./cmd/go-coverage complete \
   --input ../../coverage.out \
   --output ../../coverage-reports \
   --verbose
@@ -712,9 +712,9 @@ def run_coverage_analysis():
     # Run tests
     subprocess.run(["go", "test", "-coverprofile=coverage.out", "./..."], check=True)
 
-    # Process with GoFortress
+    # Process with Go Coverage
     result = subprocess.run([
-        "go", "run", "./.github/coverage/cmd/gofortress-coverage",
+        "go", "run", "./.github/coverage/cmd/go-coverage",
         "parse", "--file", "coverage.out", "--format", "json"
     ], capture_output=True, text=True, check=True)
 
@@ -741,7 +741,7 @@ coverage:
   script:
     - go test -coverprofile=coverage.out ./...
     - cd .github/coverage
-    - go run ./cmd/gofortress-coverage complete --input ../../coverage.out
+    - go run ./cmd/go-coverage complete --input ../../coverage.out
   artifacts:
     reports:
       coverage_report:
@@ -763,7 +763,7 @@ pipeline {
             steps {
                 dir('.github/coverage') {
                     sh '''
-                        go run ./cmd/gofortress-coverage complete \
+                        go run ./cmd/go-coverage complete \
                             --input ../../coverage.out \
                             --output ../../coverage-reports
                     '''
@@ -799,7 +799,7 @@ pipeline {
 Enable detailed debugging with:
 
 ```bash
-gofortress-coverage --debug [command]
+go-coverage --debug [command]
 ```
 
 Debug mode provides:
@@ -812,7 +812,7 @@ Debug mode provides:
 ### Verbose Logging
 
 ```bash
-gofortress-coverage --log-level debug [command]
+go-coverage --log-level debug [command]
 ```
 
 Verbose mode includes:
@@ -847,13 +847,13 @@ Verbose mode includes:
 
 ```bash
 # Validate configuration
-gofortress-coverage config validate --log-level debug
+go-coverage config validate --log-level debug
 
 # Test GitHub API connectivity
-gofortress-coverage --debug comment --pr 123 --dry-run
+go-coverage --debug comment --pr 123 --dry-run
 
 # Verify file parsing
-gofortress-coverage parse --file coverage.out --log-level debug
+go-coverage parse --file coverage.out --log-level debug
 ```
 
 ---
@@ -869,4 +869,4 @@ gofortress-coverage parse --file coverage.out --log-level debug
 - **Issues**: Report bugs and request features via GitHub Issues
 - **Documentation**: Complete guides available in `/docs/` directory
 - **Contributing**: See [CONTRIBUTING.md](../CONTRIBUTING.md) for development guidelines
-- **CLI Help**: Use `gofortress-coverage --help` for command-specific help
+- **CLI Help**: Use `go-coverage --help` for command-specific help

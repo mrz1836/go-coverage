@@ -1,10 +1,10 @@
 #!/bin/bash
 # ------------------------------------------------------------------------------------
-#  GoFortress Coverage - GitHub Pages Environment Setup Script
+#  Go Coverage Coverage - GitHub Pages Environment Setup Script
 #
 #  Purpose: Automatically configure GitHub Pages environment settings for a repository
 #  to allow deployments from the master branch. This script sets up the environment
-#  protection rules that are required for the GoFortress coverage system to deploy
+#  protection rules that are required for the Go Coverage coverage system to deploy
 #  coverage reports and badges to GitHub Pages.
 #
 #  Usage: ./.github/coverage/scripts/setup-github-pages-env.sh [repository]
@@ -294,7 +294,7 @@ show_next_steps() {
     echo "     - */*/* (three-level branch patterns like feature/category/branch-name)"
     echo "     - dependabot/* branches (automated dependency updates)"
     echo "     - development branch (development deployments)"
-    echo "  2. The GoFortress coverage workflow should now deploy successfully"
+    echo "  2. The Go Coverage coverage workflow should now deploy successfully"
     echo "  3. Coverage reports will be available at: https://$(echo "$repo" | cut -d'/' -f1).github.io/$(echo "$repo" | cut -d'/' -f2)/"
     echo ""
     echo "To test the setup:"
@@ -310,7 +310,7 @@ show_next_steps() {
 main() {
     local repo_arg="${1:-}"
 
-    echo "🏰 GoFortress Coverage - GitHub Pages Environment Setup"
+    echo "🏰 Go Coverage Coverage - GitHub Pages Environment Setup"
     echo "======================================================="
     echo ""
 
