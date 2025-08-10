@@ -478,55 +478,55 @@ update history, and create GitHub PR comment if in PR context.`,
 
 		if !dryRun {
 			if err := dashboardGen.Generate(ctx, coverageData); err != nil {
-				cmd.Printf("   ⚠️  Failed to generate dashboard: %v\n", err)
-			} else {
-				cmd.Printf("   ✅ Dashboard saved: %s/index.html\n", targetOutputDir)
+				cmd.Printf("   ❌ Failed to generate dashboard: %v\n", err)
+				return fmt.Errorf("failed to generate dashboard: %w", err)
+			}
+			cmd.Printf("   ✅ Dashboard saved: %s/index.html\n", targetOutputDir)
 
-				// Also create dashboard.html for GitHub Pages deployment compatibility
-				indexPath := filepath.Join(targetOutputDir, "index.html")
-				dashboardPath := filepath.Join(targetOutputDir, "dashboard.html")
+			// Also create dashboard.html for GitHub Pages deployment compatibility
+			indexPath := filepath.Join(targetOutputDir, "index.html")
+			dashboardPath := filepath.Join(targetOutputDir, "dashboard.html")
 
-				// Verify index.html was created successfully
-				if _, statErr := os.Stat(indexPath); statErr != nil {
-					cmd.Printf("   ❌ index.html was not created successfully: %v\n", statErr)
-					return fmt.Errorf("index.html generation failed: %w", statErr)
-				}
+			// Verify index.html was created successfully
+			if _, statErr := os.Stat(indexPath); statErr != nil {
+				cmd.Printf("   ❌ index.html was not created successfully: %v\n", statErr)
+				return fmt.Errorf("index.html generation failed: %w", statErr)
+			}
 
-				// Read the generated index.html and copy it to dashboard.html
-				indexContent, readErr := os.ReadFile(indexPath) //nolint:gosec // path is constructed from validated config
-				if readErr != nil {
-					cmd.Printf("   ❌ Failed to read index.html for dashboard.html creation: %v\n", readErr)
-					return fmt.Errorf("failed to read generated index.html: %w", readErr)
-				}
+			// Read the generated index.html and copy it to dashboard.html
+			indexContent, readErr := os.ReadFile(indexPath) //nolint:gosec // path is constructed from validated config
+			if readErr != nil {
+				cmd.Printf("   ❌ Failed to read index.html for dashboard.html creation: %v\n", readErr)
+				return fmt.Errorf("failed to read generated index.html: %w", readErr)
+			}
 
-				if len(indexContent) == 0 {
-					cmd.Printf("   ❌ index.html is empty, cannot create dashboard.html\n")
-					return ErrEmptyIndexHTML
-				}
+			if len(indexContent) == 0 {
+				cmd.Printf("   ❌ index.html is empty, cannot create dashboard.html\n")
+				return ErrEmptyIndexHTML
+			}
 
-				if writeErr := os.WriteFile(dashboardPath, indexContent, cfg.Storage.FileMode); writeErr != nil {
-					cmd.Printf("   ❌ Failed to create dashboard.html: %v\n", writeErr)
-					return fmt.Errorf("failed to create dashboard.html: %w", writeErr)
-				}
+			if writeErr := os.WriteFile(dashboardPath, indexContent, cfg.Storage.FileMode); writeErr != nil {
+				cmd.Printf("   ❌ Failed to create dashboard.html: %v\n", writeErr)
+				return fmt.Errorf("failed to create dashboard.html: %w", writeErr)
+			}
 
-				// Verify dashboard.html was created successfully
-				dashboardStat, statErr := os.Stat(dashboardPath)
-				if statErr != nil {
-					cmd.Printf("   ❌ dashboard.html was not created successfully: %v\n", statErr)
-					return fmt.Errorf("dashboard.html creation verification failed: %w", statErr)
-				}
-				cmd.Printf("   ✅ Dashboard also saved as: %s (%d bytes)\n", dashboardPath, dashboardStat.Size())
+			// Verify dashboard.html was created successfully
+			dashboardStat, statErr := os.Stat(dashboardPath)
+			if statErr != nil {
+				cmd.Printf("   ❌ dashboard.html was not created successfully: %v\n", statErr)
+				return fmt.Errorf("dashboard.html creation verification failed: %w", statErr)
+			}
+			cmd.Printf("   ✅ Dashboard also saved as: %s (%d bytes)\n", dashboardPath, dashboardStat.Size())
 
-				// Also save coverage data as JSON for pages deployment
-				dataPath := filepath.Join(outputDir, "coverage-data.json")
-				jsonData, err := json.Marshal(coverageData)
-				if err != nil {
-					cmd.Printf("   ⚠️  Failed to marshal coverage data: %v\n", err)
-				}
-				if err == nil && len(jsonData) > 0 {
-					if err := os.WriteFile(dataPath, jsonData, cfg.Storage.FileMode); err != nil {
-						cmd.Printf("   ⚠️  Failed to save coverage data: %v\n", err)
-					}
+			// Also save coverage data as JSON for pages deployment
+			dataPath := filepath.Join(outputDir, "coverage-data.json")
+			jsonData, err := json.Marshal(coverageData)
+			if err != nil {
+				cmd.Printf("   ⚠️  Failed to marshal coverage data: %v\n", err)
+			}
+			if err == nil && len(jsonData) > 0 {
+				if err := os.WriteFile(dataPath, jsonData, cfg.Storage.FileMode); err != nil {
+					cmd.Printf("   ⚠️  Failed to save coverage data: %v\n", err)
 				}
 			}
 		} else {
