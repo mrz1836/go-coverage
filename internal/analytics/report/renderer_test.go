@@ -665,6 +665,7 @@ func BenchmarkNewRenderer(b *testing.B) {
 	}
 }
 
+/* BenchmarkRenderReport is commented out as it's defined in renderer_bench_test.go
 func BenchmarkRenderReport(b *testing.B) {
 	renderer := NewRenderer()
 	ctx := context.Background()
@@ -695,6 +696,7 @@ func BenchmarkRenderReport(b *testing.B) {
 		}
 	}
 }
+*/
 
 func BenchmarkAddCommas(b *testing.B) {
 	for i := 0; i < b.N; i++ {

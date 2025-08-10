@@ -524,6 +524,7 @@ func BenchmarkNewGenerator(b *testing.B) {
 	}
 }
 
+/* BenchmarkBuildReportData is commented out as it's defined in generator_bench_test.go
 func BenchmarkBuildReportData(b *testing.B) {
 	config := &Config{
 		OutputDir:       "/tmp",
@@ -565,3 +566,4 @@ func BenchmarkBuildReportData(b *testing.B) {
 		_ = generator.buildReportData(ctx, coverageData)
 	}
 }
+*/
