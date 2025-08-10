@@ -46,3 +46,4 @@ history/*.json
 # Build artifacts
 cmd/go-coverage/go-coverage
 /cmd/go-coverage/cmd/.github
+/internal/urlutil/testdata

@@ -80,7 +80,8 @@
 * [GitHub Pages Setup](#-github-pages-setup)  
 * [Starting a New Project](#-starting-a-new-project)
 * [Documentation](#-documentation)
-* [Examples & Tests](#-examples--usage)
+* [Examples & Tests](#-examples--tests)
+  * [Fuzz Testing](#-fuzz-testing)
 * [Performance](#-performance)
 * [Code Standards](#-code-standards)
 * [AI Compliance](#-ai-compliance)
@@ -443,16 +444,16 @@ This magical file controls everything from:
 
 <br/>
 
-| Workflow Name                                                                      | Description                                                                                                            |
-|------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| [auto-merge-on-approval.yml](.github/workflows/auto-merge-on-approval.yml)         | Automatically merges PRs after approval and all required checks, following strict rules.                               |
-| [codeql-analysis.yml](.github/workflows/codeql-analysis.yml)                       | Analyzes code for security vulnerabilities using [GitHub CodeQL](https://codeql.github.com/).                          |
-| [dependabot-auto-merge.yml](.github/workflows/dependabot-auto-merge.yml)           | Automatically merges [Dependabot](https://github.com/dependabot) PRs that meet all requirements.                       |
-| [fortress.yml](.github/workflows/fortress.yml)                                     | Runs the Go Coverage security and testing workflow, including linting, testing, releasing, and vulnerability checks.    |
-| [pull-request-management.yml](.github/workflows/pull-request-management.yml)       | Labels PRs by branch prefix, assigns a default user if none is assigned, and welcomes new contributors with a comment. |
-| [scorecard.yml](.github/workflows/scorecard.yml)                                   | Runs [OpenSSF](https://openssf.org/) Scorecard to assess supply chain security.                                        |
-| [stale.yml](.github/workflows/stale-check.yml)                                     | Warns about (and optionally closes) inactive issues and PRs on a schedule or manual trigger.                           |
-| [sync-labels.yml](.github/workflows/sync-labels.yml)                               | Keeps GitHub labels in sync with the declarative manifest at [`.github/labels.yml`](./.github/labels.yml).             |
+| Workflow Name                                                                | Description                                                                                                            |
+|------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| [auto-merge-on-approval.yml](.github/workflows/auto-merge-on-approval.yml)   | Automatically merges PRs after approval and all required checks, following strict rules.                               |
+| [codeql-analysis.yml](.github/workflows/codeql-analysis.yml)                 | Analyzes code for security vulnerabilities using [GitHub CodeQL](https://codeql.github.com/).                          |
+| [dependabot-auto-merge.yml](.github/workflows/dependabot-auto-merge.yml)     | Automatically merges [Dependabot](https://github.com/dependabot) PRs that meet all requirements.                       |
+| [fortress.yml](.github/workflows/fortress.yml)                               | Runs the Go Coverage security and testing workflow, including linting, testing, releasing, and vulnerability checks.   |
+| [pull-request-management.yml](.github/workflows/pull-request-management.yml) | Labels PRs by branch prefix, assigns a default user if none is assigned, and welcomes new contributors with a comment. |
+| [scorecard.yml](.github/workflows/scorecard.yml)                             | Runs [OpenSSF](https://openssf.org/) Scorecard to assess supply chain security.                                        |
+| [stale.yml](.github/workflows/stale-check.yml)                               | Warns about (and optionally closes) inactive issues and PRs on a schedule or manual trigger.                           |
+| [sync-labels.yml](.github/workflows/sync-labels.yml)                         | Keeps GitHub labels in sync with the declarative manifest at [`.github/labels.yml`](./.github/labels.yml).             |
 
 </details>
 
@@ -472,7 +473,7 @@ This command ensures all dependencies are brought up to date in a single step, i
 
 <br/>
 
-## 🧪 Examples & Usage
+## 🧪 Examples & Tests
 
 The **Go Coverage** system is thoroughly tested via [GitHub Actions](https://github.com/mrz1836/go-coverage/actions) and uses [Go version 1.24.x](https://go.dev/doc/go1.24). View the [configuration file](.github/workflows/fortress.yml).
 
@@ -504,6 +505,38 @@ Run all tests with race detector (slower):
 ```bash script
 make test-race
 ```
+
+### 🔬 Fuzz Testing
+
+The coverage system includes comprehensive fuzz tests for critical functions to ensure robustness and security:
+
+#### Available Fuzz Tests
+
+| Package                                            | Functions Tested                  | Coverage | Security Focus                 |
+|----------------------------------------------------|-----------------------------------|----------|--------------------------------|
+| **[urlutil](internal/urlutil/urls_fuzz_test.go)**  | URL building, path cleaning       | 100%     | Path traversal, XSS prevention |
+| **[badge](internal/badge/generator_fuzz_test.go)** | Badge generation, color selection | 97.7%    | SVG injection, encoding        |
+| **[parser](internal/parser/parser_fuzz_test.go)**  | Coverage parsing, file exclusion  | 84.1%    | Malformed input handling       |
+
+#### Running Fuzz Tests
+
+```bash script
+# Run specific fuzz tests
+go test -fuzz=FuzzBuildGitHubCommitURL -fuzztime=10s ./internal/urlutil/
+go test -fuzz=FuzzGetColorForPercentage -fuzztime=10s ./internal/badge/
+go test -fuzz=FuzzParseStatementSimple -fuzztime=10s ./internal/parser/
+
+# Run all fuzz tests (via Makefile)
+make test-fuzz
+```
+
+#### Fuzz Test Features
+
+- ✅ **Comprehensive Input Coverage**: Valid inputs, edge cases, malformed data
+- ✅ **Security Testing**: Path traversal, XSS, injection attempts, null bytes
+- ✅ **Panic Prevention**: Never panics on any input
+- ✅ **Unicode Support**: Proper UTF-8 handling and validation
+- ✅ **Performance Testing**: Long inputs, memory efficiency
 
 ### Example Output
 
@@ -571,20 +604,20 @@ This project leverages a comprehensive team of specialized Claude Code sub-agent
 
 ### Available Sub-Agents
 
-| Agent | Specialization | Primary Tools | Proactive Triggers |
-|-------|---------------|---------------|-------------------|
-| **[go-test-runner](.claude/agents/go-test-runner.md)** | Test execution, coverage analysis, failure resolution | Bash, Read, Edit, Task | After code changes, before PRs |
-| **[go-linter](.claude/agents/go-linter.md)** | Code formatting, linting, standards enforcement | Bash, Edit, Glob | After any Go file modification |
-| **[coverage-analyzer](.claude/agents/coverage-analyzer.md)** | Coverage reports, badges, GitHub Pages deployment | Bash, Write, WebFetch | After successful test runs |
-| **[github-integration](.claude/agents/github-integration.md)** | PR management, status checks, API operations | Bash, WebFetch | PR events, deployments |
-| **[dependency-manager](.claude/agents/dependency-manager.md)** | Module updates, vulnerability scanning | Bash, Edit, WebFetch | go.mod changes, weekly scans |
-| **[ci-workflow](.claude/agents/ci-workflow.md)** | GitHub Actions, pipeline optimization | Read, Edit, Bash | Workflow failures, CI updates |
-| **[code-reviewer](.claude/agents/code-reviewer.md)** | Code quality, security review, best practices | Read, Grep, Glob | After code writing/modification |
-| **[documentation-manager](.claude/agents/documentation-manager.md)** | README, API docs, changelog maintenance | Read, Edit, WebFetch | API changes, new features |
-| **[release-manager](.claude/agents/release-manager.md)** | Versioning, releases, deployment coordination | Bash, Edit, Task | Version bumps, release prep |
-| **[performance-optimizer](.claude/agents/performance-optimizer.md)** | Benchmarking, profiling, optimization | Bash, Edit, Grep | Performance issues, benchmarks |
-| **[security-scanner](.claude/agents/security-scanner.md)** | Vulnerability detection, compliance checks | Bash, Grep, WebFetch | Security advisories, scans |
-| **[debugger](.claude/agents/debugger.md)** | Error analysis, test debugging, issue resolution | Read, Edit, Bash | Test failures, errors, panics |
+| Agent                                                                | Specialization                                        | Primary Tools          | Proactive Triggers              |
+|----------------------------------------------------------------------|-------------------------------------------------------|------------------------|---------------------------------|
+| **[go-test-runner](.claude/agents/go-test-runner.md)**               | Test execution, coverage analysis, failure resolution | Bash, Read, Edit, Task | After code changes, before PRs  |
+| **[go-linter](.claude/agents/go-linter.md)**                         | Code formatting, linting, standards enforcement       | Bash, Edit, Glob       | After any Go file modification  |
+| **[coverage-analyzer](.claude/agents/coverage-analyzer.md)**         | Coverage reports, badges, GitHub Pages deployment     | Bash, Write, WebFetch  | After successful test runs      |
+| **[github-integration](.claude/agents/github-integration.md)**       | PR management, status checks, API operations          | Bash, WebFetch         | PR events, deployments          |
+| **[dependency-manager](.claude/agents/dependency-manager.md)**       | Module updates, vulnerability scanning                | Bash, Edit, WebFetch   | go.mod changes, weekly scans    |
+| **[ci-workflow](.claude/agents/ci-workflow.md)**                     | GitHub Actions, pipeline optimization                 | Read, Edit, Bash       | Workflow failures, CI updates   |
+| **[code-reviewer](.claude/agents/code-reviewer.md)**                 | Code quality, security review, best practices         | Read, Grep, Glob       | After code writing/modification |
+| **[documentation-manager](.claude/agents/documentation-manager.md)** | README, API docs, changelog maintenance               | Read, Edit, WebFetch   | API changes, new features       |
+| **[release-manager](.claude/agents/release-manager.md)**             | Versioning, releases, deployment coordination         | Bash, Edit, Task       | Version bumps, release prep     |
+| **[performance-optimizer](.claude/agents/performance-optimizer.md)** | Benchmarking, profiling, optimization                 | Bash, Edit, Grep       | Performance issues, benchmarks  |
+| **[security-scanner](.claude/agents/security-scanner.md)**           | Vulnerability detection, compliance checks            | Bash, Grep, WebFetch   | Security advisories, scans      |
+| **[debugger](.claude/agents/debugger.md)**                           | Error analysis, test debugging, issue resolution      | Read, Edit, Bash       | Test failures, errors, panics   |
 
 ### Using Sub-Agents
 
