@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"unicode/utf8"
 )
 
 // Generator creates professional SVG badges matching GitHub's design language
@@ -77,6 +78,15 @@ func NewWithConfig(config *Config) *Generator {
 	return &Generator{config: config}
 }
 
+// sanitizeUTF8 ensures the string is valid UTF-8, replacing invalid sequences
+func sanitizeUTF8(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+	// Replace invalid UTF-8 sequences with replacement character
+	return strings.ToValidUTF8(s, "�")
+}
+
 // Generate creates an SVG badge for the given coverage percentage
 func (g *Generator) Generate(ctx context.Context, percentage float64, options ...Option) ([]byte, error) {
 	opts := &Options{
@@ -95,12 +105,12 @@ func (g *Generator) Generate(ctx context.Context, percentage float64, options ..
 	message := fmt.Sprintf("%.1f%%", percentage)
 
 	badgeData := Data{
-		Label:     opts.Label,
+		Label:     sanitizeUTF8(opts.Label),
 		Message:   message,
 		Color:     color,
-		Style:     opts.Style,
+		Style:     sanitizeUTF8(opts.Style),
 		Logo:      g.resolveLogo(opts.Logo),
-		LogoColor: opts.LogoColor,
+		LogoColor: sanitizeUTF8(opts.LogoColor),
 		AriaLabel: fmt.Sprintf("Code coverage: %.1f percent", percentage),
 	}
 
@@ -135,12 +145,12 @@ func (g *Generator) GenerateTrendBadge(ctx context.Context, current, previous fl
 	}
 
 	badgeData := Data{
-		Label:     opts.Label,
+		Label:     sanitizeUTF8(opts.Label),
 		Message:   trend,
 		Color:     color,
-		Style:     opts.Style,
+		Style:     sanitizeUTF8(opts.Style),
 		Logo:      g.resolveLogo(opts.Logo),
-		LogoColor: opts.LogoColor,
+		LogoColor: sanitizeUTF8(opts.LogoColor),
 		AriaLabel: fmt.Sprintf("Coverage trend: %s", trend),
 	}
 
