@@ -8,11 +8,23 @@ import (
 	"unicode/utf8"
 )
 
+// sanitizeUTF8 ensures the string is valid UTF-8, replacing invalid sequences
+func sanitizeUTF8(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+	return strings.ToValidUTF8(s, "�")
+}
+
 // BuildGitHubCommitURL builds a GitHub commit URL from repository info and commit SHA
 func BuildGitHubCommitURL(owner, repo, commitSHA string) string {
 	if owner == "" || repo == "" || commitSHA == "" {
 		return ""
 	}
+	// Ensure all components are valid UTF-8
+	owner = sanitizeUTF8(owner)
+	repo = sanitizeUTF8(repo)
+	commitSHA = sanitizeUTF8(commitSHA)
 	return fmt.Sprintf("https://github.com/%s/%s/commit/%s", owner, repo, commitSHA)
 }
 
@@ -43,11 +55,16 @@ func BuildGitHubRepoURL(owner, repo string) string {
 	if owner == "" || repo == "" {
 		return ""
 	}
+	// Ensure all components are valid UTF-8
+	owner = sanitizeUTF8(owner)
+	repo = sanitizeUTF8(repo)
 	return fmt.Sprintf("https://github.com/%s/%s", owner, repo)
 }
 
 // ExtractRepoNameFromURL extracts just the repository name from a full repository name
 func ExtractRepoNameFromURL(fullName string) string {
+	// Ensure input is valid UTF-8
+	fullName = sanitizeUTF8(fullName)
 	parts := strings.Split(fullName, "/")
 	if len(parts) >= 2 {
 		return parts[len(parts)-1]
@@ -65,9 +82,7 @@ func CleanModulePath(fullPath string) string {
 	}
 
 	// Ensure the input is valid UTF-8, replacing invalid sequences
-	if !utf8.ValidString(fullPath) {
-		fullPath = strings.ToValidUTF8(fullPath, "�")
-	}
+	fullPath = sanitizeUTF8(fullPath)
 
 	// Clean the path to remove double slashes and other issues
 	cleanedPath := path.Clean(fullPath)
@@ -94,9 +109,7 @@ func CleanModulePath(fullPath string) string {
 				result := cleanupExtraPathPrefixes(remainder)
 
 				// Ensure the result is valid UTF-8
-				if !utf8.ValidString(result) {
-					result = strings.ToValidUTF8(result, "�")
-				}
+				result = sanitizeUTF8(result)
 
 				return result
 			}
@@ -105,9 +118,7 @@ func CleanModulePath(fullPath string) string {
 
 	// If no github.com pattern found, return the cleaned path
 	// Ensure it's valid UTF-8
-	if !utf8.ValidString(cleanedPath) {
-		cleanedPath = strings.ToValidUTF8(cleanedPath, "�")
-	}
+	cleanedPath = sanitizeUTF8(cleanedPath)
 	return cleanedPath
 }
 
@@ -116,6 +127,10 @@ func BuildGitHubFileURL(owner, repo, branch, filePath string) string {
 	if owner == "" || repo == "" || branch == "" || filePath == "" {
 		return ""
 	}
+	// Ensure all components are valid UTF-8
+	owner = sanitizeUTF8(owner)
+	repo = sanitizeUTF8(repo)
+	branch = sanitizeUTF8(branch)
 	cleanPath := CleanModulePath(filePath)
 	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", owner, repo, branch, cleanPath)
 }

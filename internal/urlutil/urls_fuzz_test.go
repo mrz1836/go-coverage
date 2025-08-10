@@ -52,20 +52,33 @@ func FuzzBuildGitHubCommitURL(f *testing.F) {
 		} else {
 			assert.NotEmpty(t, result, "Should return non-empty string for valid inputs")
 			assert.True(t, strings.HasPrefix(result, "https://github.com/"), "Should start with GitHub URL prefix")
-			assert.Contains(t, result, owner, "Should contain owner")
-			assert.Contains(t, result, repo, "Should contain repo")
-			assert.Contains(t, result, commitSHA, "Should contain commit SHA")
 			assert.Contains(t, result, "/commit/", "Should contain commit path")
 
-			// Check for proper structure
-			expected := "https://github.com/" + owner + "/" + repo + "/commit/" + commitSHA
-			assert.Equal(t, expected, result, "Should match expected URL format")
+			// Check for proper structure with sanitized inputs
+			// Invalid UTF-8 is replaced with replacement character
+			sanitizedOwner := owner
+			sanitizedRepo := repo
+			sanitizedCommitSHA := commitSHA
+			if !utf8.ValidString(owner) {
+				sanitizedOwner = strings.ToValidUTF8(owner, "�")
+			}
+			if !utf8.ValidString(repo) {
+				sanitizedRepo = strings.ToValidUTF8(repo, "�")
+			}
+			if !utf8.ValidString(commitSHA) {
+				sanitizedCommitSHA = strings.ToValidUTF8(commitSHA, "�")
+			}
+
+			assert.Contains(t, result, sanitizedOwner, "Should contain sanitized owner")
+			assert.Contains(t, result, sanitizedRepo, "Should contain sanitized repo")
+			assert.Contains(t, result, sanitizedCommitSHA, "Should contain sanitized commit SHA")
+
+			expected := "https://github.com/" + sanitizedOwner + "/" + sanitizedRepo + "/commit/" + sanitizedCommitSHA
+			assert.Equal(t, expected, result, "Should match expected URL format with sanitized values")
 		}
 
-		// Ensure result is valid UTF-8 if all inputs were valid UTF-8
-		if utf8.ValidString(owner) && utf8.ValidString(repo) && utf8.ValidString(commitSHA) {
-			assert.True(t, utf8.ValidString(result), "Result should be valid UTF-8 when inputs are valid UTF-8")
-		}
+		// Result must always be valid UTF-8 (we sanitize invalid UTF-8)
+		assert.True(t, utf8.ValidString(result), "Result should always be valid UTF-8")
 	})
 }
 
@@ -164,18 +177,28 @@ func FuzzBuildGitHubRepoURL(f *testing.F) {
 		} else {
 			assert.NotEmpty(t, result, "Should return non-empty string for valid inputs")
 			assert.True(t, strings.HasPrefix(result, "https://github.com/"), "Should start with GitHub URL prefix")
-			assert.Contains(t, result, owner, "Should contain owner")
-			assert.Contains(t, result, repo, "Should contain repo")
+
+			// Check for proper structure with sanitized inputs
+			// Invalid UTF-8 is replaced with replacement character
+			sanitizedOwner := owner
+			sanitizedRepo := repo
+			if !utf8.ValidString(owner) {
+				sanitizedOwner = strings.ToValidUTF8(owner, "�")
+			}
+			if !utf8.ValidString(repo) {
+				sanitizedRepo = strings.ToValidUTF8(repo, "�")
+			}
+
+			assert.Contains(t, result, sanitizedOwner, "Should contain sanitized owner")
+			assert.Contains(t, result, sanitizedRepo, "Should contain sanitized repo")
 
 			// Check for proper structure
-			expected := "https://github.com/" + owner + "/" + repo
-			assert.Equal(t, expected, result, "Should match expected URL format")
+			expected := "https://github.com/" + sanitizedOwner + "/" + sanitizedRepo
+			assert.Equal(t, expected, result, "Should match expected URL format with sanitized values")
 		}
 
-		// Ensure result is valid UTF-8 if inputs were valid UTF-8
-		if utf8.ValidString(owner) && utf8.ValidString(repo) {
-			assert.True(t, utf8.ValidString(result), "Result should be valid UTF-8 when inputs are valid UTF-8")
-		}
+		// Result must always be valid UTF-8 (we sanitize invalid UTF-8)
+		assert.True(t, utf8.ValidString(result), "Result should always be valid UTF-8")
 	})
 }
 
