@@ -81,7 +81,6 @@
 * [Starting a New Project](#-starting-a-new-project)
 * [Documentation](#-documentation)
 * [Examples & Tests](#-examples--tests)
-  * [Fuzz Testing](#-fuzz-testing)
 * [Performance](#-performance)
 * [Code Standards](#-code-standards)
 * [AI Compliance](#-ai-compliance)
@@ -520,7 +519,8 @@ Run all tests with race detector (slower):
 make test-race
 ```
 
-### 🔬 Fuzz Testing
+<details>
+<summary><strong>🔬 Fuzz Testing</strong></summary>
 
 The coverage system includes comprehensive fuzz tests for critical functions to ensure robustness and security:
 
@@ -551,6 +551,8 @@ make test-fuzz
 - ✅ **Panic Prevention**: Never panics on any input
 - ✅ **Unicode Support**: Proper UTF-8 handling and validation
 - ✅ **Performance Testing**: Long inputs, memory efficiency
+
+</details>
 
 ### Example Output
 
