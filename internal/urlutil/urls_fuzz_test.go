@@ -285,25 +285,26 @@ func FuzzCleanModulePath(f *testing.F) {
 
 		// If no github.com pattern found, should return cleaned path
 		if !strings.Contains(fullPath, "github.com") {
-			// The path should be cleaned (no double slashes, etc.)
-			if strings.Contains(fullPath, "//") || strings.HasSuffix(fullPath, "/") {
-				// If the path needs cleaning, we expect it to be cleaned
-				// We can't use path.Clean here directly because it's for file paths, not URLs
-				// But we know our function should clean these issues
+			// The path should be cleaned (no double slashes, UTF-8 issues, etc.)
+			if strings.Contains(fullPath, "//") || strings.HasSuffix(fullPath, "/") || !utf8.ValidString(fullPath) {
+				// If the path needs cleaning (including UTF-8 sanitization), we expect it to be cleaned
 				assert.NotContains(t, strings.TrimPrefix(result, "//"), "//", "Should clean double slashes")
+				// Result must be valid UTF-8
+				assert.True(t, utf8.ValidString(result), "Result should be valid UTF-8")
 			} else if !strings.Contains(fullPath, ".") {
-				// No domain pattern and no cleaning needed
+				// No domain pattern and no cleaning needed (including valid UTF-8)
 				assert.Equal(t, fullPath, result, "Should return original path if no cleaning needed")
 			}
 		}
 
-		// Ensure result is valid UTF-8 if input was valid UTF-8
-		if utf8.ValidString(fullPath) {
-			assert.True(t, utf8.ValidString(result), "Result should be valid UTF-8 when input is valid UTF-8")
-		}
+		// Result must always be valid UTF-8 (we sanitize invalid UTF-8)
+		assert.True(t, utf8.ValidString(result), "Result should always be valid UTF-8")
 
-		// Result should not be longer than input
-		assert.LessOrEqual(t, len(result), len(fullPath), "Result should not be longer than input")
+		// Result length check: when UTF-8 sanitization occurs, result might be longer
+		// (invalid bytes are replaced with 3-byte replacement character)
+		if utf8.ValidString(fullPath) {
+			assert.LessOrEqual(t, len(result), len(fullPath), "Result should not be longer than valid UTF-8 input")
+		}
 	})
 }
 
