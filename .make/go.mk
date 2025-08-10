@@ -36,10 +36,10 @@ bench: ## Run all benchmarks in the Go application
 	@echo "Running benchmarks..."
 	@go test -bench=. -benchmem $(TAGS)
 
-.PHONY: build-go
-build-go: ## Build the Go application (locally)
-	@echo "Building Go app..."
-	@go build -o bin/$(BINARY_NAME) $(TAGS) $(GOFLAGS)
+#.PHONY: build-go
+#build-go: ## Build the Go application (locally)
+#	@echo "Building Go app..."
+#	@go build -o bin/$(BINARY_NAME) $(TAGS) $(GOFLAGS)
 
 .PHONY: clean-mods
 clean-mods: ## Remove all the Go mod cache
@@ -81,10 +81,10 @@ govulncheck: ## Scan for vulnerabilities
 	@echo "Running govulncheck..."
 	@govulncheck -show verbose ./...
 
-.PHONY: install
-install: ## Install the application binary
-	@echo "Installing binary..."
-	@go build -o $$GOPATH/bin/$(BINARY_NAME) $(TAGS) $(GOFLAGS)
+#.PHONY: install
+#install: ## Install the application binary
+#	@echo "Installing binary..."
+#	@go build -o $$GOPATH/bin/$(BINARY_NAME) $(TAGS) $(GOFLAGS)
 
 .PHONY: install-go
 install-go: ## Install using go install with specific version

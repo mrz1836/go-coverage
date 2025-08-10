@@ -116,6 +116,9 @@ go-coverage parse -i coverage.txt
 
 # View coverage history trends
 go-coverage history --branch master --days 30
+
+# Set up GitHub Pages environment for coverage deployment
+go-coverage setup-pages
 ```
 
 ### Core Features
@@ -157,16 +160,23 @@ go-coverage --version
 
 ### Quick Setup
 
-Run the setup script to configure GitHub Pages environment:
+Set up GitHub Pages environment using the integrated CLI command:
 
 ```bash
-# From repository root
-./scripts/setup-github-pages-env.sh
+# Auto-detect repository from git remote
+go-coverage setup-pages
+
+# Or specify repository explicitly  
+go-coverage setup-pages owner/repo
+
+# Preview changes without making them
+go-coverage setup-pages --dry-run
 ```
+
 
 This configures:
 - ✅ **GitHub Pages Environment** with proper branch policies  
-- ✅ **Deployment Permissions** for `master`, `gh-pages`, and `dependabot/*` branches
+- ✅ **Deployment Permissions** for `master`, `gh-pages`, and any `*/*/*/*` branches
 - ✅ **Environment Protection** rules for secure deployments
 
 ### What Gets Deployed
@@ -185,14 +195,14 @@ https://yourname.github.io/yourrepo/
 <details>
 <summary><strong>Manual GitHub Pages Configuration</strong></summary>
 
-If the setup script fails, manually configure:
+If the setup command fails, manually configure:
 
 1. Go to **Settings** → **Environments** → **github-pages**
 2. Under **Deployment branches**, select "Selected branches and tags"  
 3. Add these deployment branch rules:
    - `master` (main deployments)
    - `gh-pages` (GitHub Pages default)
-   - `dependabot/*` (dependency update PRs)
+   - `*`, `*/*`, `*/*/*`, `*/*/*/*` (all branches for PR-specific reports)
 4. Save changes and verify in workflow runs
 
 </details>
@@ -222,8 +232,8 @@ go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ### 2. Configure GitHub Pages
 
 ```bash
-# Run the setup script (requires gh CLI)
-./scripts/setup-github-pages-env.sh
+# Use the integrated command (requires gh CLI)
+go-coverage setup-pages
 ```
 
 ### 3. Add to GitHub Actions  
@@ -319,7 +329,7 @@ Create a `.go-coverage.json` config file:
 * **Coverage History & Trends** – Track coverage changes over time with retention policies, trend analysis, and historical comparisons.
 * **Smart GitHub Integration** – Automated PR comments with coverage analysis, commit status checks, and diff-based coverage reporting.
 * **Multi-Branch Support** – Separate coverage tracking for different branches with automatic main branch detection and PR context handling.
-* **Comprehensive CLI Tool** – Four powerful commands (`complete`, `comment`, `parse`, `history`) for all coverage operations.
+* **Comprehensive CLI Tool** – Five powerful commands (`complete`, `comment`, `parse`, `history`, `setup-pages`) for all coverage operations.
 * **Highly Configurable** – JSON-based configuration for thresholds, exclusions, badge styling, report themes, and integration settings.
 * **Enterprise Ready** – Built with security, performance, and scalability in mind for production environments.
 * **Self-Contained Deployment** – Everything runs in your repository's `.github` folder with no external service dependencies or accounts required.
@@ -491,6 +501,10 @@ go-coverage parse -i coverage.txt --exclude-paths "vendor/,test/" --threshold 80
 
 # View coverage history and trends
 go-coverage history --branch master --days 30 --format json
+
+# Set up GitHub Pages environment for coverage deployment
+go-coverage setup-pages --verbose --dry-run
+go-coverage setup-pages owner/repo --custom-domain example.com
 ```
 
 ### Testing the Coverage System

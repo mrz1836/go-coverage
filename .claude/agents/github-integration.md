@@ -130,8 +130,8 @@ gh api repos/{owner}/{repo}/statuses/{sha} \
 
 ### Setup Process (from README)
 ```bash
-# Run setup script
-./scripts/setup-github-pages-env.sh
+# Use the integrated Go command
+go-coverage setup-pages
 
 # Manual configuration if needed
 gh api repos/{owner}/{repo}/environments/github-pages \
