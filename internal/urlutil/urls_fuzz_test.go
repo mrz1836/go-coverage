@@ -385,9 +385,24 @@ func FuzzBuildGitHubFileURL(f *testing.F) {
 		} else {
 			assert.NotEmpty(t, result, "Should return non-empty string for valid inputs")
 			assert.True(t, strings.HasPrefix(result, "https://github.com/"), "Should start with GitHub URL prefix")
-			assert.Contains(t, result, owner, "Should contain owner")
-			assert.Contains(t, result, repo, "Should contain repo")
-			assert.Contains(t, result, branch, "Should contain branch")
+
+			// Sanitize inputs the same way the function does before checking
+			sanitizedOwner := owner
+			if !utf8.ValidString(owner) {
+				sanitizedOwner = strings.ToValidUTF8(owner, "�")
+			}
+			sanitizedRepo := repo
+			if !utf8.ValidString(repo) {
+				sanitizedRepo = strings.ToValidUTF8(repo, "�")
+			}
+			sanitizedBranch := branch
+			if !utf8.ValidString(branch) {
+				sanitizedBranch = strings.ToValidUTF8(branch, "�")
+			}
+
+			assert.Contains(t, result, sanitizedOwner, "Should contain sanitized owner")
+			assert.Contains(t, result, sanitizedRepo, "Should contain sanitized repo")
+			assert.Contains(t, result, sanitizedBranch, "Should contain sanitized branch")
 			assert.Contains(t, result, "/blob/", "Should contain blob path")
 
 			// The file path should be processed through CleanModulePath
