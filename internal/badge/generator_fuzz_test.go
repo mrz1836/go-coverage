@@ -324,7 +324,7 @@ func FuzzResolveLogo(f *testing.F) {
 		}
 
 		// If result is not empty, ensure it's valid UTF-8
-		// Note: For pass-through cases (URLs and data URIs), we accept the input as-is
+		// For pass-through cases (URLs and data URIs), we accept the input as-is
 		// Only check UTF-8 validity for our predefined logos
 		if result != "" {
 			lowerLogo := strings.ToLower(logo)

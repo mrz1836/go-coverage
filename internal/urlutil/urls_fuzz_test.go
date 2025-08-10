@@ -283,11 +283,17 @@ func FuzzCleanModulePath(f *testing.F) {
 		// Result should be a valid path (no double slashes except possibly at start)
 		assert.NotContains(t, strings.TrimPrefix(result, "//"), "//", "Should not contain double slashes (except possibly at start)")
 
-		// If no github.com pattern found, should return original
+		// If no github.com pattern found, should return cleaned path
 		if !strings.Contains(fullPath, "github.com") {
-			if !strings.Contains(fullPath, ".") {
-				// No domain pattern at all
-				assert.Equal(t, fullPath, result, "Should return original path if no domain pattern")
+			// The path should be cleaned (no double slashes, etc.)
+			if strings.Contains(fullPath, "//") || strings.HasSuffix(fullPath, "/") {
+				// If the path needs cleaning, we expect it to be cleaned
+				// We can't use path.Clean here directly because it's for file paths, not URLs
+				// But we know our function should clean these issues
+				assert.NotContains(t, strings.TrimPrefix(result, "//"), "//", "Should clean double slashes")
+			} else if !strings.Contains(fullPath, ".") {
+				// No domain pattern and no cleaning needed
+				assert.Equal(t, fullPath, result, "Should return original path if no cleaning needed")
 			}
 		}
 

@@ -3,6 +3,7 @@ package urlutil
 
 import (
 	"fmt"
+	"path"
 	"strings"
 )
 
@@ -57,9 +58,22 @@ func ExtractRepoNameFromURL(fullName string) string {
 // e.g., "github.com/mrz1836/go-broadcast/internal/algorithms/file.go" -> "internal/algorithms/file.go"
 // e.g., "github.com/mrz1836/go-broadcast/cli/internal/cli/cancel.go" -> "internal/cli/cancel.go"
 func CleanModulePath(fullPath string) string {
+	// Handle empty string
+	if fullPath == "" {
+		return ""
+	}
+
+	// Clean the path to remove double slashes and other issues
+	cleanedPath := path.Clean(fullPath)
+
+	// path.Clean converts empty string to ".", so handle that
+	if cleanedPath == "." && fullPath != "." {
+		cleanedPath = ""
+	}
+
 	// Try to match the pattern github.com/owner/repo/...
 	// We want to strip everything up to and including the repo name
-	parts := strings.Split(fullPath, "/")
+	parts := strings.Split(cleanedPath, "/")
 
 	// Look for github.com pattern
 	for i := 0; i < len(parts); i++ {
@@ -76,8 +90,8 @@ func CleanModulePath(fullPath string) string {
 		}
 	}
 
-	// If no github.com pattern found, return the original path
-	return fullPath
+	// If no github.com pattern found, return the cleaned path
+	return cleanedPath
 }
 
 // BuildGitHubFileURL builds a GitHub file URL with automatic path cleaning
