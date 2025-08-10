@@ -244,12 +244,18 @@ func FuzzExtractRepoNameFromURL(f *testing.F) {
 		assert.NotNil(t, result, "Should never return nil")
 
 		// If input has slashes, result should be the last part
-		parts := strings.Split(fullName, "/")
+		// First sanitize the input the same way the function does
+		sanitizedInput := fullName
+		if !utf8.ValidString(fullName) {
+			sanitizedInput = strings.ToValidUTF8(fullName, "�")
+		}
+
+		parts := strings.Split(sanitizedInput, "/")
 		if len(parts) >= 2 {
 			expected := parts[len(parts)-1]
 			assert.Equal(t, expected, result, "Should return last part after splitting on slash")
 		} else {
-			assert.Equal(t, fullName, result, "Should return original string if no slashes")
+			assert.Equal(t, sanitizedInput, result, "Should return sanitized string if no slashes")
 		}
 
 		// Ensure result is valid UTF-8 if input was valid UTF-8
