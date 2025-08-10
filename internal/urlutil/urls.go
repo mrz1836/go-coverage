@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"unicode/utf8"
 )
 
 // BuildGitHubCommitURL builds a GitHub commit URL from repository info and commit SHA
@@ -63,6 +64,11 @@ func CleanModulePath(fullPath string) string {
 		return ""
 	}
 
+	// Ensure the input is valid UTF-8, replacing invalid sequences
+	if !utf8.ValidString(fullPath) {
+		fullPath = strings.ToValidUTF8(fullPath, "�")
+	}
+
 	// Clean the path to remove double slashes and other issues
 	cleanedPath := path.Clean(fullPath)
 
@@ -85,12 +91,23 @@ func CleanModulePath(fullPath string) string {
 				// Special handling for paths that might have extra prefixes
 				// like "cli/internal/cli/cancel.go" -> "internal/cli/cancel.go"
 				// This happens when the Go module analysis includes extra path components
-				return cleanupExtraPathPrefixes(remainder)
+				result := cleanupExtraPathPrefixes(remainder)
+
+				// Ensure the result is valid UTF-8
+				if !utf8.ValidString(result) {
+					result = strings.ToValidUTF8(result, "�")
+				}
+
+				return result
 			}
 		}
 	}
 
 	// If no github.com pattern found, return the cleaned path
+	// Ensure it's valid UTF-8
+	if !utf8.ValidString(cleanedPath) {
+		cleanedPath = strings.ToValidUTF8(cleanedPath, "�")
+	}
 	return cleanedPath
 }
 

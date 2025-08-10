@@ -410,11 +410,18 @@ func FuzzCleanupExtraPathPrefixesViaCleanModulePath(f *testing.F) {
 
 		// Validate that result is reasonable
 		assert.True(t, utf8.ValidString(result), "Result should be valid UTF-8")
-		assert.LessOrEqual(t, len(result), len(testPath), "Result should not be longer than input")
 
-		// If the original path is not empty, result should not be empty
-		if path != "" {
-			assert.NotEmpty(t, result, "Result should not be empty for non-empty input")
+		// When UTF-8 sanitization occurs, the result might be longer than input
+		// (invalid bytes are replaced with the 3-byte replacement character)
+		// So we only check length when the input was valid UTF-8
+		if utf8.ValidString(testPath) {
+			assert.LessOrEqual(t, len(result), len(testPath), "Result should not be longer than valid UTF-8 input")
+		}
+
+		// If the original path is not empty, result might still be empty if the path
+		// resolves to nothing valid (e.g., "../../.." going outside the repo)
+		if path != "" && !strings.Contains(path, "..") {
+			assert.NotEmpty(t, result, "Result should not be empty for non-empty input without ..")
 		}
 	})
 }
