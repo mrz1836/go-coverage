@@ -106,7 +106,7 @@ Features:
 		if baseCoverageFile != "" {
 			baseCoverage, err = p.ParseFile(ctx, baseCoverageFile)
 			if err != nil {
-				fmt.Printf("Warning: failed to parse base coverage file: %v\n", err) //nolint:forbidigo // CLI output
+				cmd.Printf("Warning: failed to parse base coverage file: %v\n", err)
 				baseCoverage = nil
 			}
 		}
@@ -153,10 +153,10 @@ Features:
 		if enableAnalysis {
 			prDiff, diffErr := client.GetPRDiff(ctx, cfg.GitHub.Owner, cfg.GitHub.Repository, prNumber)
 			if diffErr != nil {
-				fmt.Printf("Warning: failed to get PR diff: %v\n", diffErr) //nolint:forbidigo // CLI output
+				cmd.Printf("Warning: failed to get PR diff: %v\n", diffErr)
 			} else {
 				prFileAnalysis = github.AnalyzePRFiles(prDiff)
-				fmt.Printf("📋 PR Analysis: %s\n", prFileAnalysis.Summary.GetSummaryText()) //nolint:forbidigo // CLI output
+				cmd.Printf("📋 PR Analysis: %s\n", prFileAnalysis.Summary.GetSummaryText())
 			}
 		}
 
@@ -194,7 +194,7 @@ Features:
 
 			comparisonResult, compErr := comparisonEngine.CompareCoverage(ctx, baseSnapshot, prSnapshot)
 			if compErr != nil {
-				fmt.Printf("Warning: failed to perform coverage comparison: %v\n", compErr) //nolint:forbidigo // CLI output
+				cmd.Printf("Warning: failed to perform coverage comparison: %v\n", compErr)
 			} else {
 				// Convert comparison result to PR comment format
 				comparison = &github.CoverageComparison{
@@ -311,13 +311,13 @@ Features:
 			return fmt.Errorf("failed to create PR comment: %w", err)
 		}
 
-		fmt.Printf("Coverage comment %s successfully!\n", result.Action)   //nolint:forbidigo // CLI output
-		fmt.Printf("Comment ID: %d\n", result.CommentID)                   //nolint:forbidigo // CLI output
-		fmt.Printf("Coverage: %.2f%%\n", comparison.PRCoverage.Percentage) //nolint:forbidigo // CLI output
+		cmd.Printf("Coverage comment %s successfully!\n", result.Action)
+		cmd.Printf("Comment ID: %d\n", result.CommentID)
+		cmd.Printf("Coverage: %.2f%%\n", comparison.PRCoverage.Percentage)
 		if comparison.BaseCoverage.Percentage > 0 {
-			fmt.Printf("Change: %+.2f%% vs base\n", comparison.Difference) //nolint:forbidigo // CLI output
+			cmd.Printf("Change: %+.2f%% vs base\n", comparison.Difference)
 		}
-		fmt.Printf("Action taken: %s (%s)\n", result.Action, result.Reason) //nolint:forbidigo // CLI output
+		cmd.Printf("Action taken: %s (%s)\n", result.Action, result.Reason)
 
 		// Generate PR-specific badges if requested
 		if generateBadges {
@@ -355,18 +355,18 @@ Features:
 
 			badgeResult, err := prBadgeManager.GenerateStandardPRBadges(ctx, badgeRequest)
 			if err != nil {
-				fmt.Printf("Warning: failed to generate PR badges: %v\n", err) //nolint:forbidigo // CLI output
+				cmd.Printf("Warning: failed to generate PR badges: %v\n", err)
 			} else {
-				fmt.Printf("Generated %d PR-specific badges\n", badgeResult.TotalBadges) //nolint:forbidigo // CLI output
+				cmd.Printf("Generated %d PR-specific badges\n", badgeResult.TotalBadges)
 				for badgeType, urls := range badgeResult.PublicURLs {
 					if len(urls) > 0 {
-						fmt.Printf("  %s: %s\n", badgeType, urls[0]) //nolint:forbidigo // CLI output
+						cmd.Printf("  %s: %s\n", badgeType, urls[0])
 					}
 				}
 			}
 
 			// Generate PR-specific coverage report
-			fmt.Printf("Generating PR coverage report...\n") //nolint:forbidigo // CLI output
+			cmd.Printf("Generating PR coverage report...\n")
 
 			// Get branch name from environment with PR context awareness
 			// For file URLs in PRs, we want to use the base branch (master) not the PR branch
@@ -382,7 +382,7 @@ Features:
 			// Create PR report directory
 			prReportDir := fmt.Sprintf("/tmp/pr-badges/pr/%d", prNumber)
 			if err := os.MkdirAll(prReportDir, 0o750); err != nil {
-				fmt.Printf("Warning: failed to create PR report directory: %v\n", err) //nolint:forbidigo // CLI output
+				cmd.Printf("Warning: failed to create PR report directory: %v\n", err)
 			}
 
 			reportConfig := &report.Config{
@@ -396,14 +396,14 @@ Features:
 
 			reportGen := report.NewGenerator(reportConfig)
 			if err := reportGen.Generate(ctx, coverage); err != nil {
-				fmt.Printf("Warning: failed to generate PR report: %v\n", err) //nolint:forbidigo // CLI output
+				cmd.Printf("Warning: failed to generate PR report: %v\n", err)
 			} else {
-				fmt.Printf("PR report saved to: %s/coverage.html\n", prReportDir) //nolint:forbidigo // CLI output
+				cmd.Printf("PR report saved to: %s/coverage.html\n", prReportDir)
 
 				// Also copy index.html to support both coverage.html and index.html access
 				if htmlData, err := os.ReadFile(fmt.Sprintf("%s/coverage.html", prReportDir)); err == nil {
 					if err := os.WriteFile(fmt.Sprintf("%s/index.html", prReportDir), htmlData, 0o600); err != nil {
-						fmt.Printf("Warning: failed to create index.html copy: %v\n", err) //nolint:forbidigo // CLI output
+						cmd.Printf("Warning: failed to create index.html copy: %v\n", err)
 					}
 				}
 			}
@@ -443,16 +443,16 @@ Features:
 
 			statusResult, err := statusManager.CreateStatusChecks(ctx, statusRequest)
 			if err != nil {
-				fmt.Printf("Warning: failed to create status checks: %v\n", err) //nolint:forbidigo // CLI output
+				cmd.Printf("Warning: failed to create status checks: %v\n", err)
 			} else {
-				fmt.Printf("Created %d status checks\n", statusResult.TotalChecks) //nolint:forbidigo // CLI output
-				fmt.Printf("Passed: %d, Failed: %d, Errors: %d\n",                 //nolint:forbidigo // CLI output
+				cmd.Printf("Created %d status checks\n", statusResult.TotalChecks)
+				cmd.Printf("Passed: %d, Failed: %d, Errors: %d\n",
 					statusResult.PassedChecks, statusResult.FailedChecks, statusResult.ErrorChecks)
 				if statusResult.BlockingPR {
-					fmt.Printf("⚠️ PR merge is blocked due to failed required checks\n") //nolint:forbidigo // CLI output
+					cmd.Printf("⚠️ PR merge is blocked due to failed required checks\n")
 				}
 				if len(statusResult.RequiredFailed) > 0 {
-					fmt.Printf("Failed required checks: %v\n", statusResult.RequiredFailed) //nolint:forbidigo // CLI output
+					cmd.Printf("Failed required checks: %v\n", statusResult.RequiredFailed)
 				}
 			}
 		}

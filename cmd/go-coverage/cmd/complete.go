@@ -777,7 +777,7 @@ update history, and create GitHub PR comment if in PR context.`,
 
 			if _, err := os.Stat(sourceAssetsDir); err == nil {
 				cmd.Printf("   📁 Copying assets directory to root...\n")
-				if err := copyDir(sourceAssetsDir, destAssetsDir); err != nil {
+				if err := copyDir(cmd, sourceAssetsDir, destAssetsDir); err != nil {
 					cmd.Printf("   ⚠️  Failed to copy assets directory: %v\n", err)
 				} else {
 					cmd.Printf("   ✅ Copied assets directory to root output directory\n")
@@ -850,7 +850,7 @@ func getStatusIcon(coverage, threshold float64) string {
 }
 
 // copyDir recursively copies a directory from src to dst
-func copyDir(src, dst string) error {
+func copyDir(cmd *cobra.Command, src, dst string) error {
 	// Get source directory info
 	srcInfo, err := os.Stat(src)
 	if err != nil {
@@ -875,12 +875,12 @@ func copyDir(src, dst string) error {
 
 		if entry.IsDir() {
 			// Recursively copy subdirectory
-			if err := copyDir(srcPath, dstPath); err != nil {
+			if err := copyDir(cmd, srcPath, dstPath); err != nil {
 				return fmt.Errorf("failed to copy subdirectory %s: %w", entry.Name(), err)
 			}
 		} else {
 			// Copy file
-			if err := copyFile(srcPath, dstPath); err != nil {
+			if err := copyFile(cmd, srcPath, dstPath); err != nil {
 				return fmt.Errorf("failed to copy file %s: %w", entry.Name(), err)
 			}
 		}
@@ -890,7 +890,7 @@ func copyDir(src, dst string) error {
 }
 
 // copyFile copies a single file from src to dst
-func copyFile(src, dst string) error {
+func copyFile(cmd *cobra.Command, src, dst string) error {
 	// Open source file
 	srcFile, err := os.Open(src) //nolint:gosec // src is constructed from validated paths
 	if err != nil {
@@ -899,7 +899,7 @@ func copyFile(src, dst string) error {
 	defer func() {
 		if closeErr := srcFile.Close(); closeErr != nil {
 			// Log the error but don't override the main error
-			fmt.Fprintf(os.Stderr, "Warning: failed to close source file: %v\n", closeErr)
+			cmd.Printf("Warning: failed to close source file: %v\n", closeErr)
 		}
 	}()
 
@@ -917,7 +917,7 @@ func copyFile(src, dst string) error {
 	defer func() {
 		if closeErr := dstFile.Close(); closeErr != nil {
 			// Log the error but don't override the main error
-			fmt.Fprintf(os.Stderr, "Warning: failed to close destination file: %v\n", closeErr)
+			cmd.Printf("Warning: failed to close destination file: %v\n", closeErr)
 		}
 	}()
 
