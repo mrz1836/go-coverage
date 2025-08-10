@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -485,7 +486,7 @@ func TestCompleteCommand(t *testing.T) {
 	err = os.WriteFile(coverageFile, []byte(testCoverageData), 0o600)
 	require.NoError(t, err)
 
-	// Create output directory
+	// Base output directory (will be made unique per test case)
 	outputDir := filepath.Join(tempDir, "output")
 
 	tests := []struct {
@@ -599,6 +600,24 @@ func TestCompleteCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Create a unique output directory for each test case
+			testOutputDir := filepath.Join(tempDir, "output_"+strings.ReplaceAll(tt.name, " ", "_"))
+
+			// Update the args to use the unique output directory
+			updatedArgs := make([]string, len(tt.args))
+			copy(updatedArgs, tt.args)
+			for i, arg := range updatedArgs {
+				if arg == outputDir {
+					updatedArgs[i] = testOutputDir
+				}
+			}
+
+			// Update checkFiles paths to use the unique output directory
+			updatedCheckFiles := make([]string, len(tt.checkFiles))
+			for i, filePath := range tt.checkFiles {
+				updatedCheckFiles[i] = strings.ReplaceAll(filePath, outputDir, testOutputDir)
+			}
+
 			// Set environment variables
 			for key, value := range tt.envVars {
 				_ = os.Setenv(key, value)
@@ -631,7 +650,7 @@ update history, and create GitHub PR comment if in PR context.`,
 			testCmd.AddCommand(testCompleteCmd)
 			testCmd.SetOut(&buf)
 			testCmd.SetErr(&buf)
-			testCmd.SetArgs(tt.args)
+			testCmd.SetArgs(updatedArgs)
 
 			// Execute command
 			err := testCmd.Execute()
@@ -650,7 +669,7 @@ update history, and create GitHub PR comment if in PR context.`,
 			}
 
 			// Check files were created
-			for _, filePath := range tt.checkFiles {
+			for _, filePath := range updatedCheckFiles {
 				assert.FileExists(t, filePath, "File should be created: %s", filePath)
 			}
 		})
