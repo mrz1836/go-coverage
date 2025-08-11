@@ -483,6 +483,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN != '' && secrets.GH_PAT_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_PR_NUMBER: ${{ inputs.pr-number || github.event.pull_request.number }}
           GITHUB_SHA: ${{ inputs.commit-sha }}
           GITHUB_REF_NAME: ${{ inputs.branch-name }}
           COVERAGE_HISTORY_PATH: ${{ github.workspace }}/.github/coverage/history
@@ -498,6 +499,7 @@ jobs:
           echo "  - GitHub repository: $GITHUB_REPOSITORY"
           echo "  - Branch: $GITHUB_REF_NAME"
           echo "  - Commit SHA: $GITHUB_SHA"
+          echo "  - PR Number: ${GITHUB_PR_NUMBER:-Not in PR context}"
 
           # Find coverage file with detailed logging
           REPO_ROOT="$(pwd)"
