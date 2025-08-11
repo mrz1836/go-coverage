@@ -493,14 +493,14 @@ jobs:
           # Debug: Show current working directory and paths
           echo "🔍 Environment information:"
           echo "  - Current working directory: $(pwd)"
-          echo "  - Repository root should be: $(realpath ../../../../)"
+          echo "  - Repository root should be: $(pwd)"
           echo "  - History path from env: $COVERAGE_HISTORY_PATH"
           echo "  - GitHub repository: $GITHUB_REPOSITORY"
           echo "  - Branch: $GITHUB_REF_NAME"
           echo "  - Commit SHA: $GITHUB_SHA"
 
           # Find coverage file with detailed logging
-          REPO_ROOT="$(realpath ../../../../)"
+          REPO_ROOT="$(pwd)"
           echo ""
           echo "🔍 Locating coverage input file..."
           echo "  - Repository root: $REPO_ROOT"
@@ -680,7 +680,7 @@ jobs:
           echo "📈 Recording coverage history..."
 
           # Find coverage file
-          REPO_ROOT="$(realpath ../../../../)"
+          REPO_ROOT="$(pwd)"
           if [[ -f "$REPO_ROOT/coverage-artifacts/${{ inputs.coverage-file }}" ]]; then
             COVERAGE_FILE="$REPO_ROOT/coverage-artifacts/${{ inputs.coverage-file }}"
           elif [[ -f "$REPO_ROOT/${{ inputs.coverage-file }}" ]]; then
@@ -728,7 +728,7 @@ jobs:
           echo ""
 
           # Get the coverage file path
-          REPO_ROOT="$(realpath ../../../../)"
+          REPO_ROOT="$(pwd)"
           COVERAGE_FILE="$REPO_ROOT/coverage-artifacts/${{ inputs.coverage-file }}"
 
           if [[ ! -f "$COVERAGE_FILE" ]]; then
@@ -756,7 +756,7 @@ jobs:
             echo "📋 Base branch: $BASE_BRANCH (SHA: $BASE_SHA)"
 
             # Define repository root for consistent path handling
-            REPO_ROOT="$(realpath ../../../../)"
+            REPO_ROOT="$(pwd)"
             echo "📁 Repository root: $REPO_ROOT"
 
             # Try to fetch base coverage profile from recent workflow artifacts
@@ -945,7 +945,7 @@ jobs:
           echo "🏷️ Deploying PR badges to GitHub Pages..."
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-          REPO_ROOT="$(realpath ../../../../)"
+          REPO_ROOT="$(pwd)"
           PR_NUMBER="${{ inputs.pr-number || github.event.pull_request.number }}"
 
           echo "🔍 Debug Information:"
