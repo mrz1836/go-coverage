@@ -20,7 +20,7 @@ func TestNewAnalyticsDashboard(t *testing.T) {
 	}
 
 	// Test with provided config
-	config := &DashboardConfig{
+	config := &Config{
 		Title:                "Test Dashboard",
 		Theme:                ThemeLight,
 		RefreshInterval:      30 * time.Second,
@@ -68,7 +68,7 @@ func TestGenerateDashboard(t *testing.T) {
 func TestGenerateHTML(t *testing.T) {
 	dashboard := NewAnalyticsDashboard(nil)
 
-	data := &DashboardData{
+	data := &Data{
 		CurrentMetrics: CurrentMetrics{
 			Coverage:       78.5,
 			CoverageChange: 2.3,
@@ -131,7 +131,7 @@ func TestTimePresets(t *testing.T) {
 }
 
 func TestDashboardThemes(t *testing.T) {
-	themes := []DashboardTheme{
+	themes := []Theme{
 		ThemeAuto,
 		ThemeLight,
 		ThemeDark,
@@ -141,7 +141,7 @@ func TestDashboardThemes(t *testing.T) {
 
 	for i, theme := range themes {
 		if string(theme) != expectedValues[i] {
-			t.Errorf("DashboardTheme %d: expected %s, got %s", i, expectedValues[i], string(theme))
+			t.Errorf("Theme %d: expected %s, got %s", i, expectedValues[i], string(theme))
 		}
 	}
 }

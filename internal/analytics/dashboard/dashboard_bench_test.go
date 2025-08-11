@@ -8,7 +8,7 @@ import (
 
 // BenchmarkGenerateDashboard benchmarks dashboard data generation
 func BenchmarkGenerateDashboard(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -30,7 +30,7 @@ func BenchmarkGenerateDashboard(b *testing.B) {
 
 // BenchmarkGenerateDashboardSmall benchmarks with small dataset
 func BenchmarkGenerateDashboardSmall(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -52,7 +52,7 @@ func BenchmarkGenerateDashboardSmall(b *testing.B) {
 
 // BenchmarkGenerateDashboardLarge benchmarks with large dataset
 func BenchmarkGenerateDashboardLarge(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -74,7 +74,7 @@ func BenchmarkGenerateDashboardLarge(b *testing.B) {
 
 // BenchmarkGenerateHTML benchmarks HTML generation from dashboard data
 func BenchmarkGenerateHTML(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -91,7 +91,7 @@ func BenchmarkGenerateHTML(b *testing.B) {
 
 // BenchmarkProcessCoverageData benchmarks coverage data processing
 func BenchmarkProcessCoverageData(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -110,7 +110,7 @@ func BenchmarkProcessCoverageData(b *testing.B) {
 
 // BenchmarkCalculateMetrics benchmarks metric calculations
 func BenchmarkCalculateMetrics(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -129,7 +129,7 @@ func BenchmarkCalculateMetrics(b *testing.B) {
 
 // BenchmarkGeneratePackageSummary benchmarks package summary generation
 func BenchmarkGeneratePackageSummary(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -148,7 +148,7 @@ func BenchmarkGeneratePackageSummary(b *testing.B) {
 
 // BenchmarkIdentifyLowCoverageFiles benchmarks low coverage file identification
 func BenchmarkIdentifyLowCoverageFiles(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -167,7 +167,7 @@ func BenchmarkIdentifyLowCoverageFiles(b *testing.B) {
 
 // BenchmarkGenerateInsights benchmarks insight generation
 func BenchmarkGenerateInsights(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -186,7 +186,7 @@ func BenchmarkGenerateInsights(b *testing.B) {
 
 // BenchmarkDashboardMemoryAllocation benchmarks memory allocation
 func BenchmarkDashboardMemoryAllocation(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -211,7 +211,7 @@ func BenchmarkDashboardMemoryAllocation(b *testing.B) {
 
 // BenchmarkConcurrentDashboardGeneration benchmarks concurrent generation
 func BenchmarkConcurrentDashboardGeneration(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -234,7 +234,7 @@ func BenchmarkConcurrentDashboardGeneration(b *testing.B) {
 
 // BenchmarkWithHistory benchmarks dashboard generation with history
 func BenchmarkWithHistory(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title:             "BenchmarkProject",
 		EnablePredictions: true,
 	})
@@ -258,7 +258,7 @@ func BenchmarkWithHistory(b *testing.B) {
 
 // BenchmarkWithComparison benchmarks dashboard with comparison data
 func BenchmarkWithComparison(b *testing.B) {
-	dashboard := NewAnalyticsDashboard(&DashboardConfig{
+	dashboard := NewAnalyticsDashboard(&Config{
 		Title: "BenchmarkProject",
 	})
 	ctx := context.Background()
@@ -281,8 +281,8 @@ func BenchmarkWithComparison(b *testing.B) {
 
 // Helper functions
 
-func createBenchmarkDashboardData() *DashboardData {
-	return &DashboardData{
+func createBenchmarkDashboardData() *Data {
+	return &Data{
 		CurrentMetrics: CurrentMetrics{
 			Coverage:       75.5,
 			CoverageChange: 2.5,

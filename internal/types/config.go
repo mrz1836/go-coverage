@@ -1,7 +1,7 @@
 // Package types defines common data structures and configuration types used throughout the coverage system.
 // This package provides shared type definitions for notification channels, configuration objects,
 // and other data structures that need to be used across multiple packages.
-package types //nolint:revive // "types" is an acceptable package name for common data structures
+package types
 
 // SlackConfig holds Slack-specific configuration
 type SlackConfig struct {
