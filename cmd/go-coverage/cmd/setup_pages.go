@@ -44,6 +44,9 @@ var ErrRepositoryPermissionDenied = errors.New("permission denied - ensure you h
 // ErrDeploymentPoliciesNotFound indicates that deployment branch policies were not found
 var ErrDeploymentPoliciesNotFound = errors.New("deployment branch policies not found - environment may not be fully configured")
 
+// ErrSetupHasWarnings indicates that setup completed with warnings
+var ErrSetupHasWarnings = errors.New("setup completed with warnings - run 'setup-pages' again after first deployment to verify")
+
 // GitHubEnvironmentResponse represents the response from GitHub API for environments
 type GitHubEnvironmentResponse struct {
 	Name                   string                  `json:"name"`
@@ -143,16 +146,26 @@ Examples:
 		}
 		cmd.Printf("   ✅ GitHub Pages environment configured\n\n")
 
-		// Step 5: Configure deployment branch policies
-		cmd.Printf("🌿 Step 5: Configuring deployment branch policies...\n")
+		// Step 5: Create initial gh-pages branch if needed
+		cmd.Printf("🌿 Step 5: Setting up gh-pages branch...\n")
+		if err := createInitialGhPagesBranch(ctx, cmd, repo, dryRun, verbose); err != nil {
+			cmd.Printf("   ⚠️  Failed to create initial gh-pages branch: %v\n", err)
+			cmd.Printf("   💡 You may need to create it manually or it will be created on first deployment\n")
+		} else {
+			cmd.Printf("   ✅ gh-pages branch ready\n")
+		}
+		cmd.Printf("\n")
+
+		// Step 6: Configure deployment branch policies
+		cmd.Printf("📋 Step 6: Configuring deployment branch policies...\n")
 		if err := setupDeploymentBranches(ctx, cmd, repo, dryRun, verbose); err != nil {
 			return fmt.Errorf("failed to setup deployment branches: %w", err)
 		}
 		cmd.Printf("   ✅ Deployment branch policies configured\n\n")
 
-		// Step 6: Configure custom domain (if specified)
+		// Step 7: Configure custom domain (if specified)
 		if customDomain != "" {
-			cmd.Printf("🌍 Step 6: Configuring custom domain...\n")
+			cmd.Printf("🌍 Step 7: Configuring custom domain...\n")
 			if err := setupCustomDomain(ctx, cmd, repo, customDomain, dryRun, verbose); err != nil {
 				cmd.Printf("   ⚠️  Custom domain setup failed: %v\n", err)
 				cmd.Printf("   💡 You can configure this manually in repository settings\n")
@@ -162,9 +175,9 @@ Examples:
 			cmd.Printf("\n")
 		}
 
-		// Step 7: Setup branch protection (if requested)
+		// Step 8: Setup branch protection (if requested)
 		if protectBranches {
-			cmd.Printf("🛡️  Step 7: Setting up branch protection...\n")
+			cmd.Printf("🛡️  Step 8: Setting up branch protection...\n")
 			if err := setupBranchProtection(ctx, cmd, repo, dryRun, verbose); err != nil {
 				cmd.Printf("   ⚠️  Branch protection setup failed: %v\n", err)
 				cmd.Printf("   💡 You can configure this manually in repository settings\n")
@@ -174,8 +187,8 @@ Examples:
 			cmd.Printf("\n")
 		}
 
-		// Step 8: Verify setup
-		cmd.Printf("✅ Step 8: Verifying configuration...\n")
+		// Step 9: Verify setup
+		cmd.Printf("✅ Step 9: Verifying configuration...\n")
 		if dryRun {
 			cmd.Printf("   ℹ️  Skipping verification in dry-run mode (environment not created yet)\n")
 			cmd.Printf("   💡 Run without --dry-run to create environment and verify setup\n")
@@ -338,6 +351,191 @@ func setupPagesEnvironment(ctx context.Context, cmd *cobra.Command, repo string,
 	return nil
 }
 
+// createInitialGhPagesBranch creates an initial gh-pages branch if it doesn't exist
+//
+//nolint:gosec // repo is validated before this function is called
+func createInitialGhPagesBranch(ctx context.Context, cmd *cobra.Command, repo string, dryRun, verbose bool) error {
+	if verbose {
+		cmd.Printf("   🔍 Checking if gh-pages branch exists...\n")
+	}
+
+	// Check if gh-pages branch already exists
+	checkCmd := exec.CommandContext(ctx, "gh", "api", "repos/"+repo+"/branches/gh-pages", "--silent") //nolint:gosec // repo is validated
+	checkCmd.Stdout = nil
+	checkCmd.Stderr = nil
+
+	if err := checkCmd.Run(); err == nil {
+		// Branch already exists
+		if verbose {
+			cmd.Printf("   ✅ gh-pages branch already exists\n")
+		}
+		return nil
+	}
+
+	// Branch doesn't exist, create it
+	if verbose {
+		cmd.Printf("   📝 gh-pages branch not found, creating initial branch...\n")
+	}
+
+	if dryRun {
+		cmd.Printf("   🧪 DRY RUN: Would create initial gh-pages branch with placeholder content\n")
+		return nil
+	}
+
+	// Create a temporary directory for the git operations
+	tempDir, err := exec.CommandContext(ctx, "mktemp", "-d", "-t", "gh-pages-init").Output()
+	if err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	tempDirPath := strings.TrimSpace(string(tempDir))
+	defer func() {
+		// Clean up temp directory
+		exec.CommandContext(ctx, "rm", "-rf", tempDirPath).Run() //nolint:errcheck // cleanup best effort
+	}()
+
+	// Clone the repository with minimal depth
+	if verbose {
+		cmd.Printf("   📥 Cloning repository to create gh-pages branch...\n")
+	}
+
+	cloneCmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1",
+		"https://github.com/"+repo+".git", tempDirPath)
+	cloneCmd.Stdout = nil
+	cloneCmd.Stderr = nil
+	if err := cloneCmd.Run(); err != nil {
+		return fmt.Errorf("failed to clone repository: %w", err)
+	}
+
+	// Change to the cloned directory
+	originalDir, getWdErr := exec.CommandContext(ctx, "pwd").Output()
+	if getWdErr != nil {
+		return fmt.Errorf("failed to get current directory: %w", getWdErr)
+	}
+
+	if cdErr := exec.CommandContext(ctx, "sh", "-c", "cd "+tempDirPath).Run(); cdErr != nil {
+		return fmt.Errorf("failed to change directory: %w", cdErr)
+	}
+
+	// Create orphan gh-pages branch
+	createBranchCmd := exec.CommandContext(ctx, "sh", "-c",
+		"cd "+tempDirPath+" && git checkout --orphan gh-pages")
+	if err := createBranchCmd.Run(); err != nil {
+		return fmt.Errorf("failed to create orphan branch: %w", err)
+	}
+
+	// Remove all files from the branch
+	removeCmd := exec.CommandContext(ctx, "sh", "-c",
+		"cd "+tempDirPath+" && git rm -rf . 2>/dev/null || true")
+	removeCmd.Run() //nolint:errcheck // ignore errors as there might be no files
+
+	// Create initial placeholder content
+	indexHTML := `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Coverage Reports - Initializing</title>
+    <meta http-equiv="refresh" content="5; url=coverage/branch/master/">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            text-align: center;
+        }
+        h1 { color: #2ea44f; }
+        .message {
+            background: #f6f8fa;
+            border: 1px solid #d1d5da;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2ea44f;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Coverage Reports</h1>
+    <div class="spinner"></div>
+    <div class="message">
+        <h2>GitHub Pages is being initialized...</h2>
+        <p>This page will automatically redirect to the coverage reports once they are deployed.</p>
+        <p>If you're not redirected, the coverage reports will be available at:</p>
+        <p><a href="coverage/branch/master/">coverage/branch/master/</a></p>
+    </div>
+    <p><small>Generated by go-coverage setup-pages</small></p>
+</body>
+</html>`
+
+	// Write the index.html file using a more reliable method
+	indexPath := tempDirPath + "/index.html"
+	writeCmd := exec.CommandContext(ctx, "sh", "-c",
+		fmt.Sprintf("cat > %s << 'EOF'\n%s\nEOF", indexPath, indexHTML))
+	if err := writeCmd.Run(); err != nil {
+		return fmt.Errorf("failed to create index.html: %w", err)
+	}
+
+	// Create .nojekyll file to disable Jekyll processing
+	nojekyllCmd := exec.CommandContext(ctx, "sh", "-c",
+		"cd "+tempDirPath+" && touch .nojekyll")
+	if err := nojekyllCmd.Run(); err != nil {
+		return fmt.Errorf("failed to create .nojekyll: %w", err)
+	}
+
+	// Add and commit the files
+	commitCmd := exec.CommandContext(ctx, "sh", "-c",
+		"cd "+tempDirPath+" && git add . && git commit -m 'Initial gh-pages branch setup'")
+	if err := commitCmd.Run(); err != nil {
+		return fmt.Errorf("failed to commit initial content: %w", err)
+	}
+
+	// Push the branch using GitHub CLI for authentication
+	if verbose {
+		cmd.Printf("   📤 Pushing gh-pages branch to GitHub...\n")
+	}
+
+	pushCmd := exec.CommandContext(ctx, "gh", "api", "repos/"+repo+"/git/refs",
+		"--method", "POST",
+		"--field", "ref=refs/heads/gh-pages",
+		"--field", "sha=$(cd "+tempDirPath+" && git rev-parse HEAD)")
+
+	// Alternative approach using git push with gh auth token
+	pushCmd = exec.CommandContext(ctx, "sh", "-c",
+		fmt.Sprintf("cd %s && git push -u origin gh-pages", tempDirPath))
+
+	if err := pushCmd.Run(); err != nil {
+		// Try with gh auth setup-git first
+		authCmd := exec.CommandContext(ctx, "sh", "-c",
+			fmt.Sprintf("cd %s && gh auth setup-git && git push -u origin gh-pages", tempDirPath))
+		if err := authCmd.Run(); err != nil {
+			return fmt.Errorf("failed to push gh-pages branch: %w", err)
+		}
+	}
+
+	// Return to original directory
+	exec.CommandContext(ctx, "sh", "-c", "cd "+string(originalDir)).Run() //nolint:errcheck // best effort
+
+	if verbose {
+		cmd.Printf("   ✅ Created initial gh-pages branch with placeholder content\n")
+	}
+
+	return nil
+}
+
 // setupDeploymentBranches configures deployment branch policies
 func setupDeploymentBranches(ctx context.Context, cmd *cobra.Command, repo string, dryRun, verbose bool) error { //nolint:unparam // error return for future extensibility
 	branches := []string{
@@ -464,8 +662,23 @@ func setupBranchProtection(ctx context.Context, cmd *cobra.Command, repo string,
 
 // verifySetup checks that the GitHub Pages environment is configured correctly
 func verifySetup(ctx context.Context, cmd *cobra.Command, repo string, verbose bool) error {
+	var hasWarnings bool
+
 	if verbose {
 		cmd.Printf("   🔍 Fetching environment configuration...\n")
+	}
+
+	// Check if gh-pages branch exists
+	branchCheckCmd := exec.CommandContext(ctx, "gh", "api", "repos/"+repo+"/branches/gh-pages", "--silent")
+	branchCheckCmd.Stdout = nil
+	branchCheckCmd.Stderr = nil
+	if err := branchCheckCmd.Run(); err != nil {
+		cmd.Printf("   ⚠️  gh-pages branch not found (will be created on first deployment)\n")
+		hasWarnings = true
+	} else {
+		if verbose {
+			cmd.Printf("   ✅ gh-pages branch exists\n")
+		}
 	}
 
 	// Get environment details
@@ -474,57 +687,78 @@ func verifySetup(ctx context.Context, cmd *cobra.Command, repo string, verbose b
 	if err != nil {
 		// Check if it's a 404 error (environment doesn't exist)
 		if strings.Contains(string(envOutput), "Not Found") || strings.Contains(string(envOutput), "404") {
-			return ErrGitHubPagesEnvironmentNotFound
-		}
-		// Check for authentication/permission errors
-		if strings.Contains(string(envOutput), "403") || strings.Contains(string(envOutput), "Forbidden") {
+			cmd.Printf("   ⚠️  GitHub Pages environment not found - will be created on first deployment\n")
+			hasWarnings = true
+		} else if strings.Contains(string(envOutput), "403") || strings.Contains(string(envOutput), "Forbidden") {
 			return ErrRepositoryPermissionDenied
+		} else {
+			// Include stderr output for better debugging
+			if len(envOutput) > 0 && verbose {
+				cmd.Printf("   📋 API Error Details: %s\n", string(envOutput))
+			}
+			return fmt.Errorf("failed to fetch environment details: %w", err)
 		}
-		// Include stderr output for better debugging
-		if len(envOutput) > 0 && verbose {
-			cmd.Printf("   📋 API Error Details: %s\n", string(envOutput))
+	} else {
+		var envResponse GitHubEnvironmentResponse
+		if parseErr := json.Unmarshal(envOutput, &envResponse); parseErr != nil {
+			return fmt.Errorf("failed to parse environment response: %w", parseErr)
 		}
-		return fmt.Errorf("failed to fetch environment details: %w", err)
+
+		if verbose {
+			cmd.Printf("   ✅ GitHub Pages environment exists: %s\n", envResponse.Name)
+		}
+
+		// Get deployment branch policies
+		policiesCmd := exec.CommandContext(ctx, "gh", "api", //nolint:gosec // repo is validated
+			"repos/"+repo+"/environments/github-pages/deployment-branch-policies")
+		policiesOutput, policiesErr := policiesCmd.CombinedOutput()
+		if policiesErr != nil {
+			// Check for specific error conditions
+			if strings.Contains(string(policiesOutput), "404") {
+				cmd.Printf("   ⚠️  Deployment branch policies not configured\n")
+				hasWarnings = true
+			} else {
+				if len(policiesOutput) > 0 && verbose {
+					cmd.Printf("   📋 Policy API Error Details: %s\n", string(policiesOutput))
+				}
+				return fmt.Errorf("failed to fetch deployment policies: %w", policiesErr)
+			}
+		} else {
+			var policiesResponse GitHubBranchPoliciesResponse
+			if unmarshalErr := json.Unmarshal(policiesOutput, &policiesResponse); unmarshalErr != nil {
+				return fmt.Errorf("failed to parse policies response: %w", unmarshalErr)
+			}
+
+			if verbose {
+				cmd.Printf("   📊 Found %d deployment branch policies:\n", len(policiesResponse.BranchPolicies))
+				for _, policy := range policiesResponse.BranchPolicies {
+					cmd.Printf("       - %s\n", policy.Name)
+				}
+			}
+
+			if len(policiesResponse.BranchPolicies) == 0 {
+				cmd.Printf("   ⚠️  No deployment branch policies configured\n")
+				hasWarnings = true
+			}
+		}
 	}
 
-	var envResponse GitHubEnvironmentResponse
-	if parseErr := json.Unmarshal(envOutput, &envResponse); parseErr != nil {
-		return fmt.Errorf("failed to parse environment response: %w", parseErr)
-	}
-
-	if verbose {
-		cmd.Printf("   ✅ GitHub Pages environment exists: %s\n", envResponse.Name)
-	}
-
-	// Get deployment branch policies
-	policiesCmd := exec.CommandContext(ctx, "gh", "api", //nolint:gosec // repo is validated
-		"repos/"+repo+"/environments/github-pages/deployment-branch-policies")
-	policiesOutput, err := policiesCmd.CombinedOutput()
+	// Check GitHub Pages settings
+	pagesCmd := exec.CommandContext(ctx, "gh", "api", "repos/"+repo+"/pages", "--silent")
+	pagesOutput, err := pagesCmd.CombinedOutput()
 	if err != nil {
-		// Check for specific error conditions
-		if strings.Contains(string(policiesOutput), "404") {
-			return ErrDeploymentPoliciesNotFound
+		if strings.Contains(string(pagesOutput), "404") {
+			cmd.Printf("   ℹ️  GitHub Pages not yet enabled (will be enabled on first deployment)\n")
+			hasWarnings = true
 		}
-		if len(policiesOutput) > 0 && verbose {
-			cmd.Printf("   📋 Policy API Error Details: %s\n", string(policiesOutput))
-		}
-		return fmt.Errorf("failed to fetch deployment policies: %w", err)
-	}
-
-	var policiesResponse GitHubBranchPoliciesResponse
-	if err := json.Unmarshal(policiesOutput, &policiesResponse); err != nil {
-		return fmt.Errorf("failed to parse policies response: %w", err)
-	}
-
-	if verbose {
-		cmd.Printf("   📊 Found %d deployment branch policies:\n", len(policiesResponse.BranchPolicies))
-		for _, policy := range policiesResponse.BranchPolicies {
-			cmd.Printf("       - %s\n", policy.Name)
+	} else {
+		if verbose {
+			cmd.Printf("   ✅ GitHub Pages is enabled\n")
 		}
 	}
 
-	if len(policiesResponse.BranchPolicies) == 0 {
-		return ErrNoDeploymentPolicies
+	if hasWarnings {
+		return ErrSetupHasWarnings
 	}
 
 	return nil
@@ -545,6 +779,7 @@ func showNextSteps(cmd *cobra.Command, repo string, dryRun bool) {
 
 	cmd.Printf("📋 What's been configured:\n")
 	cmd.Printf("   • GitHub Pages environment with custom branch policies\n")
+	cmd.Printf("   • Initial gh-pages branch with placeholder content (if created)\n")
 	cmd.Printf("   • Deployment permissions for multiple branch patterns:\n")
 	cmd.Printf("     - master branch (main deployments)\n")
 	cmd.Printf("     - gh-pages branch (GitHub Pages default)\n")
