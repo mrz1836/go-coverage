@@ -28,18 +28,90 @@ GOMODCACHE ?= $(HOME)/go/pkg/mod
 PARALLEL := $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
 
 # Tool version pins
-GOLANGCI_LINT_VERSION := v2.3.0
+GOLANGCI_LINT_VERSION := v2.3.1
 export GOLANGCI_LINT_VERSION
 
 .PHONY: bench
 bench: ## Run all benchmarks in the Go application
-	@echo "Running benchmarks..."
-	@go test -bench=. -benchmem $(TAGS)
+	@echo "🏃 Running benchmarks..."
+	@echo "📋 Mode: Normal (100ms per benchmark)"
+	@echo "⏱️  Timeout: 30 seconds"
+	@echo "📊 Running benchmarks across all packages..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@go test -bench=. -benchmem -benchtime=100ms -timeout=30s ./... $(TAGS)
+	@$(MAKE) clean-test-artifacts
 
-#.PHONY: build-go
-#build-go: ## Build the Go application (locally)
-#	@echo "Building Go app..."
-#	@go build -o bin/$(BINARY_NAME) $(TAGS) $(GOFLAGS)
+.PHONY: bench-quick
+bench-quick: ## Run quick benchmarks (skip slow packages)
+	@echo "⚡ Running quick benchmarks..."
+	@echo "📋 Mode: Quick (50ms per benchmark)"
+	@echo "⏱️  Timeout: 15 seconds"
+	@echo "📦 Packages: algorithms, cache, config, transform"
+	@echo "📊 Starting benchmark execution..."
+	@go test -bench=. -benchmem -benchtime=50ms -timeout=15s \
+		./internal/algorithms/... \
+		./internal/cache/... \
+		./internal/config/... \
+		./internal/transform/... \
+		$(TAGS)
+	@$(MAKE) clean-test-artifacts
+
+.PHONY: bench-full
+bench-full: ## Run comprehensive benchmarks with multiple iterations
+	@echo "🔬 Running comprehensive benchmarks..."
+	@echo "📋 Mode: Full (10s per benchmark, 3 iterations)"
+	@echo "⏱️  Timeout: Default (10 minutes)"
+	@echo "⚠️  This may take several minutes to complete"
+	@echo "📊 Starting comprehensive benchmark analysis..."
+	@go test -bench=. -benchmem -benchtime=10s -count=3 ./... $(TAGS)
+	@$(MAKE) clean-test-artifacts
+
+.PHONY: bench-compare
+bench-compare: ## Run benchmarks and save results for comparison
+	@echo "📊 Running benchmarks for comparison..."
+	@echo "📋 Mode: Comparison (5 iterations for statistical analysis)"
+	@echo "💾 Results will be saved to: bench-new.txt"
+	@echo "🔄 Starting benchmark comparison run..."
+	@go test -bench=. -benchmem -count=5 ./... $(TAGS) | tee bench-new.txt
+	@if [ -f bench-old.txt ]; then \
+		echo ""; \
+		echo "📈 Comparing with previous results..."; \
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+		benchstat bench-old.txt bench-new.txt || echo "⚠️  Install benchstat: go install golang.org/x/perf/cmd/benchstat@latest"; \
+	else \
+		echo ""; \
+		echo "ℹ️  No previous results found. Run 'make bench-save' to save current results."; \
+	fi
+	@$(MAKE) clean-test-artifacts
+
+.PHONY: bench-save
+bench-save: ## Save current benchmark results as baseline
+	@echo "💾 Saving benchmark baseline..."
+	@echo "📋 Running 5 iterations for reliable baseline..."
+	@echo "📊 Collecting benchmark data..."
+	@go test -bench=. -benchmem -count=5 ./... $(TAGS) > bench-old.txt
+	@echo "✅ Baseline saved to bench-old.txt"
+	@echo "ℹ️  Use 'make bench-compare' to compare future results against this baseline"
+	@$(MAKE) clean-test-artifacts
+
+.PHONY: bench-cpu
+bench-cpu: ## Run benchmarks with CPU profiling
+	@echo "🔍 Running benchmarks with CPU profiling..."
+	@echo "📋 Mode: CPU Profiling (100ms per benchmark)"
+	@echo "💾 Profile will be saved to: cpu.prof"
+	@echo "📊 Starting profiled benchmark run..."
+	@go test -bench=. -benchmem -cpuprofile=cpu.prof ./... $(TAGS)
+	@echo ""
+	@echo "✅ CPU profile saved to cpu.prof"
+	@echo "📈 To analyze the profile, run:"
+	@echo "   go tool pprof cpu.prof"
+	@echo "   Then use commands like: top10, list, web"
+	@$(MAKE) clean-test-artifacts
+
+.PHONY: build-go
+build-go: ## Build the Go application (locally)
+	@echo "Building Go app..."
+	@go build -o bin/$(BINARY_NAME) $(TAGS) $(GOFLAGS)
 
 .PHONY: clean-mods
 clean-mods: ## Remove all the Go mod cache
@@ -54,8 +126,57 @@ coverage: ## Show test coverage
 .PHONY: fumpt
 fumpt: ## Run fumpt to format Go code
 	@echo "Running fumpt..."
-	@go install mvdan.cc/gofumpt@latest
-	@gofumpt -w -extra .
+	@GOPATH=$$(go env GOPATH); \
+	if [ -z "$$GOPATH" ]; then GOPATH=$$HOME/go; fi; \
+	export PATH="$$GOPATH/bin:$$PATH"; \
+	if [ -n "$${GO_PRE_COMMIT_FUMPT_VERSION}" ]; then \
+		echo "Installing gofumpt $${GO_PRE_COMMIT_FUMPT_VERSION}..."; \
+		go install mvdan.cc/gofumpt@$${GO_PRE_COMMIT_FUMPT_VERSION}; \
+	else \
+		echo "Installing gofumpt latest..."; \
+		go install mvdan.cc/gofumpt@latest; \
+	fi; \
+	if ! command -v gofumpt >/dev/null 2>&1; then \
+		echo "Error: gofumpt installation failed or not in PATH"; \
+		echo "GOPATH: $$GOPATH"; \
+		echo "PATH: $$PATH"; \
+		echo "Expected location: $$GOPATH/bin/gofumpt"; \
+		if [ -f "$$GOPATH/bin/gofumpt" ]; then \
+			echo "gofumpt exists at expected location but not in PATH"; \
+		else \
+			echo "gofumpt not found at expected location"; \
+		fi; \
+		exit 1; \
+	fi; \
+	echo "Formatting Go code with gofumpt..."; \
+	gofumpt -w -extra .
+
+.PHONY: goimports
+goimports: ## Run goimports to fix import organization
+	@echo "Running goimports..."
+	@GOPATH=$$(go env GOPATH); \
+	if [ -z "$$GOPATH" ]; then GOPATH=$$HOME/go; fi; \
+	export PATH="$$GOPATH/bin:$$PATH"; \
+	if ! command -v goimports >/dev/null 2>&1; then \
+		echo "Installing goimports..."; \
+		go install golang.org/x/tools/cmd/goimports@latest; \
+	else \
+		echo "goimports is already installed"; \
+	fi; \
+	if ! command -v goimports >/dev/null 2>&1; then \
+		echo "Error: goimports installation failed or not in PATH"; \
+		echo "GOPATH: $$GOPATH"; \
+		echo "PATH: $$PATH"; \
+		echo "Expected location: $$GOPATH/bin/goimports"; \
+		if [ -f "$$GOPATH/bin/goimports" ]; then \
+			echo "goimports exists at expected location but not in PATH"; \
+		else \
+			echo "goimports not found at expected location"; \
+		fi; \
+		exit 1; \
+	fi; \
+	echo "Formatting imports with goimports..."; \
+	goimports -w -local github.com/mrz1836/go-broadcast .
 
 .PHONY: generate
 generate: ## Run go generate in the base of the repo
@@ -173,7 +294,7 @@ test-fuzz: ## Run fuzz tests only (no unit tests)
 		gopkg=$$(go list "$$pkg" | grep "^$$modpath"); \
 		for fuzz in $$(go test -list ^Fuzz "$$gopkg" | grep ^Fuzz); do \
 			echo "Fuzzing $$fuzz in $$gopkg..."; \
-			CMD="go test -run=^$$ -fuzz=\"^$$fuzz\$$\" -fuzztime=5s $$gopkg"; \
+			CMD="go test -run=^$$ -fuzz=\"$$fuzz\" -fuzztime=5s $$gopkg"; \
 			[ "$(VERBOSE)" = "true" ] && CMD="$$CMD -v"; \
 			eval "$$CMD" || exit 1; \
 		done; \
