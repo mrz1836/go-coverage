@@ -370,7 +370,7 @@ func setupDeploymentBranches(ctx context.Context, cmd *cobra.Command, repo strin
 }
 
 // setupCustomDomain configures a custom domain for GitHub Pages
-func setupCustomDomain(ctx context.Context, cmd *cobra.Command, repo string, domain string, dryRun, verbose bool) error {
+func setupCustomDomain(ctx context.Context, cmd *cobra.Command, repo, domain string, dryRun, verbose bool) error {
 	if verbose {
 		cmd.Printf("   🌍 Configuring custom domain: %s\n", domain)
 	}
