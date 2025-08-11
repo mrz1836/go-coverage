@@ -542,9 +542,28 @@ func TestGetBadgeURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment variable to mock master branch for complete configuration test
 			if tt.name == "complete configuration" {
+				// Save and clear any existing GitHub environment variables
+				oldHeadRef := os.Getenv("GITHUB_HEAD_REF")
+				oldRefName := os.Getenv("GITHUB_REF_NAME")
+				oldRef := os.Getenv("GITHUB_REF")
+
+				// Clear all GitHub ref variables to ensure clean test environment
+				require.NoError(t, os.Unsetenv("GITHUB_HEAD_REF"))
+				require.NoError(t, os.Unsetenv("GITHUB_REF"))
 				require.NoError(t, os.Setenv("GITHUB_REF_NAME", "master"))
+
 				defer func() {
+					// Restore original environment
 					require.NoError(t, os.Unsetenv("GITHUB_REF_NAME"))
+					if oldHeadRef != "" {
+						require.NoError(t, os.Setenv("GITHUB_HEAD_REF", oldHeadRef))
+					}
+					if oldRefName != "" {
+						require.NoError(t, os.Setenv("GITHUB_REF_NAME", oldRefName))
+					}
+					if oldRef != "" {
+						require.NoError(t, os.Setenv("GITHUB_REF", oldRef))
+					}
 				}()
 			}
 			result := tt.config.GetBadgeURL()
@@ -601,9 +620,28 @@ func TestGetReportURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment variable to mock master branch for complete configuration test
 			if tt.name == "complete configuration" {
+				// Save and clear any existing GitHub environment variables
+				oldHeadRef := os.Getenv("GITHUB_HEAD_REF")
+				oldRefName := os.Getenv("GITHUB_REF_NAME")
+				oldRef := os.Getenv("GITHUB_REF")
+
+				// Clear all GitHub ref variables to ensure clean test environment
+				require.NoError(t, os.Unsetenv("GITHUB_HEAD_REF"))
+				require.NoError(t, os.Unsetenv("GITHUB_REF"))
 				require.NoError(t, os.Setenv("GITHUB_REF_NAME", "master"))
+
 				defer func() {
+					// Restore original environment
 					require.NoError(t, os.Unsetenv("GITHUB_REF_NAME"))
+					if oldHeadRef != "" {
+						require.NoError(t, os.Setenv("GITHUB_HEAD_REF", oldHeadRef))
+					}
+					if oldRefName != "" {
+						require.NoError(t, os.Setenv("GITHUB_REF_NAME", oldRefName))
+					}
+					if oldRef != "" {
+						require.NoError(t, os.Setenv("GITHUB_REF", oldRef))
+					}
 				}()
 			}
 			result := tt.config.GetReportURL()
