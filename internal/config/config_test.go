@@ -53,8 +53,6 @@ func TestLoad(t *testing.T) {
 	assert.True(t, config.Report.ShowPackages)
 	assert.True(t, config.Report.ShowFiles)
 	assert.True(t, config.Report.ShowMissing)
-	assert.True(t, config.Report.Responsive)
-	assert.True(t, config.Report.Interactive)
 
 	// Test history defaults
 	assert.True(t, config.History.Enabled)
@@ -106,8 +104,6 @@ func TestLoadWithEnvironmentVariables(t *testing.T) {
 	_ = os.Setenv("GO_COVERAGE_REPORT_PACKAGES", "false")
 	_ = os.Setenv("GO_COVERAGE_REPORT_FILES", "false")
 	_ = os.Setenv("GO_COVERAGE_REPORT_MISSING", "false")
-	_ = os.Setenv("GO_COVERAGE_REPORT_RESPONSIVE", "false")
-	_ = os.Setenv("GO_COVERAGE_REPORT_INTERACTIVE", "false")
 
 	_ = os.Setenv("GO_COVERAGE_HISTORY_ENABLED", "false")
 	_ = os.Setenv("GO_COVERAGE_HISTORY_PATH", "/tmp/history")
@@ -157,8 +153,6 @@ func TestLoadWithEnvironmentVariables(t *testing.T) {
 	assert.False(t, config.Report.ShowPackages)
 	assert.False(t, config.Report.ShowFiles)
 	assert.False(t, config.Report.ShowMissing)
-	assert.False(t, config.Report.Responsive)
-	assert.False(t, config.Report.Interactive)
 
 	// Test history settings
 	assert.False(t, config.History.Enabled)
@@ -1157,7 +1151,6 @@ func clearEnvironment() {
 		"GO_COVERAGE_BADGE_OUTPUT", "GO_COVERAGE_BADGE_TREND",
 		"GO_COVERAGE_REPORT_OUTPUT", "GO_COVERAGE_REPORT_TITLE", "GO_COVERAGE_REPORT_THEME",
 		"GO_COVERAGE_REPORT_PACKAGES", "GO_COVERAGE_REPORT_FILES", "GO_COVERAGE_REPORT_MISSING",
-		"GO_COVERAGE_REPORT_RESPONSIVE", "GO_COVERAGE_REPORT_INTERACTIVE",
 		"GO_COVERAGE_HISTORY_ENABLED", "GO_COVERAGE_HISTORY_PATH", "GO_COVERAGE_HISTORY_RETENTION",
 		"GO_COVERAGE_HISTORY_MAX_ENTRIES", "GO_COVERAGE_HISTORY_CLEANUP", "GO_COVERAGE_HISTORY_METRICS",
 		"GO_COVERAGE_BASE_DIR", "GO_COVERAGE_AUTO_CREATE_DIRS", "GO_COVERAGE_FILE_MODE", "GO_COVERAGE_DIR_MODE",
