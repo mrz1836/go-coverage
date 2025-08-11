@@ -868,9 +868,10 @@ jobs:
           fi
 
 
-          # Get URLs for the comment
-          BADGE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/coverage.svg"
-          REPORT_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/coverage/"
+          # Get URLs for the comment - use branch-specific URLs for PRs
+          BRANCH_NAME="${{ inputs.branch-name }}"
+          BADGE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/coverage/branch/$BRANCH_NAME/coverage.svg"
+          REPORT_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/coverage/branch/$BRANCH_NAME/"
 
           # Create PR comment
           "$GO_COVERAGE_BINARY" comment \
