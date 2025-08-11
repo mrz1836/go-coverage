@@ -104,10 +104,10 @@ go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ### Basic Usage
 
 ```bash
-# Run complete coverage pipeline
+# Run complete coverage pipeline (requires ENV vars for GitHub integration)
 go-coverage complete -i coverage.txt -o coverage-output
 
-# Generate PR comment with coverage analysis
+# Generate PR comment with coverage analysis (requires ENV vars for GitHub integration)
 go-coverage comment --pr 123 --coverage coverage.txt
 
 # Parse coverage data only
@@ -148,7 +148,7 @@ go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ### Verify Installation
 ```bash
 go-coverage --version
-# Go Coverage v1.0.0
+# Go Coverage v1.0.5
 ```
 
 <br/>

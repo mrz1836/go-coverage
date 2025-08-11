@@ -468,7 +468,7 @@ update history, and create GitHub PR comment if in PR context.`,
 			RepositoryOwner:  cfg.GitHub.Owner,
 			RepositoryName:   cfg.GitHub.Repository,
 			OutputDir:        targetOutputDir, // Dashboard goes in target directory
-			GeneratorVersion: "1.0.0",
+			GeneratorVersion: "1.0.5",
 			GitHubToken:      cfg.GitHub.Token,
 		}
 
