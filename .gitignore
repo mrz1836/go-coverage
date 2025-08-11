@@ -47,6 +47,5 @@ history/*.json
 /bin
 /cmd/go-coverage/cmd/.github
 /internal/badge/testdata
-/internal/parser/testdata/
 /internal/urlutil/testdata
 cmd/go-coverage/go-coverage
