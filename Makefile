@@ -57,4 +57,12 @@ update-version: ## Update version number (usage: make update-version version=1.0
 	printf "Updating CITATION.cff: "; \
 	$(MAKE) citation version=$(version) > /dev/null 2>&1 && echo "✓ updated" || echo "⚠️ failed"; \
 	\
+	printf "Updating GO_COVERAGE_VERSION in .env.shared: "; \
+	if grep -E 'GO_COVERAGE_VERSION=v[0-9]+\.[0-9]+\.[0-9]+' .github/.env.shared >/dev/null 2>&1; then \
+		sed -i '' -E 's/GO_COVERAGE_VERSION=v[0-9]+\.[0-9]+\.[0-9]+/GO_COVERAGE_VERSION=v$(version)/' .github/.env.shared && \
+		echo "✓ updated"; \
+	else \
+		echo "not found"; \
+	fi; \
+	\
 	echo "Version update complete!"

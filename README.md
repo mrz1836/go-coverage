@@ -170,6 +170,9 @@ go-coverage setup-pages owner/repo
 
 # Preview changes without making them
 go-coverage setup-pages --dry-run
+
+# Use a custom domain for GitHub Pages
+go-coverage setup-pages --custom-domain mysite.com
 ```
 
 
