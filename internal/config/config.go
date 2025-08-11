@@ -140,10 +140,6 @@ type ReportConfig struct {
 	ShowFiles bool `json:"show_files"`
 	// Whether to show missing lines
 	ShowMissing bool `json:"show_missing"`
-	// Whether to enable responsive design
-	Responsive bool `json:"responsive"`
-	// Whether to include interactive features
-	Interactive bool `json:"interactive"`
 }
 
 // HistoryConfig holds history tracking settings
@@ -230,8 +226,6 @@ func Load() *Config {
 			ShowPackages: getEnvBool("GO_COVERAGE_REPORT_PACKAGES", true),
 			ShowFiles:    getEnvBool("GO_COVERAGE_REPORT_FILES", true),
 			ShowMissing:  getEnvBool("GO_COVERAGE_REPORT_MISSING", true),
-			Responsive:   getEnvBool("GO_COVERAGE_REPORT_RESPONSIVE", true),
-			Interactive:  getEnvBool("GO_COVERAGE_REPORT_INTERACTIVE", true),
 		},
 		History: HistoryConfig{
 			Enabled:        getEnvBool("GO_COVERAGE_HISTORY_ENABLED", true),

@@ -169,10 +169,10 @@ Basic usage:
 
 	// Parse coverage file
 	cov, err := coverage.ParseFile("coverage.txt")
-	
+
 	// Generate badge
 	badge := coverage.GenerateBadge(cov)
-	
+
 	// Create report
 	report := coverage.GenerateReport(cov)
 
@@ -196,7 +196,7 @@ package coverage
 // Document business logic
 // Coverage thresholds:
 // - 80%+ : Green badge (passing)
-// - 60-79%: Yellow badge (warning)  
+// - 60-79%: Yellow badge (warning)
 // - <60%  : Red badge (failing)
 ```
 
@@ -248,7 +248,7 @@ package main
 import (
     "fmt"
     "log"
-    
+
     coverage "github.com/mrz1836/go-coverage"
 )
 
@@ -259,7 +259,7 @@ func Example() {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     // Display results
     fmt.Printf("Coverage: %.1f%%\n", cov.Percentage)
     // Output: Coverage: 87.4%

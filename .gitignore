@@ -44,8 +44,9 @@ node_modules/
 history/*.json
 
 # Build artifacts
-cmd/go-coverage/go-coverage
-/cmd/go-coverage/cmd/.github
-/internal/urlutil/testdata
-/internal/badge/testdata
 /bin
+/cmd/go-coverage/cmd/.github
+/internal/badge/testdata
+/internal/parser/testdata/
+/internal/urlutil/testdata
+cmd/go-coverage/go-coverage

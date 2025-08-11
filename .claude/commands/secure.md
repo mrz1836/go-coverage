@@ -23,14 +23,14 @@ Perform comprehensive security audit using **security-scanner** agent:
      - Hardcoded credentials
      - API keys in code
      - Leaked tokens
-   
+
    - **Common Vulnerabilities**:
      - SQL injection risks
      - Path traversal
      - Command injection
      - Weak cryptography
      - Insecure random
-   
+
    - **Input Validation**:
      - Unvalidated user input
      - Missing bounds checks

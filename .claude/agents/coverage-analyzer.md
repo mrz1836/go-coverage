@@ -27,7 +27,7 @@ You own the coverage analysis pipeline:
    ```bash
    # Generate coverage if missing
    go test -coverprofile=coverage.txt ./...
-   
+
    # Use go-coverage CLI
    go-coverage parse -i coverage.txt
    ```

@@ -304,7 +304,7 @@ func NewURLBuilder(host, owner, repo string) *URLBuilder {
 	}
 }
 
-func (b *URLBuilder) BuildGitHubURL(pathType string, identifier string) string {
+func (b *URLBuilder) BuildGitHubURL(pathType, identifier string) string {
 	return "https://" + b.host + "/" + b.owner + "/" + b.repo + "/" + pathType + "/" + identifier
 }
 

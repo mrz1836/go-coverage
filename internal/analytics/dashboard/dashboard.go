@@ -8,13 +8,13 @@ import (
 
 // AnalyticsDashboard provides coverage analytics visualization
 type AnalyticsDashboard struct {
-	config *DashboardConfig
+	config *Config
 }
 
-// DashboardConfig holds dashboard configuration
-type DashboardConfig struct { //nolint:revive // dashboard.DashboardConfig is appropriately descriptive
+// Config holds dashboard configuration
+type Config struct {
 	Title                string
-	Theme                DashboardTheme
+	Theme                Theme
 	RefreshInterval      time.Duration
 	DefaultTimeRange     TimeRange
 	EnablePredictions    bool
@@ -24,20 +24,20 @@ type DashboardConfig struct { //nolint:revive // dashboard.DashboardConfig is ap
 	EnableTeamAnalytics  bool
 }
 
-// DashboardTheme represents dashboard theme options
-type DashboardTheme string //nolint:revive // dashboard.DashboardTheme is appropriately descriptive
+// Theme represents dashboard theme options
+type Theme string
 
 const (
 	// ThemeAuto automatically selects theme based on user preference
-	ThemeAuto DashboardTheme = "auto"
+	ThemeAuto Theme = "auto"
 	// ThemeLight uses light theme
-	ThemeLight DashboardTheme = "light"
+	ThemeLight Theme = "light"
 	// ThemeDark uses dark theme
-	ThemeDark DashboardTheme = "dark"
+	ThemeDark Theme = "dark"
 )
 
-// DashboardData represents dashboard data
-type DashboardData struct { //nolint:revive // dashboard.DashboardData is appropriately descriptive
+// Data represents dashboard data
+type Data struct {
 	CurrentMetrics     CurrentMetrics      `json:"current_metrics"`
 	Charts             []Chart             `json:"charts,omitempty"`
 	Predictions        []Prediction        `json:"predictions,omitempty"`
@@ -133,9 +133,9 @@ type Request struct {
 }
 
 // NewAnalyticsDashboard creates a new analytics dashboard
-func NewAnalyticsDashboard(config *DashboardConfig) *AnalyticsDashboard {
+func NewAnalyticsDashboard(config *Config) *AnalyticsDashboard {
 	if config == nil {
-		config = &DashboardConfig{
+		config = &Config{
 			Title: "Coverage Dashboard",
 			Theme: ThemeAuto,
 		}
@@ -149,19 +149,19 @@ func (d *AnalyticsDashboard) SetComponents(_, _, _, _, _ interface{}) {
 }
 
 // GenerateDashboard generates dashboard data
-func (d *AnalyticsDashboard) GenerateDashboard(ctx context.Context, _ *Request) (*DashboardData, error) {
-	data := &DashboardData{}
+func (d *AnalyticsDashboard) GenerateDashboard(ctx context.Context, _ *Request) (*Data, error) {
+	data := &Data{}
 	err := d.generateCurrentMetrics(ctx, data)
 	return data, err
 }
 
 // GenerateHTML renders a dashboard as HTML
-func (d *AnalyticsDashboard) GenerateHTML(_ context.Context, _ *DashboardData) (string, error) {
+func (d *AnalyticsDashboard) GenerateHTML(_ context.Context, _ *Data) (string, error) {
 	return "<html><body><h1>Coverage Dashboard</h1><p>Coverage: " +
 		"75.5%</p><p>Status: Working</p></body></html>", nil
 }
 
-func (d *AnalyticsDashboard) generateCurrentMetrics(_ context.Context, data *DashboardData) error { //nolint:unparam // Future error handling
+func (d *AnalyticsDashboard) generateCurrentMetrics(_ context.Context, data *Data) error { //nolint:unparam // Future error handling
 	data.CurrentMetrics = CurrentMetrics{
 		Coverage:       78.5,
 		CoverageChange: 2.3,

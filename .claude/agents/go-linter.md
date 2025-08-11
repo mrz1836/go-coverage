@@ -92,10 +92,10 @@ You are the guardian of code quality, responsible for:
    ```bash
    # Basic Go formatting
    go fmt ./...
-   
+
    # Import organization
    goimports -w .
-   
+
    # Enhanced formatting
    gofumpt -w .
    ```
@@ -104,7 +104,7 @@ You are the guardian of code quality, responsible for:
    ```bash
    # Check YAML formatting
    npx prettier "**/*.{yml,yaml}" --check --config .github/.prettierrc.yml
-   
+
    # Fix YAML formatting
    npx prettier "**/*.{yml,yaml}" --write --config .github/.prettierrc.yml
    ```
@@ -162,7 +162,7 @@ golangci-lint run --fix
    ```go
    // Before
    func ProcessData(data string, ctx context.Context) error
-   
+
    // After
    func ProcessData(ctx context.Context, data string) error
    ```
@@ -171,7 +171,7 @@ golangci-lint run --fix
    ```go
    // Before
    return err
-   
+
    // After
    return fmt.Errorf("processing data: %w", err)
    ```

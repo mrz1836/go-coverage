@@ -136,12 +136,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     # runs immediately
-  
+
   test:
     needs: lint
     runs-on: ubuntu-latest
     # runs after lint
-  
+
   coverage:
     needs: test
     runs-on: ubuntu-latest
@@ -202,7 +202,7 @@ jobs:
    ```bash
    # Re-run with verbose output
    gh workflow run fortress.yml -f debug=true
-   
+
    # Download artifacts
    gh run download [run-id] -n test-results
    ```
@@ -250,7 +250,7 @@ RUNNER_OS=ubuntu-latest
 # Use organization secrets
 env:
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  
+
 # Repository secrets
 env:
   DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
@@ -265,15 +265,15 @@ on:
   push:
     branches: [master, develop]
     tags: ['v*']
-    
+
   # Pull request events
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    
+
   # Scheduled runs
   schedule:
     - cron: '0 0 * * 0'  # Weekly on Sunday
-    
+
   # Manual trigger
   workflow_dispatch:
     inputs:

@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -52,8 +53,6 @@ func TestLoad(t *testing.T) {
 	assert.True(t, config.Report.ShowPackages)
 	assert.True(t, config.Report.ShowFiles)
 	assert.True(t, config.Report.ShowMissing)
-	assert.True(t, config.Report.Responsive)
-	assert.True(t, config.Report.Interactive)
 
 	// Test history defaults
 	assert.True(t, config.History.Enabled)
@@ -105,8 +104,6 @@ func TestLoadWithEnvironmentVariables(t *testing.T) {
 	_ = os.Setenv("GO_COVERAGE_REPORT_PACKAGES", "false")
 	_ = os.Setenv("GO_COVERAGE_REPORT_FILES", "false")
 	_ = os.Setenv("GO_COVERAGE_REPORT_MISSING", "false")
-	_ = os.Setenv("GO_COVERAGE_REPORT_RESPONSIVE", "false")
-	_ = os.Setenv("GO_COVERAGE_REPORT_INTERACTIVE", "false")
 
 	_ = os.Setenv("GO_COVERAGE_HISTORY_ENABLED", "false")
 	_ = os.Setenv("GO_COVERAGE_HISTORY_PATH", "/tmp/history")
@@ -156,8 +153,6 @@ func TestLoadWithEnvironmentVariables(t *testing.T) {
 	assert.False(t, config.Report.ShowPackages)
 	assert.False(t, config.Report.ShowFiles)
 	assert.False(t, config.Report.ShowMissing)
-	assert.False(t, config.Report.Responsive)
-	assert.False(t, config.Report.Interactive)
 
 	// Test history settings
 	assert.False(t, config.History.Enabled)
@@ -542,9 +537,28 @@ func TestGetBadgeURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment variable to mock master branch for complete configuration test
 			if tt.name == "complete configuration" {
+				// Save and clear any existing GitHub environment variables
+				oldHeadRef := os.Getenv("GITHUB_HEAD_REF")
+				oldRefName := os.Getenv("GITHUB_REF_NAME")
+				oldRef := os.Getenv("GITHUB_REF")
+
+				// Clear all GitHub ref variables to ensure clean test environment
+				require.NoError(t, os.Unsetenv("GITHUB_HEAD_REF"))
+				require.NoError(t, os.Unsetenv("GITHUB_REF"))
 				require.NoError(t, os.Setenv("GITHUB_REF_NAME", "master"))
+
 				defer func() {
+					// Restore original environment
 					require.NoError(t, os.Unsetenv("GITHUB_REF_NAME"))
+					if oldHeadRef != "" {
+						require.NoError(t, os.Setenv("GITHUB_HEAD_REF", oldHeadRef))
+					}
+					if oldRefName != "" {
+						require.NoError(t, os.Setenv("GITHUB_REF_NAME", oldRefName))
+					}
+					if oldRef != "" {
+						require.NoError(t, os.Setenv("GITHUB_REF", oldRef))
+					}
 				}()
 			}
 			result := tt.config.GetBadgeURL()
@@ -601,9 +615,28 @@ func TestGetReportURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment variable to mock master branch for complete configuration test
 			if tt.name == "complete configuration" {
+				// Save and clear any existing GitHub environment variables
+				oldHeadRef := os.Getenv("GITHUB_HEAD_REF")
+				oldRefName := os.Getenv("GITHUB_REF_NAME")
+				oldRef := os.Getenv("GITHUB_REF")
+
+				// Clear all GitHub ref variables to ensure clean test environment
+				require.NoError(t, os.Unsetenv("GITHUB_HEAD_REF"))
+				require.NoError(t, os.Unsetenv("GITHUB_REF"))
 				require.NoError(t, os.Setenv("GITHUB_REF_NAME", "master"))
+
 				defer func() {
+					// Restore original environment
 					require.NoError(t, os.Unsetenv("GITHUB_REF_NAME"))
+					if oldHeadRef != "" {
+						require.NoError(t, os.Setenv("GITHUB_HEAD_REF", oldHeadRef))
+					}
+					if oldRefName != "" {
+						require.NoError(t, os.Setenv("GITHUB_REF_NAME", oldRefName))
+					}
+					if oldRef != "" {
+						require.NoError(t, os.Setenv("GITHUB_REF", oldRef))
+					}
 				}()
 			}
 			result := tt.config.GetReportURL()
@@ -874,6 +907,239 @@ func TestConfigurationEdgeCases(t *testing.T) {
 	})
 }
 
+// TestGetCurrentBranch tests the GetCurrentBranch method
+func TestGetCurrentBranch(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func()
+		cleanup  func()
+		expected string
+	}{
+		{
+			name: "from GITHUB_HEAD_REF in pull request",
+			setup: func() {
+				require.NoError(t, os.Setenv("GITHUB_HEAD_REF", "feature-branch"))
+			},
+			cleanup: func() {
+				require.NoError(t, os.Unsetenv("GITHUB_HEAD_REF"))
+			},
+			expected: "feature-branch",
+		},
+		{
+			name: "from GITHUB_REF_NAME when not in PR",
+			setup: func() {
+				require.NoError(t, os.Setenv("GITHUB_REF_NAME", "main"))
+			},
+			cleanup: func() {
+				require.NoError(t, os.Unsetenv("GITHUB_REF_NAME"))
+			},
+			expected: "main",
+		},
+		{
+			name: "from GITHUB_REF with refs/heads prefix",
+			setup: func() {
+				require.NoError(t, os.Setenv("GITHUB_REF", "refs/heads/develop"))
+			},
+			cleanup: func() {
+				require.NoError(t, os.Unsetenv("GITHUB_REF"))
+			},
+			expected: "develop",
+		},
+		{
+			name: "fallback to git or master when no environment variables set",
+			setup: func() {
+				// Clear all relevant environment variables
+				require.NoError(t, os.Unsetenv("GITHUB_HEAD_REF"))
+				require.NoError(t, os.Unsetenv("GITHUB_REF_NAME"))
+				require.NoError(t, os.Unsetenv("GITHUB_REF"))
+			},
+			cleanup:  func() {},
+			expected: "", // Will validate separately since it can be git branch or "master"
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Clear environment before each test
+			require.NoError(t, os.Unsetenv("GITHUB_HEAD_REF"))
+			require.NoError(t, os.Unsetenv("GITHUB_REF_NAME"))
+			require.NoError(t, os.Unsetenv("GITHUB_REF"))
+
+			// Setup test environment
+			tt.setup()
+			defer tt.cleanup()
+
+			// Create config and test
+			config := &Config{}
+			result := config.GetCurrentBranch()
+
+			// Special handling for fallback case
+			if tt.name == "fallback to git or master when no environment variables set" {
+				// Should return either a git branch name or "master" as fallback
+				assert.NotEmpty(t, result, "Should return a branch name")
+				// The function will return either the actual git branch or "master" as fallback
+				// Both are valid behaviors
+			} else {
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestGetRepositoryRoot tests the GetRepositoryRoot method
+func TestGetRepositoryRoot(t *testing.T) {
+	tests := []struct {
+		name          string
+		setup         func() string
+		cleanup       func()
+		expectedError bool
+		validatePath  func(t *testing.T, path string)
+	}{
+		{
+			name: "when already in repository root with .git directory",
+			setup: func() string {
+				// Create temporary directory with .git subdirectory
+				tempDir := t.TempDir()
+				gitDir := filepath.Join(tempDir, ".git")
+				require.NoError(t, os.Mkdir(gitDir, 0o750))
+
+				// Change to the temp directory
+				originalDir, err := os.Getwd()
+				require.NoError(t, err)
+				require.NoError(t, os.Chdir(tempDir))
+
+				// Store original directory for cleanup
+				t.Cleanup(func() {
+					_ = os.Chdir(originalDir)
+				})
+
+				return tempDir
+			},
+			cleanup:       func() {},
+			expectedError: false,
+			validatePath: func(t *testing.T, path string) {
+				// Should return the directory with .git
+				_, err := os.Stat(filepath.Join(path, ".git"))
+				assert.NoError(t, err, "Should find .git directory in returned path")
+			},
+		},
+		{
+			name: "when in subdirectory of repository",
+			setup: func() string {
+				// Create temporary directory structure
+				tempDir := t.TempDir()
+				gitDir := filepath.Join(tempDir, ".git")
+				subDir := filepath.Join(tempDir, "src", "internal")
+
+				require.NoError(t, os.Mkdir(gitDir, 0o750))
+				require.NoError(t, os.MkdirAll(subDir, 0o750))
+
+				// Change to subdirectory
+				originalDir, err := os.Getwd()
+				require.NoError(t, err)
+				require.NoError(t, os.Chdir(subDir))
+
+				t.Cleanup(func() {
+					_ = os.Chdir(originalDir)
+				})
+
+				return tempDir
+			},
+			cleanup:       func() {},
+			expectedError: false,
+			validatePath: func(t *testing.T, path string) {
+				// Should return the current working directory (no git detection without actual git)
+				assert.NotEmpty(t, path)
+			},
+		},
+		{
+			name: "when in special .github/coverage/cmd/go-coverage path",
+			setup: func() string {
+				// Create the special directory structure
+				tempDir := t.TempDir()
+				specialPath := filepath.Join(tempDir, ".github", "coverage", "cmd", "go-coverage")
+				gitDir := filepath.Join(tempDir, ".git")
+
+				require.NoError(t, os.MkdirAll(specialPath, 0o750))
+				require.NoError(t, os.Mkdir(gitDir, 0o750))
+
+				// Change to the special path
+				originalDir, err := os.Getwd()
+				require.NoError(t, err)
+				require.NoError(t, os.Chdir(specialPath))
+
+				t.Cleanup(func() {
+					_ = os.Chdir(originalDir)
+				})
+
+				return tempDir
+			},
+			cleanup:       func() {},
+			expectedError: false,
+			validatePath: func(t *testing.T, path string) {
+				// Should navigate up 4 levels to find repo root
+				assert.NotEmpty(t, path)
+				// The path should be an absolute path
+				assert.True(t, filepath.IsAbs(path))
+			},
+		},
+		{
+			name: "fallback to working directory when not in git repo",
+			setup: func() string {
+				// Create temporary directory without .git
+				tempDir := t.TempDir()
+
+				// Change to temp directory
+				originalDir, err := os.Getwd()
+				require.NoError(t, err)
+				require.NoError(t, os.Chdir(tempDir))
+
+				t.Cleanup(func() {
+					_ = os.Chdir(originalDir)
+				})
+
+				return tempDir
+			},
+			cleanup:       func() {},
+			expectedError: false,
+			validatePath: func(t *testing.T, path string) {
+				// Should return the current working directory
+				wd, err := os.Getwd()
+				require.NoError(t, err)
+				assert.Equal(t, wd, path)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup test environment
+			expectedDir := tt.setup()
+			defer tt.cleanup()
+
+			// Create config and test
+			config := &Config{}
+			result, err := config.GetRepositoryRoot()
+
+			// Check error expectation
+			if tt.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.NotEmpty(t, result)
+
+				// Validate the returned path
+				if tt.validatePath != nil {
+					tt.validatePath(t, result)
+				}
+			}
+
+			// Suppress unused variable warning
+			_ = expectedDir
+		})
+	}
+}
+
 // Helper function to clear environment variables
 func clearEnvironment() {
 	envVars := []string{
@@ -885,7 +1151,6 @@ func clearEnvironment() {
 		"GO_COVERAGE_BADGE_OUTPUT", "GO_COVERAGE_BADGE_TREND",
 		"GO_COVERAGE_REPORT_OUTPUT", "GO_COVERAGE_REPORT_TITLE", "GO_COVERAGE_REPORT_THEME",
 		"GO_COVERAGE_REPORT_PACKAGES", "GO_COVERAGE_REPORT_FILES", "GO_COVERAGE_REPORT_MISSING",
-		"GO_COVERAGE_REPORT_RESPONSIVE", "GO_COVERAGE_REPORT_INTERACTIVE",
 		"GO_COVERAGE_HISTORY_ENABLED", "GO_COVERAGE_HISTORY_PATH", "GO_COVERAGE_HISTORY_RETENTION",
 		"GO_COVERAGE_HISTORY_MAX_ENTRIES", "GO_COVERAGE_HISTORY_CLEANUP", "GO_COVERAGE_HISTORY_METRICS",
 		"GO_COVERAGE_BASE_DIR", "GO_COVERAGE_AUTO_CREATE_DIRS", "GO_COVERAGE_FILE_MODE", "GO_COVERAGE_DIR_MODE",

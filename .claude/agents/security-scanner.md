@@ -246,10 +246,10 @@ func NewClient(ctx context.Context) (*Client, error) {
     if token == "" {
         return nil, errors.New("GITHUB_TOKEN not set")
     }
-    
+
     // Never log tokens
     log.Printf("Initializing GitHub client") // No token in log
-    
+
     return &Client{
         token: token,
         // Use context for cancellation

@@ -28,7 +28,7 @@ Use the **documentation-manager** agent to create a detailed product requirement
      - User workflows
      - API specifications
      - Configuration options
-   
+
    - **Non-Functional Requirements**:
      - Performance targets (based on CLAUDE.md metrics)
      - Security requirements
