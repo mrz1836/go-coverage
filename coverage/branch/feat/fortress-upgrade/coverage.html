@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR #2 - mrz1836/go-coverage Coverage Report</title>
+    <meta name="description" content="Detailed coverage analysis for mrz1836/go-coverage">
+
+    
+    <link rel="icon" type="image/x-icon" href="./assets/images/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg">
+    <link rel="shortcut icon" href="./assets/images/favicon.ico">
+    <link rel="manifest" href="./assets/site.webmanifest">
+
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    
+    <link rel="stylesheet" href="./assets/css/coverage.css">
+
+    
+    <meta property="og:title" content="mrz1836/go-coverage Coverage Report">
+    <meta property="og:description" content="Code coverage analysis for mrz1836/go-coverage">
+    <meta property="og:type" content="website">
+
+</head>
+<body>
+    
+    <nav class="nav-header">
+        <div class="nav-container">
+            <a href="https://mrz1836.github.io/go-coverage/" class="nav-title-link">
+                <div class="nav-title">go-coverage</div>
+            </a>
+            <div class="nav-actions">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" placeholder="Search packages and files..." id="searchInput">
+                </div>
+                <div class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    
+    <header class="header">
+        <div class="header-content">
+            <div class="header-main">
+                <h1>PR #2 Coverage Report</h1>
+                <p class="subtitle">
+                        go-coverage •
+                    Detailed coverage analysis • <span class="dynamic-timestamp" data-timestamp="2025-08-11T18:36:17Z">Generated 2025-08-11 18:36:17 UTC</span>
+                </p>
+            </div>
+
+            
+            <div class="repo-info">
+            <a href="https://github.com/mrz1836/go-coverage" class="repo-link" target="_blank">
+                <span class="repo-icon">📦</span>
+                mrz1836/go-coverage
+            </a>
+            <span class="repo-separator">•</span>
+            <span class="branch-info">
+                <span class="branch-icon">🌿</span>
+                2/merge
+            </span>
+            <span class="repo-separator">•</span>
+            <a href="https://github.com/mrz1836/go-coverage/pull/2" class="commit-link" target="_blank">
+                <span class="commit-icon">🔀</span>
+                PR #2
+            </a>
+            <span class="repo-separator">•</span>
+            <a href="https://github.com/mrz1836/go-coverage/commit/89aff7fcdf7cb18ff78cd17d0520868de41f987e" class="commit-link" target="_blank">
+                <span class="commit-icon">🔗</span>
+                89aff7f
+            </a>
+
+            <div class="repo-actions">
+                <button class="action-btn secondary small" onclick="copyBadgeURL(event, 'https:\/\/mrz1836.github.io\/go-coverage\/coverage\/pr\/2\/coverage.svg')">
+                    <span class="btn-icon">🏷️</span>
+                    <span class="btn-text">Badge</span>
+                </button>
+                <button class="action-btn secondary small" onclick="window.location.reload()">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">Refresh</span>
+                </button>
+            </div>
+            </div>
+        </div>
+    </header>
+
+    
+    <main class="main-content">
+        
+        <section class="summary-section">
+            <h2>Coverage Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Overall Coverage</h3>
+                    <div class="coverage-bar large">
+                        <div class="coverage-fill low"
+                             style="width: 68.04172593646278%"></div>
+                    </div>
+                    <div class="coverage-stats">
+                        <span class="coverage-value">68.0%</span>
+                        <span class="coverage-label">2,870 of 4,218 lines across 31 files</span>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <h3>Package Distribution</h3>
+                    <div class="distribution-chart">
+                        <div class="chart-placeholder">
+                            <span class="chart-icon">📊</span>
+                            <span class="chart-text">14 packages</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="packages-section">
+            <h2>Package Coverage</h2>
+            <div class="packages-container">
+                <div class="package-card" data-package="analysis">
+                    <div class="package-header" onclick="togglePackage('analysis')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">analysis</span>
+                            <span class="package-stats">271 / 289 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage success">
+                                93.8%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill success"
+                                     style="width: 93.77162629757785%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-analysis" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/analysis/go-coverage/internal/analysis/comparison.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analysis/comparison.go</a>
+                                <span class="file-stats">605 / 654 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage success">
+                                    92.5%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill success"
+                                         style="width: 92.50764525993884%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="assets">
+                    <div class="package-header" onclick="togglePackage('assets')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">assets</span>
+                            <span class="package-stats">29 / 35 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage warning">
+                                82.9%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill warning"
+                                     style="width: 82.85714285714286%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-assets" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/assets/go-coverage/internal/analytics/assets/assets.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analytics/assets/assets.go</a>
+                                <span class="file-stats">49 / 67 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage low">
+                                    73.1%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill low"
+                                         style="width: 73.13432835820896%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="badge">
+                    <div class="package-header" onclick="togglePackage('badge')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">badge</span>
+                            <span class="package-stats">295 / 303 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage excellent">
+                                97.4%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill excellent"
+                                     style="width: 97.35973597359737%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-badge" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/badge/go-coverage/internal/badge/generator.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/badge/generator.go</a>
+                                <span class="file-stats">285 / 286 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage excellent">
+                                    99.7%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill excellent"
+                                         style="width: 99.65034965034964%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/badge/go-coverage/internal/badge/pr_badge.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/badge/pr_badge.go</a>
+                                <span class="file-stats">441 / 460 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage excellent">
+                                    95.9%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill excellent"
+                                         style="width: 95.86956521739131%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="cmd">
+                    <div class="package-header" onclick="togglePackage('cmd')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">cmd</span>
+                            <span class="package-stats">597 / 1180 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage danger">
+                                50.6%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill danger"
+                                     style="width: 50.593220338983045%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-cmd" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/cmd/go-coverage/cmd/go-coverage/cmd/comment.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/cmd/go-coverage/cmd/comment.go</a>
+                                <span class="file-stats">408 / 649 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    62.9%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 62.865947611710325%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/cmd/go-coverage/cmd/go-coverage/cmd/complete.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/cmd/go-coverage/cmd/complete.go</a>
+                                <span class="file-stats">556 / 913 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    60.9%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 60.89813800657174%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/cmd/go-coverage/cmd/go-coverage/cmd/history.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/cmd/go-coverage/cmd/history.go</a>
+                                <span class="file-stats">156 / 241 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    64.7%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 64.73029045643153%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/cmd/go-coverage/cmd/go-coverage/cmd/parse.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/cmd/go-coverage/cmd/parse.go</a>
+                                <span class="file-stats">66 / 89 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage low">
+                                    74.2%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill low"
+                                         style="width: 74.15730337078652%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/cmd/go-coverage/cmd/go-coverage/cmd/root.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/cmd/go-coverage/cmd/root.go</a>
+                                <span class="file-stats">13 / 16 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage warning">
+                                    81.2%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill warning"
+                                         style="width: 81.25%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/cmd/go-coverage/cmd/go-coverage/cmd/setup_pages.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/cmd/go-coverage/cmd/setup_pages.go</a>
+                                <span class="file-stats">43 / 680 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    6.3%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 6.323529411764706%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="config">
+                    <div class="package-header" onclick="togglePackage('config')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">config</span>
+                            <span class="package-stats">126 / 161 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage warning">
+                                78.3%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill warning"
+                                     style="width: 78.26086956521739%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-config" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/config/go-coverage/internal/config/config.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/config/config.go</a>
+                                <span class="file-stats">316 / 391 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage warning">
+                                    80.8%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill warning"
+                                         style="width: 80.81841432225065%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="dashboard">
+                    <div class="package-header" onclick="togglePackage('dashboard')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">dashboard</span>
+                            <span class="package-stats">151 / 192 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage warning">
+                                78.6%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill warning"
+                                     style="width: 78.64583333333334%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-dashboard" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/dashboard/go-coverage/internal/analytics/dashboard/dashboard.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analytics/dashboard/dashboard.go</a>
+                                <span class="file-stats">31 / 31 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage excellent">
+                                    100.0%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill excellent"
+                                         style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/dashboard/go-coverage/internal/analytics/dashboard/generator.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analytics/dashboard/generator.go</a>
+                                <span class="file-stats">320 / 438 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage low">
+                                    73.1%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill low"
+                                         style="width: 73.0593607305936%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/dashboard/go-coverage/internal/analytics/dashboard/template.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analytics/dashboard/template.go</a>
+                                <span class="file-stats">285 / 285 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage excellent">
+                                    100.0%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill excellent"
+                                         style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="github">
+                    <div class="package-header" onclick="togglePackage('github')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">github</span>
+                            <span class="package-stats">378 / 698 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage danger">
+                                54.2%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill danger"
+                                     style="width: 54.15472779369628%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-github" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/github/go-coverage/internal/github/client.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/github/client.go</a>
+                                <span class="file-stats">177 / 374 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    47.3%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 47.32620320855615%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/github/go-coverage/internal/github/pr_comment.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/github/pr_comment.go</a>
+                                <span class="file-stats">318 / 430 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage low">
+                                    74.0%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill low"
+                                         style="width: 73.95348837209302%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/github/go-coverage/internal/github/pr_diff.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/github/pr_diff.go</a>
+                                <span class="file-stats">219 / 237 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage success">
+                                    92.4%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill success"
+                                         style="width: 92.40506329113924%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/github/go-coverage/internal/github/status_check.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/github/status_check.go</a>
+                                <span class="file-stats">54 / 470 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    11.5%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 11.48936170212766%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="go-coverage">
+                    <div class="package-header" onclick="togglePackage('go-coverage')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">go-coverage</span>
+                            <span class="package-stats">2 / 2 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage excellent">
+                                100.0%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill excellent"
+                                     style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-go-coverage" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/go-coverage/go-coverage/cmd/go-coverage/main.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/cmd/go-coverage/main.go</a>
+                                <span class="file-stats">5 / 5 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage excellent">
+                                    100.0%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill excellent"
+                                         style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="history">
+                    <div class="package-header" onclick="togglePackage('history')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">history</span>
+                            <span class="package-stats">489 / 637 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage warning">
+                                76.8%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill warning"
+                                     style="width: 76.76609105180535%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-history" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/history/go-coverage/internal/analytics/history/analyzer.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analytics/history/analyzer.go</a>
+                                <span class="file-stats">556 / 671 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage warning">
+                                    82.9%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill warning"
+                                         style="width: 82.86140089418778%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/history/go-coverage/internal/history/history.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/history/history.go</a>
+                                <span class="file-stats">0 / 99 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    0.0%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/history/go-coverage/internal/history/tracker.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/history/tracker.go</a>
+                                <span class="file-stats">511 / 663 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage warning">
+                                    77.1%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill warning"
+                                         style="width: 77.0739064856712%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="logger">
+                    <div class="package-header" onclick="togglePackage('logger')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">logger</span>
+                            <span class="package-stats">76 / 87 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage success">
+                                87.4%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill success"
+                                     style="width: 87.35632183908046%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-logger" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/logger/go-coverage/internal/logger/logger.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/logger/logger.go</a>
+                                <span class="file-stats">210 / 248 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage warning">
+                                    84.7%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill warning"
+                                         style="width: 84.67741935483872%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="parser">
+                    <div class="package-header" onclick="togglePackage('parser')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">parser</span>
+                            <span class="package-stats">145 / 176 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage warning">
+                                82.4%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill warning"
+                                     style="width: 82.38636363636364%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-parser" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/parser/go-coverage/internal/parser/parser.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/parser/parser.go</a>
+                                <span class="file-stats">295 / 357 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage warning">
+                                    82.6%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill warning"
+                                         style="width: 82.6330532212885%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="report">
+                    <div class="package-header" onclick="togglePackage('report')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">report</span>
+                            <span class="package-stats">101 / 118 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage success">
+                                85.6%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill success"
+                                     style="width: 85.59322033898306%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-report" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/report/go-coverage/internal/analytics/report/generator.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analytics/report/generator.go</a>
+                                <span class="file-stats">190 / 222 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage success">
+                                    85.6%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill success"
+                                         style="width: 85.58558558558559%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/report/go-coverage/internal/analytics/report/renderer.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analytics/report/renderer.go</a>
+                                <span class="file-stats">41 / 56 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage low">
+                                    73.2%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill low"
+                                         style="width: 73.21428571428571%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/report/go-coverage/internal/analytics/report/template.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/analytics/report/template.go</a>
+                                <span class="file-stats">223 / 223 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage excellent">
+                                    100.0%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill excellent"
+                                         style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="templates">
+                    <div class="package-header" onclick="togglePackage('templates')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">templates</span>
+                            <span class="package-stats">152 / 280 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage danger">
+                                54.3%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill danger"
+                                     style="width: 54.285714285714285%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-templates" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/templates/go-coverage/internal/templates/pr_templates.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/templates/pr_templates.go</a>
+                                <span class="file-stats">372 / 548 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage low">
+                                    67.9%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill low"
+                                         style="width: 67.88321167883211%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/templates/go-coverage/internal/templates/template_definitions.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/templates/template_definitions.go</a>
+                                <span class="file-stats">0 / 71 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    0.0%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/templates/go-coverage/internal/templates/templates.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/templates/templates.go</a>
+                                <span class="file-stats">0 / 113 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage danger">
+                                    0.0%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill danger"
+                                         style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="package-card" data-package="urlutil">
+                    <div class="package-header" onclick="togglePackage('urlutil')">
+                        <div class="package-info">
+                            <span class="package-toggle">▶</span>
+                            <span class="package-name">urlutil</span>
+                            <span class="package-stats">58 / 60 lines</span>
+                        </div>
+                        <div class="package-coverage">
+                            <span class="coverage-percentage excellent">
+                                96.7%
+                            </span>
+                            <div class="coverage-bar mini">
+                                <div class="coverage-fill excellent"
+                                     style="width: 96.66666666666667%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="package-files" id="package-urlutil" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <a href="https://github.com/mrz1836/go-coverage/blob/2/merge/urlutil/go-coverage/internal/urlutil/urls.go" class="file-name" target="_blank" rel="noopener noreferrer">go-coverage/internal/urlutil/urls.go</a>
+                                <span class="file-stats">113 / 117 lines</span>
+                            </div>
+                            <div class="file-coverage">
+                                <span class="coverage-percentage excellent">
+                                    96.6%
+                                </span>
+                                <div class="coverage-bar mini">
+                                    <div class="coverage-fill excellent"
+                                         style="width: 96.58119658119658%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-version">
+                    <a href="https://github.com/mrz1836/go-coverage/releases/tag/v1.0.4" target="_blank" class="version-link">
+                        <span class="version-icon">🏷️</span>
+                        <span class="version-text">v1.0.4</span>
+                    </a>
+                </div>
+                <span class="footer-separator">•</span>
+                <div class="footer-powered">
+                    <span class="powered-text">Powered by</span>
+                    <a href="https://github.com/mrz1836/go-coverage" target="_blank" class="go-coverage-link">
+                        <span class="coverage-icon">📊</span>
+                        <span class="coverage-text">Go Coverage</span>
+                    </a>
+                </div>
+                <span class="footer-separator">•</span>
+                <div class="footer-timestamp">
+                    <span class="timestamp-icon">🕐</span>
+                    <span class="timestamp-text dynamic-timestamp" data-timestamp="2025-08-11T18:36:17Z">Generated 2025-08-11 18:36:17 UTC</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="./assets/js/coverage-time.js"></script>
+	<script src="./assets/js/theme.js"></script>
+
+</body>
+</html>
