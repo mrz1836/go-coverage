@@ -824,8 +824,46 @@ update history, and create GitHub PR comment if in PR context.`,
 			cmd.Printf("Report URL: %s\n", cfg.GetReportURL())
 		}
 
-		// Return error if below threshold
+		// Check if we should skip threshold check due to label override
+		skipThresholdCheck := false
 		if coverage.Percentage < cfg.Coverage.Threshold {
+			// Check for label override if we're in PR context and it's enabled
+			if cfg.IsPullRequestContext() && cfg.Coverage.AllowLabelOverride && cfg.GitHub.Token != "" {
+				cmd.Printf("📊 Coverage below threshold, checking for override label...\n")
+
+				// Create GitHub client to fetch PR labels
+				githubConfig := &github.Config{
+					Token:      cfg.GitHub.Token,
+					BaseURL:    "https://api.github.com",
+					Timeout:    cfg.GitHub.Timeout,
+					RetryCount: 3,
+					UserAgent:  "go-coverage/1.0",
+				}
+				client := github.NewWithConfig(githubConfig)
+
+				// Fetch PR details to get labels
+				pr, err := client.GetPullRequest(ctx, cfg.GitHub.Owner, cfg.GitHub.Repository, cfg.GitHub.PullRequest)
+				if err != nil {
+					cmd.Printf("   ⚠️  Failed to fetch PR labels: %v\n", err)
+				} else {
+					// Check for coverage-override label
+					for _, label := range pr.Labels {
+						if label.Name == "coverage-override" {
+							cmd.Printf("   ✅ Found 'coverage-override' label - skipping threshold check\n")
+							skipThresholdCheck = true
+							break
+						}
+					}
+
+					if !skipThresholdCheck {
+						cmd.Printf("   ❌ No 'coverage-override' label found\n")
+					}
+				}
+			}
+		}
+
+		// Return error if below threshold and no override
+		if coverage.Percentage < cfg.Coverage.Threshold && !skipThresholdCheck {
 			return fmt.Errorf("%w: %.2f%% is below threshold %.2f%%", ErrCoverageBelowThreshold, coverage.Percentage, cfg.Coverage.Threshold)
 		}
 
