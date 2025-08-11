@@ -478,7 +478,7 @@ jobs:
             echo "| **Badge Style** | \`${{ env.COVERAGE_BADGE_STYLE }}\` | Coverage badge appearance |" >> $GITHUB_STEP_SUMMARY
             echo "| **Badge Logo** | \`${{ env.COVERAGE_BADGE_LOGO }}\` | Badge logo/icon |" >> $GITHUB_STEP_SUMMARY
             echo "| **Report Theme** | \`${{ env.COVERAGE_REPORT_THEME }}\` | HTML report styling |" >> $GITHUB_STEP_SUMMARY
-            echo "| **PR Comments** | $([ "${{ env.COVERAGE_PR_COMMENT_ENABLED }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | Coverage comments on pull requests |" >> $GITHUB_STEP_SUMMARY
+            echo "| **PR Comments** | $([ "${{ env.GO_COVERAGE_POST_COMMENTS }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | Coverage comments on pull requests |" >> $GITHUB_STEP_SUMMARY
             echo "| **History Retention** | \`${{ env.COVERAGE_HISTORY_RETENTION_DAYS }}\` days | Coverage data retention period |" >> $GITHUB_STEP_SUMMARY
             echo "| **Badge Branches** | \`${{ env.COVERAGE_BADGE_BRANCHES }}\` | Branches that generate badges |" >> $GITHUB_STEP_SUMMARY
             echo "| **Exclude Paths** | \`${{ env.COVERAGE_EXCLUDE_PATHS }}\` | Paths excluded from coverage |" >> $GITHUB_STEP_SUMMARY

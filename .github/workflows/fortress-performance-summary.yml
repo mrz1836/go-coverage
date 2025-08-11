@@ -330,7 +330,7 @@ jobs:
               echo "| **System** | Internal GoFortress Coverage |" >> $GITHUB_STEP_SUMMARY
               echo "| **Threshold** | ${{ env.COVERAGE_FAIL_UNDER }}% minimum |" >> $GITHUB_STEP_SUMMARY
               echo "| **Badge Style** | ${{ env.COVERAGE_BADGE_STYLE }} |" >> $GITHUB_STEP_SUMMARY
-              echo "| **PR Comments** | $([ "${{ env.COVERAGE_PR_COMMENT_ENABLED }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") |" >> $GITHUB_STEP_SUMMARY
+              echo "| **PR Comments** | $([ "${{ env.GO_COVERAGE_POST_COMMENTS }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") |" >> $GITHUB_STEP_SUMMARY
               echo "| **Theme** | ${{ env.COVERAGE_REPORT_THEME }} |" >> $GITHUB_STEP_SUMMARY
             fi
 
