@@ -62,7 +62,7 @@ Bug fixes/documentation only? → PATCH
    # Ensure on master branch
    git checkout master
    git pull origin master
-   
+
    # Run full test suite
    make test-ci
    make coverage
@@ -72,7 +72,7 @@ Bug fixes/documentation only? → PATCH
    ```bash
    # Update CITATION.cff
    make citation version=X.Y.Z
-   
+
    # Verify version in files
    grep -r "version.*X.Y.Z" .
    ```
@@ -81,7 +81,7 @@ Bug fixes/documentation only? → PATCH
    ```bash
    # Get commit list since last tag
    git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:"- %s"
-   
+
    # Categorize changes
    # Added, Changed, Fixed, Security, Deprecated, Removed
    ```
@@ -90,7 +90,7 @@ Bug fixes/documentation only? → PATCH
    ```bash
    # Create and push tag (only by codeowners)
    make tag version=X.Y.Z
-   
+
    # This runs:
    # git tag -a vX.Y.Z -m "Release vX.Y.Z"
    # git push origin vX.Y.Z

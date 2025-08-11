@@ -293,7 +293,7 @@ gh pr view 123 --json files,commits
 gh pr comment 123 --body "Coverage updated"
 gh pr merge 123 --auto --merge
 
-# Issue operations  
+# Issue operations
 gh issue create --title "..." --body "..."
 gh issue list --label "coverage"
 

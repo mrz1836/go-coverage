@@ -59,10 +59,10 @@ You optimize system performance:
 func BenchmarkParseCoverage(b *testing.B) {
     // Setup
     data := generateTestData(10000) // 10K lines
-    
+
     b.ResetTimer() // Start timing after setup
     b.ReportAllocs() // Report allocations
-    
+
     for i := 0; i < b.N; i++ {
         _, err := ParseCoverage(data)
         if err != nil {
@@ -74,12 +74,12 @@ func BenchmarkParseCoverage(b *testing.B) {
 // Table-driven benchmarks for different sizes
 func BenchmarkParseSizes(b *testing.B) {
     sizes := []int{100, 1000, 10000, 100000}
-    
+
     for _, size := range sizes {
         b.Run(fmt.Sprintf("size-%d", size), func(b *testing.B) {
             data := generateTestData(size)
             b.ResetTimer()
-            
+
             for i := 0; i < b.N; i++ {
                 ParseCoverage(data)
             }
@@ -201,7 +201,7 @@ func ProcessItems(items []Item) []Result {
     numWorkers := runtime.NumCPU()
     jobs := make(chan Item, len(items))
     results := make(chan Result, len(items))
-    
+
     // Start workers
     var wg sync.WaitGroup
     for i := 0; i < numWorkers; i++ {
@@ -213,19 +213,19 @@ func ProcessItems(items []Item) []Result {
             }
         }()
     }
-    
+
     // Send jobs
     for _, item := range items {
         jobs <- item
     }
     close(jobs)
-    
+
     // Collect results
     go func() {
         wg.Wait()
         close(results)
     }()
-    
+
     // Gather results
     var output []Result
     for r := range results {
@@ -252,7 +252,7 @@ func ProcessWithPool(data []byte) string {
         buf.Reset()
         bufferPool.Put(buf)
     }()
-    
+
     buf.Write(data)
     // Process...
     return buf.String()
@@ -289,16 +289,16 @@ func GenerateBadge(coverage float64) string {
     // Pre-calculate common values
     color := getColor(coverage)
     text := fmt.Sprintf("%.1f%%", coverage)
-    
+
     // Use string builder for efficiency
     var svg strings.Builder
     svg.Grow(1024) // Pre-allocate typical size
-    
+
     // Write SVG with minimal allocations
     svg.WriteString(svgHeader)
     svg.WriteString(fmt.Sprintf(svgTemplate, color, text))
     svg.WriteString(svgFooter)
-    
+
     return svg.String()
 }
 
@@ -332,15 +332,15 @@ func ParseCoverageFile(path string) (*Coverage, error) {
         return nil, err
     }
     defer file.Close()
-    
+
     // Use buffered reader
     scanner := bufio.NewScanner(file)
-    
+
     // Pre-allocate data structures
     coverage := &Coverage{
         Files: make(map[string]*FileCoverage, 100),
     }
-    
+
     // Parse efficiently
     for scanner.Scan() {
         line := scanner.Bytes() // Avoid string allocation
@@ -348,7 +348,7 @@ func ParseCoverageFile(path string) (*Coverage, error) {
             return nil, err
         }
     }
-    
+
     return coverage, scanner.Err()
 }
 ```
@@ -407,7 +407,7 @@ fi
 // Add to CI
 func TestPerformanceRegression(t *testing.T) {
     result := testing.Benchmark(BenchmarkParseCoverage)
-    
+
     // Check against baseline
     nsPerOp := result.NsPerOp()
     if nsPerOp > 50_000_000 { // 50ms

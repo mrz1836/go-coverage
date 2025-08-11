@@ -77,7 +77,7 @@
 ## 🗂️ Table of Contents
 * [Quickstart](#-quickstart)
 * [Installation](#-installation)
-* [GitHub Pages Setup](#-github-pages-setup)  
+* [GitHub Pages Setup](#-github-pages-setup)
 * [Starting a New Project](#-starting-a-new-project)
 * [Documentation](#-documentation)
 * [Examples & Tests](#-examples--tests)
@@ -107,7 +107,7 @@ go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 # Run complete coverage pipeline
 go-coverage complete -i coverage.txt -o coverage-output
 
-# Generate PR comment with coverage analysis  
+# Generate PR comment with coverage analysis
 go-coverage comment --pr 123 --coverage coverage.txt
 
 # Parse coverage data only
@@ -123,7 +123,7 @@ go-coverage setup-pages
 ### Core Features
 
 - 🏷️ **SVG Badge Generation** – Custom badges with themes and logos
-- 📊 **HTML Reports & Dashboards** – Beautiful, responsive coverage visualizations  
+- 📊 **HTML Reports & Dashboards** – Beautiful, responsive coverage visualizations
 - 📈 **History & Trends** – Track coverage changes over time
 - 🤖 **GitHub Integration** – PR comments, commit statuses, automated deployments
 - 🚀 **GitHub Pages** – Automated deployment with zero configuration
@@ -141,7 +141,7 @@ go get -u github.com/mrz1836/go-coverage
 ```
 
 ### Install the CLI Tool
-```shell script  
+```shell script
 go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ```
 
@@ -165,7 +165,7 @@ Set up GitHub Pages environment using the integrated CLI command:
 # Auto-detect repository from git remote
 go-coverage setup-pages
 
-# Or specify repository explicitly  
+# Or specify repository explicitly
 go-coverage setup-pages owner/repo
 
 # Preview changes without making them
@@ -174,7 +174,7 @@ go-coverage setup-pages --dry-run
 
 
 This configures:
-- ✅ **GitHub Pages Environment** with proper branch policies  
+- ✅ **GitHub Pages Environment** with proper branch policies
 - ✅ **Deployment Permissions** for `master`, `gh-pages`, and any `*/*/*/*` branches
 - ✅ **Environment Protection** rules for secure deployments
 
@@ -185,7 +185,7 @@ Your coverage system automatically creates:
 ```
 https://yourname.github.io/yourrepo/
 ├── coverage.svg              # Live coverage badge
-├── index.html                # Coverage dashboard  
+├── index.html                # Coverage dashboard
 ├── coverage.html             # Detailed coverage report
 ├── reports/branch/master/    # Branch-specific reports
 └── pr/123/                   # PR-specific reports
@@ -197,7 +197,7 @@ https://yourname.github.io/yourrepo/
 If the setup command fails, manually configure:
 
 1. Go to **Settings** → **Environments** → **github-pages**
-2. Under **Deployment branches**, select "Selected branches and tags"  
+2. Under **Deployment branches**, select "Selected branches and tags"
 3. Add these deployment branch rules:
    - `master` (main deployments)
    - `gh-pages` (GitHub Pages default)
@@ -235,7 +235,7 @@ go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 go-coverage setup-pages
 ```
 
-### 3. Add to GitHub Actions  
+### 3. Add to GitHub Actions
 
 Add coverage generation to your workflow:
 
@@ -251,15 +251,15 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          
+
       - name: Run Tests with Coverage
         run: go test -coverprofile=coverage.txt ./...
-        
+
       - name: Generate Coverage Reports
         run: go-coverage complete -i coverage.txt -o coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -270,7 +270,7 @@ jobs:
 ### 4. First Run
 
 Commit and push - your coverage reports will be available at:
-- **Reports**: `https://yourname.github.io/yourrepo/`  
+- **Reports**: `https://yourname.github.io/yourrepo/`
 - **Badge**: `https://yourname.github.io/yourrepo/coverage.svg`
 
 <details>
@@ -308,7 +308,7 @@ Create a `.go-coverage.json` config file:
 
 - **CLI Reference** – Complete command documentation at [pkg.go.dev/github.com/mrz1836/go-coverage](https://pkg.go.dev/github.com/mrz1836/go-coverage)
 - **Coverage Analysis** – Parse Go coverage profiles with exclusions and thresholds
-- **Badge Generation** – Create SVG badges with custom styling and themes  
+- **Badge Generation** – Create SVG badges with custom styling and themes
 - **Report Generation** – Build HTML dashboards and detailed coverage reports
 - **History Tracking** – Monitor coverage trends over time with retention policies
 - **GitHub Integration** – PR comments, commit statuses, and automated deployments
@@ -449,7 +449,7 @@ This magical file controls everything from:
 - **🤖 Auto-merge behaviors** (how aggressive should the bots be?)
 - **🏷️ PR management rules** (size labels, auto-assignment, welcome messages)
 
-> **Pro tip:** Want to disable code coverage? Just flip `ENABLE_CODE_COVERAGE=false` in [.env.shared](.github/.env.shared) and push. No YAML archaeology required! 
+> **Pro tip:** Want to disable code coverage? Just flip `ENABLE_CODE_COVERAGE=false` in [.env.shared](.github/.env.shared) and push. No YAML archaeology required!
 
 <br/>
 
@@ -560,7 +560,7 @@ The system generates comprehensive coverage reports:
 
 ```
 📊 Coverage Dashboard: https://yourname.github.io/yourrepo/
-🏷️ Coverage Badge: https://yourname.github.io/yourrepo/coverage.svg  
+🏷️ Coverage Badge: https://yourname.github.io/yourrepo/coverage.svg
 📈 Coverage: 87.4% (1,247/1,426 lines)
 📦 Packages: 15 analyzed
 🔍 Trend: UP (+2.3% from last run)
@@ -595,7 +595,7 @@ make bench
 ### Performance Characteristics
 
 - **Concurrent Operations**: All critical paths support concurrent execution
-- **Memory Efficiency**: Streaming parsers for large files  
+- **Memory Efficiency**: Streaming parsers for large files
 - **Caching**: Template compilation and static asset caching
 - **Optimization**: Profile-guided optimizations for hot paths
 
@@ -623,7 +623,7 @@ benchstat old.txt new.txt
 ### Real-World Metrics
 
 - ⚡ **CI/CD Integration**: Adds < 2 seconds to your workflow
-- 📊 **Memory Efficient**: Peak usage under 10MB for large repositories  
+- 📊 **Memory Efficient**: Peak usage under 10MB for large repositories
 - 🚀 **GitHub Pages**: Deploy coverage reports in under 30 seconds
 - 📈 **Scalable**: Tested with repositories containing 100,000+ lines of code
 

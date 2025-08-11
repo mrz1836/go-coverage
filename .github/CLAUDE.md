@@ -11,7 +11,7 @@ This repository uses **`AGENTS.md`** as the single source of truth for:
 * Release, CI, and dependency‑management policies
 * Security reporting and governance links
 
-> **TL;DR:** **Read `AGENTS.md` first.**  
+> **TL;DR:** **Read `AGENTS.md` first.**
 > All technical and procedural questions are answered there.
 
 ## 📊 Go Coverage System
@@ -21,7 +21,7 @@ This project implements a complete coverage analysis pipeline:
 **CLI Tool**: `go-coverage` with 5 core commands:
 - `complete` - Full pipeline (parse + badge + report + history + GitHub integration)
 - `comment` - Generate PR comments with coverage analysis
-- `parse` - Parse coverage data with exclusions and thresholds  
+- `parse` - Parse coverage data with exclusions and thresholds
 - `history` - View coverage trends and historical data
 - `setup-pages` - Configure GitHub Pages environment for coverage deployment
 
@@ -71,21 +71,21 @@ When working with this coverage system, follow these domain-specific standards:
 
 ## ✅ Quick Checklist for Claude
 
-1. **Study `AGENTS.md`**  
+1. **Study `AGENTS.md`**
    Understand Go coding standards, context patterns, and interface design
-2. **Coverage System Context**  
+2. **Coverage System Context**
    Remember this replaces Codecov - focus on zero external dependencies
-3. **Performance Requirements**  
+3. **Performance Requirements**
    Keep operations fast for CI/CD environments (see performance table in README)
-4. **Follow CLI Patterns**  
+4. **Follow CLI Patterns**
    Use existing command structure and flag naming conventions
-5. **GitHub Integration Security**  
+5. **GitHub Integration Security**
    Handle tokens securely, implement proper rate limiting and retry logic
-6. **Branch‑prefix and commit‑message standards**  
+6. **Branch‑prefix and commit‑message standards**
    They drive auto‑labeling and CI gates for the coverage workflow
-7. **Never tag releases**  
+7. **Never tag releases**
    Only repository code‑owners run `make tag` / `make release`
-8. **Pass CI including coverage**  
+8. **Pass CI including coverage**
    Run tests with coverage: `make test-cover` before opening PR
 
 ### **Common Operations**
@@ -107,7 +107,7 @@ go-coverage comment --pr 123 --coverage coverage.txt
 go-coverage setup-pages --dry-run
 ```
 
-If you encounter conflicting guidance elsewhere, `AGENTS.md` wins.  
+If you encounter conflicting guidance elsewhere, `AGENTS.md` wins.
 Questions about coverage system specifics? Check the CLI help or internal package docs.
 
 Happy coverage hacking! 📊

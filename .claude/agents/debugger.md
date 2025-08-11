@@ -23,7 +23,7 @@ You are the problem solver:
    ```bash
    # Get recent test failures
    go test ./... 2>&1 | grep -E "FAIL|Error|panic"
-   
+
    # Check CI status
    gh run list --status failure --limit 3
    ```
@@ -80,20 +80,20 @@ main.main()
 // Strategic debug points
 func ProcessCoverage(data []byte) (*Coverage, error) {
     log.Printf("DEBUG: Processing %d bytes of data", len(data))
-    
+
     if len(data) == 0 {
         log.Printf("DEBUG: Empty data received")
         return nil, errors.New("empty coverage data")
     }
-    
+
     lines := bytes.Split(data, []byte("\n"))
     log.Printf("DEBUG: Found %d lines", len(lines))
-    
+
     for i, line := range lines {
         log.Printf("DEBUG: Line %d: %s", i, line)
         // Process line...
     }
-    
+
     return coverage, nil
 }
 ```
@@ -108,16 +108,16 @@ func ProcessCoverage(data []byte) (*Coverage, error) {
 // Debug approach:
 func TestCalculation(t *testing.T) {
     input := prepareTestData()
-    
+
     // Add debug output
     t.Logf("Input: %+v", input)
-    
+
     result := Calculate(input)
-    
+
     // Debug intermediate state
     t.Logf("Result: %+v", result)
     t.Logf("Expected: 10, Got: %d", result.Value)
-    
+
     require.Equal(t, 10, result.Value)
 }
 ```
@@ -131,12 +131,12 @@ func SafeProcess(obj *Object) error {
     if obj == nil {
         return errors.New("object is nil")
     }
-    
+
     // Check nested fields
     if obj.Field == nil {
         return errors.New("object.Field is nil")
     }
-    
+
     return obj.Field.Process()
 }
 ```
@@ -208,19 +208,19 @@ func Increment() {
 // Add memory profiling to tests
 func TestMemoryLeak(t *testing.T) {
     var m runtime.MemStats
-    
+
     runtime.ReadMemStats(&m)
     before := m.Alloc
-    
+
     // Run potentially leaky code
     for i := 0; i < 1000; i++ {
         LeakyFunction()
     }
-    
+
     runtime.GC()
     runtime.ReadMemStats(&m)
     after := m.Alloc
-    
+
     leaked := after - before
     if leaked > 1024*1024 { // 1MB threshold
         t.Errorf("Memory leak detected: %d bytes", leaked)
