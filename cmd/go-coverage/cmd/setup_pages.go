@@ -35,6 +35,15 @@ var ErrCouldNotParseRepository = errors.New("could not parse GitHub repository f
 // ErrNoDeploymentPolicies indicates that no deployment branch policies were found
 var ErrNoDeploymentPolicies = errors.New("no deployment branch policies found")
 
+// ErrGitHubPagesEnvironmentNotFound indicates that the GitHub Pages environment was not found
+var ErrGitHubPagesEnvironmentNotFound = errors.New("GitHub Pages environment not found - it may not have been created yet")
+
+// ErrRepositoryPermissionDenied indicates that the user doesn't have admin access to the repository
+var ErrRepositoryPermissionDenied = errors.New("permission denied - ensure you have admin access to the repository")
+
+// ErrDeploymentPoliciesNotFound indicates that deployment branch policies were not found
+var ErrDeploymentPoliciesNotFound = errors.New("deployment branch policies not found - environment may not be fully configured")
+
 // GitHubEnvironmentResponse represents the response from GitHub API for environments
 type GitHubEnvironmentResponse struct {
 	Name                   string                  `json:"name"`
@@ -167,10 +176,15 @@ Examples:
 
 		// Step 8: Verify setup
 		cmd.Printf("✅ Step 8: Verifying configuration...\n")
-		if err := verifySetup(ctx, cmd, repo, verbose); err != nil {
-			cmd.Printf("   ⚠️  Verification completed with warnings: %v\n", err)
+		if dryRun {
+			cmd.Printf("   ℹ️  Skipping verification in dry-run mode (environment not created yet)\n")
+			cmd.Printf("   💡 Run without --dry-run to create environment and verify setup\n")
 		} else {
-			cmd.Printf("   ✅ Configuration verified successfully\n")
+			if err := verifySetup(ctx, cmd, repo, verbose); err != nil {
+				cmd.Printf("   ⚠️  Verification completed with warnings: %v\n", err)
+			} else {
+				cmd.Printf("   ✅ Configuration verified successfully\n")
+			}
 		}
 		cmd.Printf("\n")
 
@@ -456,8 +470,20 @@ func verifySetup(ctx context.Context, cmd *cobra.Command, repo string, verbose b
 
 	// Get environment details
 	envCmd := exec.CommandContext(ctx, "gh", "api", "repos/"+repo+"/environments/github-pages") //nolint:gosec // repo is validated
-	envOutput, err := envCmd.Output()
+	envOutput, err := envCmd.CombinedOutput()
 	if err != nil {
+		// Check if it's a 404 error (environment doesn't exist)
+		if strings.Contains(string(envOutput), "Not Found") || strings.Contains(string(envOutput), "404") {
+			return ErrGitHubPagesEnvironmentNotFound
+		}
+		// Check for authentication/permission errors
+		if strings.Contains(string(envOutput), "403") || strings.Contains(string(envOutput), "Forbidden") {
+			return ErrRepositoryPermissionDenied
+		}
+		// Include stderr output for better debugging
+		if len(envOutput) > 0 && verbose {
+			cmd.Printf("   📋 API Error Details: %s\n", string(envOutput))
+		}
 		return fmt.Errorf("failed to fetch environment details: %w", err)
 	}
 
@@ -473,8 +499,15 @@ func verifySetup(ctx context.Context, cmd *cobra.Command, repo string, verbose b
 	// Get deployment branch policies
 	policiesCmd := exec.CommandContext(ctx, "gh", "api", //nolint:gosec // repo is validated
 		"repos/"+repo+"/environments/github-pages/deployment-branch-policies")
-	policiesOutput, err := policiesCmd.Output()
+	policiesOutput, err := policiesCmd.CombinedOutput()
 	if err != nil {
+		// Check for specific error conditions
+		if strings.Contains(string(policiesOutput), "404") {
+			return ErrDeploymentPoliciesNotFound
+		}
+		if len(policiesOutput) > 0 && verbose {
+			cmd.Printf("   📋 Policy API Error Details: %s\n", string(policiesOutput))
+		}
 		return fmt.Errorf("failed to fetch deployment policies: %w", err)
 	}
 
