@@ -219,7 +219,10 @@ install-stdlib: ## Install the Go standard library for the host platform
 
 .PHONY: lint
 lint: ## Run the golangci-lint application (install if not found)
-	@if [ "$(shell which golangci-lint)" = "" ]; then \
+	@echo "=== golangci-lint Installation Check ===" && \
+	echo "Target version: $(GOLANGCI_LINT_VERSION)" && \
+	if [ "$(shell which golangci-lint)" = "" ]; then \
+		echo "golangci-lint not found in PATH, attempting installation..." && \
 		if [ "$(shell command -v brew)" != "" ]; then \
 			echo "Brew detected, attempting to install golangci-lint..."; \
 			if ! brew list golangci-lint &>/dev/null; then \
@@ -228,21 +231,55 @@ lint: ## Run the golangci-lint application (install if not found)
 				echo "golangci-lint is already installed via brew."; \
 			fi; \
 		else \
-			echo "Installing golangci-lint via curl..."; \
-			GOPATH=$$(go env GOPATH); \
-			if [ -z "$$GOPATH" ]; then GOPATH=$$HOME/go; fi; \
-			echo "Installation path: $$GOPATH/bin"; \
-			curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$GOPATH/bin $(GOLANGCI_LINT_VERSION); \
+			echo "Installing golangci-lint via curl..." && \
+			echo "Fetching install script from: https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" && \
+			GOPATH=$$(go env GOPATH) && \
+			if [ -z "$$GOPATH" ]; then GOPATH=$$HOME/go; fi && \
+			echo "GOPATH: $$GOPATH" && \
+			echo "Installation path: $$GOPATH/bin" && \
+			echo "Attempting to install version: $(GOLANGCI_LINT_VERSION)" && \
+			echo "Downloading and running install script..." && \
+			echo "Testing GitHub connectivity..." && \
+			curl -s -o /dev/null -w "GitHub API HTTP Status: %{http_code}\n" https://api.github.com/repos/golangci/golangci-lint/releases/tags/$(GOLANGCI_LINT_VERSION) && \
+			set -x && \
+			curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -d -- -b $$GOPATH/bin $(GOLANGCI_LINT_VERSION) || \
+			{ \
+				echo "=== Installation failed, retrying with verbose output ===" && \
+				echo "Attempt 2/3 with increased verbosity..." && \
+				curl -vL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh -o /tmp/golangci-install.sh && \
+				cat /tmp/golangci-install.sh | head -20 && \
+				sh -x /tmp/golangci-install.sh -b $$GOPATH/bin $(GOLANGCI_LINT_VERSION) || \
+				{ \
+					echo "=== Installation failed again, trying direct binary download ===" && \
+					echo "Attempt 3/3 using direct GitHub releases..." && \
+					ARCH=$$(uname -m | sed 's/x86_64/amd64/') && \
+					OS=$$(uname -s | tr '[:upper:]' '[:lower:]') && \
+					echo "Detected OS: $$OS, Arch: $$ARCH" && \
+					DOWNLOAD_URL="https://github.com/golangci/golangci-lint/releases/download/$(GOLANGCI_LINT_VERSION)/golangci-lint-$${GOLANGCI_LINT_VERSION#v}-$$OS-$$ARCH.tar.gz" && \
+					echo "Download URL: $$DOWNLOAD_URL" && \
+					curl -L "$$DOWNLOAD_URL" -o /tmp/golangci-lint.tar.gz && \
+					tar -xzf /tmp/golangci-lint.tar.gz -C /tmp && \
+					mv /tmp/golangci-lint-*/golangci-lint $$GOPATH/bin/ && \
+					chmod +x $$GOPATH/bin/golangci-lint && \
+					echo "Direct download successful!"; \
+				}; \
+			} && \
+			set +x; \
 		fi; \
-	fi; \
+	else \
+		echo "golangci-lint found at: $$(which golangci-lint)" && \
+		echo "Installed version: $$(golangci-lint --version 2>&1 | head -1)"; \
+	fi && \
 	if [ "$(TRAVIS)" != "" ]; then \
 		echo "Travis CI environment detected."; \
 	elif [ "$(CODEBUILD_BUILD_ID)" != "" ]; then \
 		echo "AWS CodePipeline environment detected."; \
 	elif [ "$(GITHUB_WORKFLOW)" != "" ]; then \
 		echo "GitHub Actions environment detected."; \
-	fi; \
-	echo "Running golangci-lint..."; \
+	fi && \
+	echo "=== Running golangci-lint ===" && \
+	echo "PATH: $$PATH" && \
+	which golangci-lint || echo "Warning: golangci-lint still not in PATH" && \
 	golangci-lint run --verbose
 
 .PHONY: lint-version
