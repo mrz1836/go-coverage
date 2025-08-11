@@ -1,5 +1,5 @@
 # 📊 go-coverage
-> Self-Contained Go Coverage System: Replace Codecov with Zero Dependencies
+> Your Coverage. Your Infrastructure. Pure Go.
 
 <table>
   <thead>
@@ -104,24 +104,24 @@
 go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ```
 
-### Basic Usage
+### Basic Usage (Internal Coverage)
 
-```bash
-# Run complete coverage pipeline (requires ENV vars for GitHub integration)
-go-coverage complete -i coverage.txt -o coverage-output
-
-# Generate PR comment with coverage analysis (requires ENV vars for GitHub integration)
-go-coverage comment --pr 123 --coverage coverage.txt
-
-# Parse coverage data only
-go-coverage parse -i coverage.txt
-
-# View coverage history trends
-go-coverage history --branch master --days 30
-
-# Set up GitHub Pages environment for coverage deployment
+First, set up GitHub Pages environment for coverage deployment
+```text
 go-coverage setup-pages
 ```
+
+Next, deploy to your main branch and generate coverage reports!
+
+### Basic Usage for (External - Codecov)
+
+First, set the env vars in .env.shared to:
+```text
+GO_COVERAGE_PROVIDER=codecov
+CODECOV_TOKEN_REQUIRED=true
+```
+
+Next, deploy to your main branch and generate coverage reports!
 
 ### Core Features
 
@@ -151,7 +151,7 @@ go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ### Verify Installation
 ```bash
 go-coverage --version
-# Go Coverage v1.0.6
+# Go Coverage v1.0.7
 ```
 
 <br/>
@@ -584,19 +584,19 @@ make bench
 
 ### Benchmark Results
 
-| Component | Operation | Time/op | Memory/op | Allocs/op | Description |
-|-----------|-----------|---------|-----------|-----------|-------------|
-| **Parser** | Parse (100 files) | 105.9ns | 8B | 0 | Parse coverage data with 100 files |
-| **Parser** | Parse (1000 files) | 14.4ms | 8.0MB | 106,870 | Large coverage files |
-| **Badge** | Generate SVG | 1.76µs | 2.5KB | 14 | Badge generation |
-| **Badge** | Generate with Logo | 1.82µs | 2.7KB | 15 | Badge with custom logo |
-| **Dashboard** | Generate HTML | 12.3ms | 1.4MB | 10,645 | Full dashboard generation |
-| **Report** | Generate Report | 8.17ms | 1.1MB | 7,890 | Coverage report generation |
-| **History** | Record Entry | 240µs | 9.2KB | 68 | Store coverage entry |
-| **History** | Get Trend (30 days) | 1.7ms | 255KB | 1,254 | Trend analysis |
-| **Analysis** | Compare Coverage | 20.4µs | 42KB | 146 | Coverage comparison |
-| **Templates** | Render PR Comment | 38.9µs | 11KB | 377 | Comment generation |
-| **URL** | Build GitHub URL | 50.1ns | 48B | 1 | URL construction |
+| Component     | Operation           | Time/op | Memory/op | Allocs/op | Description                        |
+|---------------|---------------------|---------|-----------|-----------|------------------------------------|
+| **Parser**    | Parse (100 files)   | 105.9ns | 8B        | 0         | Parse coverage data with 100 files |
+| **Parser**    | Parse (1000 files)  | 14.4ms  | 8.0MB     | 106,870   | Large coverage files               |
+| **Badge**     | Generate SVG        | 1.76µs  | 2.5KB     | 14        | Badge generation                   |
+| **Badge**     | Generate with Logo  | 1.82µs  | 2.7KB     | 15        | Badge with custom logo             |
+| **Dashboard** | Generate HTML       | 12.3ms  | 1.4MB     | 10,645    | Full dashboard generation          |
+| **Report**    | Generate Report     | 8.17ms  | 1.1MB     | 7,890     | Coverage report generation         |
+| **History**   | Record Entry        | 240µs   | 9.2KB     | 68        | Store coverage entry               |
+| **History**   | Get Trend (30 days) | 1.7ms   | 255KB     | 1,254     | Trend analysis                     |
+| **Analysis**  | Compare Coverage    | 20.4µs  | 42KB      | 146       | Coverage comparison                |
+| **Templates** | Render PR Comment   | 38.9µs  | 11KB      | 377       | Comment generation                 |
+| **URL**       | Build GitHub URL    | 50.1ns  | 48B       | 1         | URL construction                   |
 
 ### Performance Characteristics
 
