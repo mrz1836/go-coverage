@@ -14,7 +14,7 @@ the simplicity and performance that Go developers expect.
 
 Built as a bolt-on solution completely encapsulated within the .github folder,
 this tool replaces Codecov with zero external service dependencies.`,
-	Version: "1.0.5",
+	Version: "1.0.6",
 }
 
 // Execute runs the root command
