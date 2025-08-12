@@ -151,7 +151,7 @@ go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ### Verify Installation
 ```bash
 go-coverage --version
-# Go Coverage v1.0.7
+# Go Coverage v1.0.8
 ```
 
 <br/>
