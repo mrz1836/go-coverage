@@ -18,12 +18,13 @@ This repository uses **`AGENTS.md`** as the single source of truth for:
 
 This project implements a complete coverage analysis pipeline:
 
-**CLI Tool**: `go-coverage` with 5 core commands:
+**CLI Tool**: `go-coverage` with 6 core commands:
 - `complete` - Full pipeline (parse + badge + report + history + GitHub integration)
 - `comment` - Generate PR comments with coverage analysis
 - `parse` - Parse coverage data with exclusions and thresholds
 - `history` - View coverage trends and historical data
 - `setup-pages` - Configure GitHub Pages environment for coverage deployment
+- `upgrade` - Check for updates and upgrade to the latest version
 
 **Core Architecture**:
 ```
@@ -105,6 +106,10 @@ go-coverage comment --pr 123 --coverage coverage.txt
 
 # Set up GitHub Pages environment
 go-coverage setup-pages --dry-run
+
+# Check for updates and upgrade
+go-coverage upgrade --check
+go-coverage upgrade
 ```
 
 If you encounter conflicting guidance elsewhere, `AGENTS.md` wins.

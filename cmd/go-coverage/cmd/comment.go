@@ -31,10 +31,12 @@ var (
 	ErrPRNumberRequired = errors.New("pull request number is required")
 )
 
-var commentCmd = &cobra.Command{ //nolint:gochecknoglobals // CLI command
-	Use:   "comment",
-	Short: "Create PR coverage comment with analysis and templates",
-	Long: `Create or update pull request comments with coverage information.
+// newCommentCmd creates the comment command
+func (c *Commands) newCommentCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "comment",
+		Short: "Create PR coverage comment with analysis and templates",
+		Long: `Create or update pull request comments with coverage information.
 
 Features:
 - Intelligent PR comment management with anti-spam features
@@ -43,422 +45,438 @@ Features:
 - PR-specific badge generation with unique naming
 - GitHub status check integration for blocking PR merges
 - Smart update logic and lifecycle management`,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		// Get flags
-		prNumber, _ := cmd.Flags().GetInt("pr")
-		inputFile, _ := cmd.Flags().GetString("coverage")
-		baseCoverageFile, _ := cmd.Flags().GetString("base-coverage")
-		badgeURL, _ := cmd.Flags().GetString("badge-url")
-		reportURL, _ := cmd.Flags().GetString("report-url")
-		createStatus, _ := cmd.Flags().GetBool("status")
-		blockOnFailure, _ := cmd.Flags().GetBool("block-merge")
-		generateBadges, _ := cmd.Flags().GetBool("generate-badges")
-		enableAnalysis, _ := cmd.Flags().GetBool("enable-analysis")
-		antiSpam, _ := cmd.Flags().GetBool("anti-spam")
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			// Get flags
+			prNumber, _ := cmd.Flags().GetInt("pr")
+			inputFile, _ := cmd.Flags().GetString("coverage")
+			baseCoverageFile, _ := cmd.Flags().GetString("base-coverage")
+			badgeURL, _ := cmd.Flags().GetString("badge-url")
+			reportURL, _ := cmd.Flags().GetString("report-url")
+			createStatus, _ := cmd.Flags().GetBool("status")
+			blockOnFailure, _ := cmd.Flags().GetBool("block-merge")
+			generateBadges, _ := cmd.Flags().GetBool("generate-badges")
+			enableAnalysis, _ := cmd.Flags().GetBool("enable-analysis")
+			antiSpam, _ := cmd.Flags().GetBool("anti-spam")
+			dryRun, _ := cmd.Flags().GetBool("dry-run")
 
-		// Load configuration
-		cfg := config.Load()
+			// Load configuration
+			cfg := config.Load()
 
-		// Validate GitHub configuration
-		if cfg.GitHub.Token == "" {
-			return ErrGitHubTokenRequired
-		}
-		if cfg.GitHub.Owner == "" {
-			return ErrGitHubOwnerRequired
-		}
-		if cfg.GitHub.Repository == "" {
-			return ErrGitHubRepoRequired
-		}
+			// Validate GitHub configuration
+			if cfg.GitHub.Token == "" {
+				return ErrGitHubTokenRequired
+			}
+			if cfg.GitHub.Owner == "" {
+				return ErrGitHubOwnerRequired
+			}
+			if cfg.GitHub.Repository == "" {
+				return ErrGitHubRepoRequired
+			}
 
-		// Use PR number from config if not provided
-		if prNumber == 0 {
-			prNumber = cfg.GitHub.PullRequest
-		}
-		if prNumber == 0 {
-			return ErrPRNumberRequired
-		}
+			// Use PR number from config if not provided
+			if prNumber == 0 {
+				prNumber = cfg.GitHub.PullRequest
+			}
+			if prNumber == 0 {
+				return ErrPRNumberRequired
+			}
 
-		// Set defaults
-		if inputFile == "" {
-			inputFile = cfg.Coverage.InputFile
-		}
-		if badgeURL == "" {
-			badgeURL = cfg.GetBadgeURL()
-		}
-		if reportURL == "" {
-			reportURL = cfg.GetReportURL()
-		}
-		// URLs will be passed to template data below
+			// Set defaults
+			if inputFile == "" {
+				inputFile = cfg.Coverage.InputFile
+			}
+			if badgeURL == "" {
+				badgeURL = cfg.GetBadgeURL()
+			}
+			if reportURL == "" {
+				reportURL = cfg.GetReportURL()
+			}
+			// URLs will be passed to template data below
 
-		// Parse current coverage data
-		p := parser.New()
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
+			// Parse current coverage data
+			p := parser.New()
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
 
-		coverage, err := p.ParseFile(ctx, inputFile)
-		if err != nil {
-			return fmt.Errorf("failed to parse coverage file: %w", err)
-		}
-
-		// Parse base coverage data for comparison (if provided)
-		var baseCoverage *parser.CoverageData
-		if baseCoverageFile != "" {
-			baseCoverage, err = p.ParseFile(ctx, baseCoverageFile)
+			coverage, err := p.ParseFile(ctx, inputFile)
 			if err != nil {
-				cmd.Printf("Warning: failed to parse base coverage file: %v\n", err)
-				baseCoverage = nil
-			}
-		}
-
-		// Get trend information if history is enabled
-		trend := "stable"
-		if cfg.History.Enabled {
-			historyConfig := &history.Config{
-				StoragePath:    cfg.History.StoragePath,
-				RetentionDays:  cfg.History.RetentionDays,
-				MaxEntries:     cfg.History.MaxEntries,
-				AutoCleanup:    cfg.History.AutoCleanup,
-				MetricsEnabled: cfg.History.MetricsEnabled,
-			}
-			tracker := history.NewWithConfig(historyConfig)
-
-			// Get latest entry to compare
-			branch := cfg.GitHub.CommitSHA
-			if branch == "" {
-				branch = "master"
+				return fmt.Errorf("failed to parse coverage file: %w", err)
 			}
 
-			if latest, latestErr := tracker.GetLatestEntry(ctx, branch); latestErr == nil {
-				if coverage.Percentage > latest.Coverage.Percentage {
-					trend = "up"
-				} else if coverage.Percentage < latest.Coverage.Percentage {
-					trend = "down"
+			// Parse base coverage data for comparison (if provided)
+			var baseCoverage *parser.CoverageData
+			if baseCoverageFile != "" {
+				baseCoverage, err = p.ParseFile(ctx, baseCoverageFile)
+				if err != nil {
+					cmd.Printf("Warning: failed to parse base coverage file: %v\n", err)
+					baseCoverage = nil
 				}
 			}
-		}
 
-		// Create GitHub client
-		githubConfig := &github.Config{
-			Token:      cfg.GitHub.Token,
-			BaseURL:    "https://api.github.com",
-			Timeout:    cfg.GitHub.Timeout,
-			RetryCount: 3,
-			UserAgent:  "go-coverage/2.0",
-		}
-		client := github.NewWithConfig(githubConfig)
+			// Get trend information if history is enabled
+			trend := "stable"
+			if cfg.History.Enabled {
+				historyConfig := &history.Config{
+					StoragePath:    cfg.History.StoragePath,
+					RetentionDays:  cfg.History.RetentionDays,
+					MaxEntries:     cfg.History.MaxEntries,
+					AutoCleanup:    cfg.History.AutoCleanup,
+					MetricsEnabled: cfg.History.MetricsEnabled,
+				}
+				tracker := history.NewWithConfig(historyConfig)
 
-		// Analyze PR files to understand the impact
-		var prFileAnalysis *github.PRFileAnalysis
-		if enableAnalysis {
-			prDiff, diffErr := client.GetPRDiff(ctx, cfg.GitHub.Owner, cfg.GitHub.Repository, prNumber)
-			if diffErr != nil {
-				cmd.Printf("Warning: failed to get PR diff: %v\n", diffErr)
-			} else {
-				prFileAnalysis = github.AnalyzePRFiles(prDiff)
-				cmd.Printf("📋 PR Analysis: %s\n", prFileAnalysis.Summary.GetSummaryText())
+				// Get latest entry to compare
+				branch := cfg.GitHub.CommitSHA
+				if branch == "" {
+					branch = "master"
+				}
+
+				if latest, latestErr := tracker.GetLatestEntry(ctx, branch); latestErr == nil {
+					if coverage.Percentage > latest.Coverage.Percentage {
+						trend = "up"
+					} else if coverage.Percentage < latest.Coverage.Percentage {
+						trend = "down"
+					}
+				}
 			}
-		}
 
-		// Initialize PR comment system
-		prCommentConfig := &github.PRCommentConfig{
-			MinUpdateIntervalMinutes: 5,
-			MaxCommentsPerPR:         1,
-			CommentSignature:         "go-coverage-v1",
-			IncludeTrend:             true,
-			IncludeCoverageDetails:   true,
-			IncludeFileAnalysis:      enableAnalysis,
-			ShowCoverageHistory:      true,
-			GeneratePRBadges:         generateBadges,
-			EnableStatusChecks:       createStatus,
-			FailBelowThreshold:       true,
-			BlockMergeOnFailure:      blockOnFailure,
-		}
+			// Create GitHub client
+			githubConfig := &github.Config{
+				Token:      cfg.GitHub.Token,
+				BaseURL:    "https://api.github.com",
+				Timeout:    cfg.GitHub.Timeout,
+				RetryCount: 3,
+				UserAgent:  "go-coverage/2.0",
+			}
+			client := github.NewWithConfig(githubConfig)
 
-		// Adjust settings for anti-spam mode
-		if antiSpam {
-			prCommentConfig.MinUpdateIntervalMinutes = 15
-			prCommentConfig.MaxCommentsPerPR = 1
-		}
+			// Analyze PR files to understand the impact
+			var prFileAnalysis *github.PRFileAnalysis
+			if enableAnalysis {
+				prDiff, diffErr := client.GetPRDiff(ctx, cfg.GitHub.Owner, cfg.GitHub.Repository, prNumber)
+				if diffErr != nil {
+					cmd.Printf("Warning: failed to get PR diff: %v\n", diffErr)
+				} else {
+					prFileAnalysis = github.AnalyzePRFiles(prDiff)
+					cmd.Printf("📋 PR Analysis: %s\n", prFileAnalysis.Summary.GetSummaryText())
+				}
+			}
 
-		prCommentManager := github.NewPRCommentManager(client, prCommentConfig)
+			// Initialize PR comment system
+			prCommentConfig := &github.PRCommentConfig{
+				MinUpdateIntervalMinutes: 5,
+				MaxCommentsPerPR:         1,
+				CommentSignature:         "go-coverage-v1",
+				IncludeTrend:             true,
+				IncludeCoverageDetails:   true,
+				IncludeFileAnalysis:      enableAnalysis,
+				ShowCoverageHistory:      true,
+				GeneratePRBadges:         generateBadges,
+				EnableStatusChecks:       createStatus,
+				FailBelowThreshold:       true,
+				BlockMergeOnFailure:      blockOnFailure,
+			}
 
-		// Perform coverage comparison and analysis if base coverage is available
-		var comparison *github.CoverageComparison
-		if baseCoverage != nil && enableAnalysis {
-			comparisonEngine := analysis.NewComparisonEngine(nil)
+			// Adjust settings for anti-spam mode
+			if antiSpam {
+				prCommentConfig.MinUpdateIntervalMinutes = 15
+				prCommentConfig.MaxCommentsPerPR = 1
+			}
 
-			// Convert parser data to comparison snapshots
-			baseSnapshot := convertToSnapshot(baseCoverage, "master", "")
-			prSnapshot := convertToSnapshot(coverage, "current", cfg.GitHub.CommitSHA)
+			prCommentManager := github.NewPRCommentManager(client, prCommentConfig)
 
-			comparisonResult, compErr := comparisonEngine.CompareCoverage(ctx, baseSnapshot, prSnapshot)
-			if compErr != nil {
-				cmd.Printf("Warning: failed to perform coverage comparison: %v\n", compErr)
-			} else {
-				// Convert comparison result to PR comment format
+			// Perform coverage comparison and analysis if base coverage is available
+			var comparison *github.CoverageComparison
+			if baseCoverage != nil && enableAnalysis {
+				comparisonEngine := analysis.NewComparisonEngine(nil)
+
+				// Convert parser data to comparison snapshots
+				baseSnapshot := convertToSnapshot(baseCoverage, "master", "")
+				prSnapshot := convertToSnapshot(coverage, "current", cfg.GitHub.CommitSHA)
+
+				comparisonResult, compErr := comparisonEngine.CompareCoverage(ctx, baseSnapshot, prSnapshot)
+				if compErr != nil {
+					cmd.Printf("Warning: failed to perform coverage comparison: %v\n", compErr)
+				} else {
+					// Convert comparison result to PR comment format
+					comparison = &github.CoverageComparison{
+						BaseCoverage: github.CoverageData{
+							Percentage:        baseCoverage.Percentage,
+							TotalStatements:   baseCoverage.TotalLines,   // Actually statement count, not line count
+							CoveredStatements: baseCoverage.CoveredLines, // Actually covered statement count, not line count
+							CommitSHA:         "",
+							Branch:            "master",
+							Timestamp:         time.Now(),
+						},
+						PRCoverage: github.CoverageData{
+							Percentage:        coverage.Percentage,
+							TotalStatements:   coverage.TotalLines,   // Actually statement count, not line count
+							CoveredStatements: coverage.CoveredLines, // Actually covered statement count, not line count
+							CommitSHA:         cfg.GitHub.CommitSHA,
+							Branch:            "current",
+							Timestamp:         time.Now(),
+						},
+						Difference:       coverage.Percentage - baseCoverage.Percentage,
+						TrendAnalysis:    convertTrendData(comparisonResult.TrendAnalysis),
+						FileChanges:      convertFileChanges(comparisonResult.FileChanges),
+						SignificantFiles: extractSignificantFiles(comparisonResult.FileChanges),
+						PRFileAnalysis:   prFileAnalysis,
+					}
+				}
+			}
+
+			// Fall back to simple comparison if no base coverage or analysis disabled
+			if comparison == nil {
 				comparison = &github.CoverageComparison{
+					// Only set base coverage if we actually have base data
 					BaseCoverage: github.CoverageData{
-						Percentage:        baseCoverage.Percentage,
-						TotalStatements:   baseCoverage.TotalLines,   // Actually statement count, not line count
-						CoveredStatements: baseCoverage.CoveredLines, // Actually covered statement count, not line count
+						// Leave base coverage empty when no baseline is available
+						// This prevents misleading "0 → current" comparisons
+						Percentage:        0,
+						TotalStatements:   0,
+						CoveredStatements: 0,
 						CommitSHA:         "",
-						Branch:            "master",
-						Timestamp:         time.Now(),
+						Branch:            "",
+						Timestamp:         time.Time{}, // Empty timestamp indicates no baseline
 					},
 					PRCoverage: github.CoverageData{
 						Percentage:        coverage.Percentage,
-						TotalStatements:   coverage.TotalLines,   // Actually statement count, not line count
-						CoveredStatements: coverage.CoveredLines, // Actually covered statement count, not line count
+						TotalStatements:   coverage.TotalLines,   // Actually contains statement count, not line count
+						CoveredStatements: coverage.CoveredLines, // Actually contains covered statement count, not line count
 						CommitSHA:         cfg.GitHub.CommitSHA,
 						Branch:            "current",
 						Timestamp:         time.Now(),
 					},
-					Difference:       coverage.Percentage - baseCoverage.Percentage,
-					TrendAnalysis:    convertTrendData(comparisonResult.TrendAnalysis),
-					FileChanges:      convertFileChanges(comparisonResult.FileChanges),
-					SignificantFiles: extractSignificantFiles(comparisonResult.FileChanges),
-					PRFileAnalysis:   prFileAnalysis,
+					Difference: 0, // No meaningful difference without baseline
+					TrendAnalysis: github.TrendData{
+						Direction:        trend,
+						Magnitude:        "minor",
+						PercentageChange: 0,
+						Momentum:         "steady",
+					},
+					PRFileAnalysis: prFileAnalysis, // Include PR file analysis even without baseline
 				}
 			}
-		}
 
-		// Fall back to simple comparison if no base coverage or analysis disabled
-		if comparison == nil {
-			comparison = &github.CoverageComparison{
-				// Only set base coverage if we actually have base data
-				BaseCoverage: github.CoverageData{
-					// Leave base coverage empty when no baseline is available
-					// This prevents misleading "0 → current" comparisons
-					Percentage:        0,
-					TotalStatements:   0,
-					CoveredStatements: 0,
-					CommitSHA:         "",
-					Branch:            "",
-					Timestamp:         time.Time{}, // Empty timestamp indicates no baseline
-				},
-				PRCoverage: github.CoverageData{
-					Percentage:        coverage.Percentage,
-					TotalStatements:   coverage.TotalLines,   // Actually contains statement count, not line count
-					CoveredStatements: coverage.CoveredLines, // Actually contains covered statement count, not line count
-					CommitSHA:         cfg.GitHub.CommitSHA,
-					Branch:            "current",
-					Timestamp:         time.Now(),
-				},
-				Difference: 0, // No meaningful difference without baseline
-				TrendAnalysis: github.TrendData{
-					Direction:        trend,
-					Magnitude:        "minor",
-					PercentageChange: 0,
-					Momentum:         "steady",
-				},
-				PRFileAnalysis: prFileAnalysis, // Include PR file analysis even without baseline
+			// Initialize template engine for comment generation
+			templateEngine := templates.NewPRTemplateEngine(&templates.TemplateConfig{
+				IncludeEmojis:          true,
+				IncludeCharts:          true,
+				MaxFileChanges:         20,
+				MaxRecommendations:     5,
+				UseMarkdownTables:      true,
+				UseCollapsibleSections: true,
+				IncludeProgressBars:    true,
+				BrandingEnabled:        true,
+			})
+
+			// Build template data
+			templateData := buildTemplateData(cfg, prNumber, comparison, coverage, badgeURL, reportURL)
+
+			// Render comment using template engine
+			commentBody, renderErr := templateEngine.RenderComment(ctx, "", templateData)
+			if renderErr != nil {
+				return fmt.Errorf("failed to render comment template: %w", renderErr)
 			}
-		}
 
-		// Initialize template engine for comment generation
-		templateEngine := templates.NewPRTemplateEngine(&templates.TemplateConfig{
-			IncludeEmojis:          true,
-			IncludeCharts:          true,
-			MaxFileChanges:         20,
-			MaxRecommendations:     5,
-			UseMarkdownTables:      true,
-			UseCollapsibleSections: true,
-			IncludeProgressBars:    true,
-			BrandingEnabled:        true,
-		})
+			if dryRun {
+				// Display preview for dry run
+				cmd.Printf("PR Comment Preview (Dry Run)\n")
+				cmd.Printf("=====================================\n")
+				cmd.Printf("Template: comprehensive\n")
+				cmd.Printf("PR: %d\n", prNumber)
+				cmd.Printf("Repository: %s/%s\n", cfg.GitHub.Owner, cfg.GitHub.Repository)
+				cmd.Printf("Coverage: %.2f%%\n", coverage.Percentage)
+				if comparison.BaseCoverage.Percentage > 0 {
+					cmd.Printf("Base Coverage: %.2f%%\n", comparison.BaseCoverage.Percentage)
+					cmd.Printf("Difference: %+.2f%%\n", comparison.Difference)
+				}
+				cmd.Printf("Features enabled:\n")
+				cmd.Printf("  - Analysis: %v\n", enableAnalysis)
+				cmd.Printf("  - Status Checks: %v\n", createStatus)
+				cmd.Printf("  - Badge Generation: %v\n", generateBadges)
+				cmd.Printf("  - Merge Blocking: %v\n", blockOnFailure)
+				cmd.Printf("  - Anti-spam: %v\n", antiSpam)
+				cmd.Printf("=====================================\n")
+				cmd.Println(commentBody)
+				cmd.Printf("=====================================\n")
 
-		// Build template data
-		templateData := buildTemplateData(cfg, prNumber, comparison, coverage, badgeURL, reportURL)
+				return nil
+			}
 
-		// Render comment using template engine
-		commentBody, renderErr := templateEngine.RenderComment(ctx, "", templateData)
-		if renderErr != nil {
-			return fmt.Errorf("failed to render comment template: %w", renderErr)
-		}
+			// Create or update PR comment
+			ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
+			defer cancel()
 
-		if dryRun {
-			// Display preview for dry run
-			cmd.Printf("PR Comment Preview (Dry Run)\n")
-			cmd.Printf("=====================================\n")
-			cmd.Printf("Template: comprehensive\n")
-			cmd.Printf("PR: %d\n", prNumber)
-			cmd.Printf("Repository: %s/%s\n", cfg.GitHub.Owner, cfg.GitHub.Repository)
-			cmd.Printf("Coverage: %.2f%%\n", coverage.Percentage)
+			result, err := prCommentManager.CreateOrUpdatePRComment(ctx, cfg.GitHub.Owner, cfg.GitHub.Repository, prNumber, commentBody, comparison)
+			if err != nil {
+				return fmt.Errorf("failed to create PR comment: %w", err)
+			}
+
+			cmd.Printf("Coverage comment %s successfully!\n", result.Action)
+			cmd.Printf("Comment ID: %d\n", result.CommentID)
+			cmd.Printf("Coverage: %.2f%%\n", comparison.PRCoverage.Percentage)
 			if comparison.BaseCoverage.Percentage > 0 {
-				cmd.Printf("Base Coverage: %.2f%%\n", comparison.BaseCoverage.Percentage)
-				cmd.Printf("Difference: %+.2f%%\n", comparison.Difference)
+				cmd.Printf("Change: %+.2f%% vs base\n", comparison.Difference)
 			}
-			cmd.Printf("Features enabled:\n")
-			cmd.Printf("  - Analysis: %v\n", enableAnalysis)
-			cmd.Printf("  - Status Checks: %v\n", createStatus)
-			cmd.Printf("  - Badge Generation: %v\n", generateBadges)
-			cmd.Printf("  - Merge Blocking: %v\n", blockOnFailure)
-			cmd.Printf("  - Anti-spam: %v\n", antiSpam)
-			cmd.Printf("=====================================\n")
-			cmd.Println(commentBody)
-			cmd.Printf("=====================================\n")
+			cmd.Printf("Action taken: %s (%s)\n", result.Action, result.Reason)
+
+			// Generate PR-specific badges if requested
+			if generateBadges {
+				badgeGenerator := badge.New()
+				// Configure badge manager to use /tmp/pr-badges for workflow compatibility
+				badgeConfig := &badge.PRBadgeConfig{
+					OutputBasePath:         "/tmp/pr-badges",
+					CreateDirectories:      true,
+					DirectoryPermissions:   0o755,
+					FilePermissions:        0o644,
+					CoveragePattern:        "badge-coverage-{style}.svg",
+					TrendPattern:           "badge-trend-{style}.svg",
+					StatusPattern:          "badge-status-{style}.svg",
+					ComparisonPattern:      "badge-comparison-{style}.svg",
+					Styles:                 []string{"flat"},
+					DefaultStyle:           "flat",
+					GenerateMultipleStyles: false,
+				}
+				prBadgeManager := badge.NewPRBadgeManager(badgeGenerator, badgeConfig)
+
+				badgeRequest := &badge.PRBadgeRequest{
+					Repository:   cfg.GitHub.Repository,
+					Owner:        cfg.GitHub.Owner,
+					PRNumber:     prNumber,
+					Branch:       "current",
+					CommitSHA:    cfg.GitHub.CommitSHA,
+					BaseBranch:   "master",
+					Coverage:     coverage.Percentage,
+					BaseCoverage: comparison.BaseCoverage.Percentage,
+					Trend:        determineBadgeTrend(comparison.TrendAnalysis.Direction),
+					QualityGrade: calculateQualityGrade(coverage.Percentage),
+					Types:        []badge.PRBadgeType{badge.PRBadgeCoverage, badge.PRBadgeTrend, badge.PRBadgeStatus},
+					Timestamp:    time.Now(),
+				}
+
+				badgeResult, err := prBadgeManager.GenerateStandardPRBadges(ctx, badgeRequest)
+				if err != nil {
+					cmd.Printf("Warning: failed to generate PR badges: %v\n", err)
+				} else {
+					cmd.Printf("Generated %d PR-specific badges\n", badgeResult.TotalBadges)
+					for badgeType, urls := range badgeResult.PublicURLs {
+						if len(urls) > 0 {
+							cmd.Printf("  %s: %s\n", badgeType, urls[0])
+						}
+					}
+				}
+
+				// Generate PR-specific coverage report
+				cmd.Printf("Generating PR coverage report...\n")
+
+				// Get branch name from environment with PR context awareness
+				// For file URLs in PRs, we want to use the base branch (master) not the PR branch
+				// This ensures the URLs remain valid after the PR is merged
+				branchName := os.Getenv("GITHUB_BASE_REF") // Base branch for PRs
+				if branchName == "" {
+					branchName = os.Getenv("GITHUB_REF_NAME") // Push branch name
+				}
+				if branchName == "" {
+					branchName = "master" // Fallback
+				}
+
+				// Create PR report directory
+				prReportDir := fmt.Sprintf("/tmp/pr-badges/pr/%d", prNumber)
+				if err := os.MkdirAll(prReportDir, 0o750); err != nil {
+					cmd.Printf("Warning: failed to create PR report directory: %v\n", err)
+				}
+
+				reportConfig := &report.Config{
+					OutputDir:       prReportDir,
+					RepositoryOwner: cfg.GitHub.Owner,
+					RepositoryName:  cfg.GitHub.Repository,
+					BranchName:      branchName,
+					CommitSHA:       cfg.GitHub.CommitSHA,
+					PRNumber:        fmt.Sprintf("%d", prNumber),
+				}
+
+				reportGen := report.NewGenerator(reportConfig)
+				if err := reportGen.Generate(ctx, coverage); err != nil {
+					cmd.Printf("Warning: failed to generate PR report: %v\n", err)
+				} else {
+					cmd.Printf("PR report saved to: %s/coverage.html\n", prReportDir)
+
+					// Also copy index.html to support both coverage.html and index.html access
+					if htmlData, err := os.ReadFile(fmt.Sprintf("%s/coverage.html", prReportDir)); err == nil {
+						if err := os.WriteFile(fmt.Sprintf("%s/index.html", prReportDir), htmlData, 0o600); err != nil {
+							cmd.Printf("Warning: failed to create index.html copy: %v\n", err)
+						}
+					}
+				}
+			}
+
+			// Create status checks if requested
+			if createStatus && cfg.GitHub.CommitSHA != "" {
+				statusManager := github.NewStatusCheckManager(client, nil)
+
+				statusRequest := &github.StatusCheckRequest{
+					Owner:      cfg.GitHub.Owner,
+					Repository: cfg.GitHub.Repository,
+					CommitSHA:  cfg.GitHub.CommitSHA,
+					PRNumber:   prNumber,
+					Branch:     "current",
+					BaseBranch: "master",
+					Coverage: github.CoverageStatusData{
+						Percentage:        coverage.Percentage,
+						TotalStatements:   coverage.TotalLines,
+						CoveredStatements: coverage.CoveredLines,
+						Change:            comparison.Difference,
+						Trend:             comparison.TrendAnalysis.Direction,
+					},
+					Comparison: github.ComparisonStatusData{
+						BasePercentage:    comparison.BaseCoverage.Percentage,
+						CurrentPercentage: comparison.PRCoverage.Percentage,
+						Difference:        comparison.Difference,
+						IsSignificant:     comparison.Difference > 1.0 || comparison.Difference < -1.0,
+						Direction:         comparison.TrendAnalysis.Direction,
+					},
+					Quality: github.QualityStatusData{
+						Grade:     calculateQualityGrade(coverage.Percentage),
+						Score:     coverage.Percentage,
+						RiskLevel: calculateRiskLevel(coverage.Percentage),
+					},
+				}
+
+				statusResult, err := statusManager.CreateStatusChecks(ctx, statusRequest)
+				if err != nil {
+					cmd.Printf("Warning: failed to create status checks: %v\n", err)
+				} else {
+					cmd.Printf("Created %d status checks\n", statusResult.TotalChecks)
+					cmd.Printf("Passed: %d, Failed: %d, Errors: %d\n",
+						statusResult.PassedChecks, statusResult.FailedChecks, statusResult.ErrorChecks)
+					if statusResult.BlockingPR {
+						cmd.Printf("⚠️ PR merge is blocked due to failed required checks\n")
+					}
+					if len(statusResult.RequiredFailed) > 0 {
+						cmd.Printf("Failed required checks: %v\n", statusResult.RequiredFailed)
+					}
+				}
+			}
 
 			return nil
-		}
+		},
+	}
 
-		// Create or update PR comment
-		ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
+	// Add flags
+	cmd.Flags().IntP("pr", "p", 0, "Pull request number")
+	cmd.Flags().StringP("coverage", "c", "", "Path to coverage profile file")
+	cmd.Flags().String("base-coverage", "", "Path to base branch coverage file for comparison")
+	cmd.Flags().String("badge-url", "", "Custom badge URL (optional)")
+	cmd.Flags().String("report-url", "", "Custom report URL (optional)")
+	cmd.Flags().Bool("status", true, "Create GitHub commit status")
+	cmd.Flags().Bool("block-merge", false, "Block PR merge on coverage failure")
+	cmd.Flags().Bool("generate-badges", false, "Generate PR-specific badges")
+	cmd.Flags().Bool("enable-analysis", true, "Enable code quality analysis")
+	cmd.Flags().Bool("anti-spam", true, "Enable anti-spam features")
+	cmd.Flags().Bool("dry-run", false, "Show what would be posted without actually posting")
 
-		result, err := prCommentManager.CreateOrUpdatePRComment(ctx, cfg.GitHub.Owner, cfg.GitHub.Repository, prNumber, commentBody, comparison)
-		if err != nil {
-			return fmt.Errorf("failed to create PR comment: %w", err)
-		}
-
-		cmd.Printf("Coverage comment %s successfully!\n", result.Action)
-		cmd.Printf("Comment ID: %d\n", result.CommentID)
-		cmd.Printf("Coverage: %.2f%%\n", comparison.PRCoverage.Percentage)
-		if comparison.BaseCoverage.Percentage > 0 {
-			cmd.Printf("Change: %+.2f%% vs base\n", comparison.Difference)
-		}
-		cmd.Printf("Action taken: %s (%s)\n", result.Action, result.Reason)
-
-		// Generate PR-specific badges if requested
-		if generateBadges {
-			badgeGenerator := badge.New()
-			// Configure badge manager to use /tmp/pr-badges for workflow compatibility
-			badgeConfig := &badge.PRBadgeConfig{
-				OutputBasePath:         "/tmp/pr-badges",
-				CreateDirectories:      true,
-				DirectoryPermissions:   0o755,
-				FilePermissions:        0o644,
-				CoveragePattern:        "badge-coverage-{style}.svg",
-				TrendPattern:           "badge-trend-{style}.svg",
-				StatusPattern:          "badge-status-{style}.svg",
-				ComparisonPattern:      "badge-comparison-{style}.svg",
-				Styles:                 []string{"flat"},
-				DefaultStyle:           "flat",
-				GenerateMultipleStyles: false,
-			}
-			prBadgeManager := badge.NewPRBadgeManager(badgeGenerator, badgeConfig)
-
-			badgeRequest := &badge.PRBadgeRequest{
-				Repository:   cfg.GitHub.Repository,
-				Owner:        cfg.GitHub.Owner,
-				PRNumber:     prNumber,
-				Branch:       "current",
-				CommitSHA:    cfg.GitHub.CommitSHA,
-				BaseBranch:   "master",
-				Coverage:     coverage.Percentage,
-				BaseCoverage: comparison.BaseCoverage.Percentage,
-				Trend:        determineBadgeTrend(comparison.TrendAnalysis.Direction),
-				QualityGrade: calculateQualityGrade(coverage.Percentage),
-				Types:        []badge.PRBadgeType{badge.PRBadgeCoverage, badge.PRBadgeTrend, badge.PRBadgeStatus},
-				Timestamp:    time.Now(),
-			}
-
-			badgeResult, err := prBadgeManager.GenerateStandardPRBadges(ctx, badgeRequest)
-			if err != nil {
-				cmd.Printf("Warning: failed to generate PR badges: %v\n", err)
-			} else {
-				cmd.Printf("Generated %d PR-specific badges\n", badgeResult.TotalBadges)
-				for badgeType, urls := range badgeResult.PublicURLs {
-					if len(urls) > 0 {
-						cmd.Printf("  %s: %s\n", badgeType, urls[0])
-					}
-				}
-			}
-
-			// Generate PR-specific coverage report
-			cmd.Printf("Generating PR coverage report...\n")
-
-			// Get branch name from environment with PR context awareness
-			// For file URLs in PRs, we want to use the base branch (master) not the PR branch
-			// This ensures the URLs remain valid after the PR is merged
-			branchName := os.Getenv("GITHUB_BASE_REF") // Base branch for PRs
-			if branchName == "" {
-				branchName = os.Getenv("GITHUB_REF_NAME") // Push branch name
-			}
-			if branchName == "" {
-				branchName = "master" // Fallback
-			}
-
-			// Create PR report directory
-			prReportDir := fmt.Sprintf("/tmp/pr-badges/pr/%d", prNumber)
-			if err := os.MkdirAll(prReportDir, 0o750); err != nil {
-				cmd.Printf("Warning: failed to create PR report directory: %v\n", err)
-			}
-
-			reportConfig := &report.Config{
-				OutputDir:       prReportDir,
-				RepositoryOwner: cfg.GitHub.Owner,
-				RepositoryName:  cfg.GitHub.Repository,
-				BranchName:      branchName,
-				CommitSHA:       cfg.GitHub.CommitSHA,
-				PRNumber:        fmt.Sprintf("%d", prNumber),
-			}
-
-			reportGen := report.NewGenerator(reportConfig)
-			if err := reportGen.Generate(ctx, coverage); err != nil {
-				cmd.Printf("Warning: failed to generate PR report: %v\n", err)
-			} else {
-				cmd.Printf("PR report saved to: %s/coverage.html\n", prReportDir)
-
-				// Also copy index.html to support both coverage.html and index.html access
-				if htmlData, err := os.ReadFile(fmt.Sprintf("%s/coverage.html", prReportDir)); err == nil {
-					if err := os.WriteFile(fmt.Sprintf("%s/index.html", prReportDir), htmlData, 0o600); err != nil {
-						cmd.Printf("Warning: failed to create index.html copy: %v\n", err)
-					}
-				}
-			}
-		}
-
-		// Create status checks if requested
-		if createStatus && cfg.GitHub.CommitSHA != "" {
-			statusManager := github.NewStatusCheckManager(client, nil)
-
-			statusRequest := &github.StatusCheckRequest{
-				Owner:      cfg.GitHub.Owner,
-				Repository: cfg.GitHub.Repository,
-				CommitSHA:  cfg.GitHub.CommitSHA,
-				PRNumber:   prNumber,
-				Branch:     "current",
-				BaseBranch: "master",
-				Coverage: github.CoverageStatusData{
-					Percentage:        coverage.Percentage,
-					TotalStatements:   coverage.TotalLines,
-					CoveredStatements: coverage.CoveredLines,
-					Change:            comparison.Difference,
-					Trend:             comparison.TrendAnalysis.Direction,
-				},
-				Comparison: github.ComparisonStatusData{
-					BasePercentage:    comparison.BaseCoverage.Percentage,
-					CurrentPercentage: comparison.PRCoverage.Percentage,
-					Difference:        comparison.Difference,
-					IsSignificant:     comparison.Difference > 1.0 || comparison.Difference < -1.0,
-					Direction:         comparison.TrendAnalysis.Direction,
-				},
-				Quality: github.QualityStatusData{
-					Grade:     calculateQualityGrade(coverage.Percentage),
-					Score:     coverage.Percentage,
-					RiskLevel: calculateRiskLevel(coverage.Percentage),
-				},
-			}
-
-			statusResult, err := statusManager.CreateStatusChecks(ctx, statusRequest)
-			if err != nil {
-				cmd.Printf("Warning: failed to create status checks: %v\n", err)
-			} else {
-				cmd.Printf("Created %d status checks\n", statusResult.TotalChecks)
-				cmd.Printf("Passed: %d, Failed: %d, Errors: %d\n",
-					statusResult.PassedChecks, statusResult.FailedChecks, statusResult.ErrorChecks)
-				if statusResult.BlockingPR {
-					cmd.Printf("⚠️ PR merge is blocked due to failed required checks\n")
-				}
-				if len(statusResult.RequiredFailed) > 0 {
-					cmd.Printf("Failed required checks: %v\n", statusResult.RequiredFailed)
-				}
-			}
-		}
-
-		return nil
-	},
+	return cmd
 }
 
 // Helper functions for converting data structures
@@ -705,18 +723,4 @@ func convertPRFiles(files []github.PRFile) []templates.PRFileData {
 		}
 	}
 	return result
-}
-
-func init() { //nolint:gochecknoinits // CLI command initialization
-	commentCmd.Flags().IntP("pr", "p", 0, "Pull request number (defaults to GITHUB_PR_NUMBER)")
-	commentCmd.Flags().StringP("coverage", "c", "", "Coverage data file")
-	commentCmd.Flags().String("base-coverage", "", "Base coverage data file for comparison")
-	commentCmd.Flags().String("badge-url", "", "Badge URL (auto-generated if not provided)")
-	commentCmd.Flags().String("report-url", "", "Report URL (auto-generated if not provided)")
-	commentCmd.Flags().Bool("status", false, "Create status checks")
-	commentCmd.Flags().Bool("block-merge", false, "Block PR merge on coverage failure")
-	commentCmd.Flags().Bool("generate-badges", false, "Generate PR-specific badges")
-	commentCmd.Flags().Bool("enable-analysis", true, "Enable detailed coverage analysis and comparison")
-	commentCmd.Flags().Bool("anti-spam", true, "Enable anti-spam features")
-	commentCmd.Flags().Bool("dry-run", false, "Show preview of comment without posting")
 }

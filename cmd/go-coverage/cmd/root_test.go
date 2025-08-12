@@ -34,7 +34,7 @@ func TestExecute(t *testing.T) {
 			name:        "version flag",
 			args:        []string{"--version"},
 			expectError: false,
-			contains:    []string{"go-coverage version 1.0.8"},
+			contains:    []string{"go-coverage version"},
 		},
 		{
 			name:        "debug flag",
@@ -77,7 +77,7 @@ the simplicity and performance that Go developers expect.
 
 Built as a bolt-on solution completely encapsulated within the .github folder,
 this tool replaces Codecov with zero external service dependencies.`,
-				Version: "1.0.8",
+				Version: "test",
 			}
 
 			// Add flags
@@ -85,12 +85,18 @@ this tool replaces Codecov with zero external service dependencies.`,
 			testRootCmd.PersistentFlags().StringP("log-level", "l", "info", "Log level (debug, info, warn, error)")
 			testRootCmd.PersistentFlags().String("log-format", "text", "Log format (text, json, pretty)")
 
-			// Add subcommands
-			testRootCmd.AddCommand(completeCmd)
-			testRootCmd.AddCommand(historyCmd)
-			testRootCmd.AddCommand(commentCmd)
-			testRootCmd.AddCommand(parseCmd)
-			testRootCmd.AddCommand(setupPagesCmd)
+			// Create Commands instance and add subcommands
+			versionInfo := VersionInfo{
+				Version:   "test",
+				Commit:    "test-commit",
+				BuildDate: "test-date",
+			}
+			commands := NewCommands(versionInfo)
+			testRootCmd.AddCommand(commands.Complete)
+			testRootCmd.AddCommand(commands.History)
+			testRootCmd.AddCommand(commands.Comment)
+			testRootCmd.AddCommand(commands.Parse)
+			testRootCmd.AddCommand(commands.SetupPages)
 
 			testRootCmd.SetOut(&buf)
 			testRootCmd.SetErr(&buf)
@@ -116,36 +122,51 @@ this tool replaces Codecov with zero external service dependencies.`,
 }
 
 func TestRootCommandSetup(t *testing.T) {
+	// Create Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
+
 	// Test that rootCmd is properly configured
-	assert.Equal(t, "go-coverage", rootCmd.Use)
-	assert.Equal(t, "Go-native coverage system for CI/CD", rootCmd.Short)
-	assert.Contains(t, rootCmd.Long, "Go Coverage is a self-contained")
-	assert.Equal(t, "1.0.8", rootCmd.Version)
+	assert.Equal(t, "go-coverage", commands.Root.Use)
+	assert.Equal(t, "Go-native coverage system for CI/CD", commands.Root.Short)
+	assert.Contains(t, commands.Root.Long, "Go Coverage is a self-contained")
 
 	// Test that all expected flags exist
 	flagNames := []string{"debug", "log-level", "log-format"}
 	for _, flagName := range flagNames {
-		flag := rootCmd.PersistentFlags().Lookup(flagName)
+		flag := commands.Root.PersistentFlags().Lookup(flagName)
 		assert.NotNil(t, flag, "Flag %s should exist", flagName)
 	}
 
 	// Test flag defaults
-	debugFlag := rootCmd.PersistentFlags().Lookup("debug")
+	debugFlag := commands.Root.PersistentFlags().Lookup("debug")
 	assert.Equal(t, "false", debugFlag.DefValue)
 
-	logLevelFlag := rootCmd.PersistentFlags().Lookup("log-level")
+	logLevelFlag := commands.Root.PersistentFlags().Lookup("log-level")
 	assert.Equal(t, "info", logLevelFlag.DefValue)
 
-	logFormatFlag := rootCmd.PersistentFlags().Lookup("log-format")
+	logFormatFlag := commands.Root.PersistentFlags().Lookup("log-format")
 	assert.Equal(t, "text", logFormatFlag.DefValue)
 }
 
 func TestRootCommandSubcommands(t *testing.T) {
+	// Create Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
+
 	// Test that all expected subcommands are added
-	expectedCommands := []string{"complete", "history", "comment", "parse", "setup-pages"}
+	expectedCommands := []string{"complete", "history", "comment", "parse", "setup-pages", "upgrade"}
 	actualCommands := make([]string, 0)
 
-	for _, cmd := range rootCmd.Commands() {
+	for _, cmd := range commands.Root.Commands() {
 		actualCommands = append(actualCommands, cmd.Name())
 	}
 
@@ -156,32 +177,22 @@ func TestRootCommandSubcommands(t *testing.T) {
 }
 
 func TestExecuteWithoutArgs(t *testing.T) {
-	// Test Execute function directly
-	// This tests the module-level Execute function
+	// Test Commands Execute function
 	var buf bytes.Buffer
 
-	// Save original and restore after test
-	originalRootCmd := rootCmd
-	defer func() {
-		rootCmd = originalRootCmd
-	}()
-
-	// Create a test root command with help output
-	rootCmd = &cobra.Command{
-		Use:   "go-coverage",
-		Short: "Go-native coverage system for CI/CD",
-		Long: `Go Coverage is a self-contained, Go-native coverage system that provides
-professional coverage tracking, badge generation, and reporting while maintaining
-the simplicity and performance that Go developers expect.`,
-		Version: "1.0.8",
-		Args:    cobra.NoArgs,
+	// Create Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
 	}
+	commands := NewCommands(versionInfo)
 
-	rootCmd.SetOut(&buf)
-	rootCmd.SetErr(&buf)
-	rootCmd.SetArgs([]string{"--help"})
+	commands.Root.SetOut(&buf)
+	commands.Root.SetErr(&buf)
+	commands.Root.SetArgs([]string{"--help"})
 
-	err := Execute()
+	err := commands.Execute()
 	require.NoError(t, err)
 
 	output := buf.String()
@@ -189,21 +200,20 @@ the simplicity and performance that Go developers expect.`,
 }
 
 func TestExecuteWithError(t *testing.T) {
-	// Save original and restore after test
-	originalRootCmd := rootCmd
-	defer func() {
-		rootCmd = originalRootCmd
-	}()
+	// Create Commands instance with custom root command that returns an error
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
 
-	// Create a test root command that returns an error
-	rootCmd = &cobra.Command{
-		Use: "go-coverage",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return assert.AnError
-		},
+	// Override the root command's RunE to return an error
+	commands.Root.RunE = func(cmd *cobra.Command, args []string) error {
+		return assert.AnError
 	}
 
-	err := Execute()
+	err := commands.Execute()
 	require.Error(t, err)
 	assert.Equal(t, assert.AnError, err)
 }

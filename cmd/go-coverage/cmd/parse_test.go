@@ -38,11 +38,19 @@ check coverage thresholds, and save results to a file.`,
 }
 
 func TestParseCommandMetadata(t *testing.T) {
+	// Create a Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
+
 	// Test command metadata
-	assert.Equal(t, "parse", parseCmd.Use)
-	assert.Equal(t, "Parse Go coverage profile and display results", parseCmd.Short)
-	assert.Contains(t, parseCmd.Long, "Parse a Go coverage profile file")
-	assert.NotNil(t, parseCmd.RunE)
+	assert.Equal(t, "parse", commands.Parse.Use)
+	assert.Equal(t, "Parse Go coverage profile and display results", commands.Parse.Short)
+	assert.Contains(t, commands.Parse.Long, "Parse a Go coverage profile file")
+	assert.NotNil(t, commands.Parse.RunE)
 }
 
 func TestParseCommandFlags(t *testing.T) {
@@ -59,7 +67,15 @@ func TestParseCommandFlags(t *testing.T) {
 
 	for flagName, expected := range expectedFlags {
 		t.Run(fmt.Sprintf("flag_%s", flagName), func(t *testing.T) {
-			flag := parseCmd.Flags().Lookup(flagName)
+			// Create a Commands instance for testing
+			versionInfo := VersionInfo{
+				Version:   "test",
+				Commit:    "test-commit",
+				BuildDate: "test-date",
+			}
+			commands := NewCommands(versionInfo)
+
+			flag := commands.Parse.Flags().Lookup(flagName)
 			require.NotNil(t, flag, "Flag %s should exist", flagName)
 			assert.Equal(t, expected.flagType, flag.Value.Type(), "Flag %s should be %s type", flagName, expected.flagType)
 			assert.Equal(t, expected.defaultValue, flag.DefValue, "Flag %s should have default %s", flagName, expected.defaultValue)
@@ -104,13 +120,21 @@ github.com/test/repo/utils.go:5.1,7.2 2 2
 func TestRunParseWithInvalidFile(t *testing.T) {
 	// Test with non-existent file
 	var buf bytes.Buffer
+	// Create a Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
+
 	testCmd := &cobra.Command{
 		Use:  "parse",
-		RunE: parseCmd.RunE,
+		RunE: commands.Parse.RunE,
 	}
 	testCmd.SetOut(&buf)
 	testCmd.SetErr(&buf)
-	testCmd.Flags().AddFlagSet(parseCmd.Flags())
+	testCmd.Flags().AddFlagSet(commands.Parse.Flags())
 
 	testCmd.SetArgs([]string{"--file", "/nonexistent/coverage.txt"})
 

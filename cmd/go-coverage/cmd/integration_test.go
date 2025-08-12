@@ -187,7 +187,7 @@ func TestHistoryCommand(t *testing.T) {
 		Use:   "history",
 		Short: "Manage coverage history",
 		Long:  `Manage historical coverage data for trend analysis and tracking.`,
-		RunE:  historyCmd.RunE,
+		RunE:  NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).History.RunE,
 	}
 	setupHistoryCmd.Flags().StringP("add", "a", "", "Add coverage data file to history")
 	setupHistoryCmd.Flags().StringP("branch", "b", "", "Branch name")
@@ -322,7 +322,7 @@ func TestHistoryCommand(t *testing.T) {
 				Use:   "history",
 				Short: "Manage coverage history",
 				Long:  `Manage historical coverage data for trend analysis and tracking.`,
-				RunE:  historyCmd.RunE,
+				RunE:  NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).History.RunE,
 			}
 			testHistoryCmd.Flags().StringP("add", "a", "", "Add coverage data file to history")
 			testHistoryCmd.Flags().StringP("branch", "b", "", "Branch name")
@@ -457,7 +457,7 @@ func TestCommentCommand(t *testing.T) {
 				Use:   "comment",
 				Short: "Create PR coverage comment with analysis and templates",
 				Long:  `Create or update pull request comments with coverage information.`,
-				RunE:  commentCmd.RunE,
+				RunE:  NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).Comment.RunE,
 			}
 			// Add all the current flags from the actual comment command
 			testCommentCmd.Flags().IntP("pr", "p", 0, "Pull request number (defaults to GITHUB_PR_NUMBER)")
@@ -657,7 +657,7 @@ func TestCompleteCommand(t *testing.T) {
 				Short: "Run complete coverage pipeline",
 				Long: `Run the complete coverage pipeline: parse coverage, generate badge and report,
 update history, and create GitHub PR comment if in PR context.`,
-				RunE: completeCmd.RunE,
+				RunE: NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).Complete.RunE,
 			}
 			testCompleteCmd.Flags().StringP("input", "i", "", "Input coverage file")
 			testCompleteCmd.Flags().StringP("output", "o", "", "Output directory")
@@ -712,7 +712,9 @@ func TestRootCommandHelp(t *testing.T) {
 professional coverage tracking, badge generation, and reporting while maintaining
 the simplicity and performance that Go developers expect.`,
 	}
-	testCmd.AddCommand(completeCmd, historyCmd, commentCmd, parseCmd)
+	// Create Commands instance for testing
+	testCommands := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"})
+	testCmd.AddCommand(testCommands.Complete, testCommands.History, testCommands.Comment, testCommands.Parse)
 	testCmd.SetOut(&buf)
 	testCmd.SetErr(&buf)
 	testCmd.SetArgs([]string{"--help"})
@@ -740,6 +742,9 @@ func TestCommandFlags(t *testing.T) {
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
+	// Create Commands instance for testing
+	testCommands := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"})
+
 	tests := []struct {
 		name     string
 		cmd      *cobra.Command
@@ -748,7 +753,7 @@ func TestCommandFlags(t *testing.T) {
 	}{
 		// {
 		// 	name:     "parse command flags",
-		// 	cmd:      parseCmd,
+		// 	cmd:      testCommands.Parse,
 		// 	helpArgs: []string{"parse", "--help"},
 		// 	contains: []string{"--file", "--output", "--format", "--exclude-tests", "--threshold"},
 		// },
@@ -766,19 +771,19 @@ func TestCommandFlags(t *testing.T) {
 		// },
 		{
 			name:     "history command flags",
-			cmd:      historyCmd,
+			cmd:      testCommands.History,
 			helpArgs: []string{"history", "--help"},
 			contains: []string{"--add", "--branch", "--commit", "--trend", "--stats", "--cleanup"},
 		},
 		{
 			name:     "comment command flags",
-			cmd:      commentCmd,
+			cmd:      testCommands.Comment,
 			helpArgs: []string{"comment", "--help"},
 			contains: []string{"--pr", "--coverage", "--badge-url", "--status", "--dry-run"},
 		},
 		{
 			name:     "complete command flags",
-			cmd:      completeCmd,
+			cmd:      testCommands.Complete,
 			helpArgs: []string{"complete", "--help"},
 			contains: []string{"--input", "--output", "--skip-history", "--skip-github", "--dry-run"},
 		},

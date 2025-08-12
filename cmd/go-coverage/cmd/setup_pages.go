@@ -71,10 +71,12 @@ type BranchPolicy struct {
 	Type string `json:"type"`
 }
 
-var setupPagesCmd = &cobra.Command{ //nolint:gochecknoglobals // CLI command
-	Use:   "setup-pages [repository]",
-	Short: "Set up GitHub Pages environment for coverage deployment",
-	Long: `Configure GitHub Pages environment with deployment branch policies to allow
+// newSetupPagesCmd creates the setup-pages command
+func (c *Commands) newSetupPagesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "setup-pages [repository]",
+		Short: "Set up GitHub Pages environment for coverage deployment",
+		Long: `Configure GitHub Pages environment with deployment branch policies to allow
 coverage reports to be deployed from various branches including master, gh-pages,
 and wildcard patterns for feature branches and dependency updates.
 
@@ -86,126 +88,135 @@ Examples:
   go-coverage setup-pages owner/repo         # Specify repository explicitly
   go-coverage setup-pages --dry-run          # Preview changes without making them
   go-coverage setup-pages --verbose          # Show detailed output`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// Get flags
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		verbose, _ := cmd.Flags().GetBool("verbose")
-		customDomain, _ := cmd.Flags().GetString("custom-domain")
-		protectBranches, _ := cmd.Flags().GetBool("protect-branches")
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Get flags
+			dryRun, _ := cmd.Flags().GetBool("dry-run")
+			verbose, _ := cmd.Flags().GetBool("verbose")
+			customDomain, _ := cmd.Flags().GetString("custom-domain")
+			protectBranches, _ := cmd.Flags().GetBool("protect-branches")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
 
-		cmd.Printf("🚀 Go Coverage - GitHub Pages Setup\n")
-		cmd.Printf("=====================================\n\n")
+			cmd.Printf("🚀 Go Coverage - GitHub Pages Setup\n")
+			cmd.Printf("=====================================\n\n")
 
-		if dryRun {
-			cmd.Printf("🧪 DRY RUN MODE - No changes will be made\n\n")
-		}
-
-		// Step 1: Check prerequisites
-		cmd.Printf("🔍 Step 1: Checking prerequisites...\n")
-		if err := checkPrerequisites(ctx, cmd, verbose); err != nil {
-			return fmt.Errorf("prerequisites check failed: %w", err)
-		}
-		cmd.Printf("   ✅ GitHub CLI is installed and authenticated\n\n")
-
-		// Step 2: Determine repository
-		cmd.Printf("📋 Step 2: Determining repository...\n")
-		var repo string
-		if len(args) > 0 {
-			repo = args[0]
-			cmd.Printf("   📝 Using specified repository: %s\n", repo)
-		} else {
-			var err error
-			repo, err = getRepositoryFromGit(ctx, cmd, verbose)
-			if err != nil {
-				return fmt.Errorf("failed to determine repository: %w", err)
+			if dryRun {
+				cmd.Printf("🧪 DRY RUN MODE - No changes will be made\n\n")
 			}
-			cmd.Printf("   🔍 Auto-detected repository: %s\n", repo)
-		}
 
-		// Validate repository format
-		if !isValidRepositoryFormat(repo) {
-			return fmt.Errorf("repository format '%s': %w", repo, ErrInvalidRepositoryFormat)
-		}
-		cmd.Printf("\n")
+			// Step 1: Check prerequisites
+			cmd.Printf("🔍 Step 1: Checking prerequisites...\n")
+			if err := checkPrerequisites(ctx, cmd, verbose); err != nil {
+				return fmt.Errorf("prerequisites check failed: %w", err)
+			}
+			cmd.Printf("   ✅ GitHub CLI is installed and authenticated\n\n")
 
-		// Step 3: Check repository access
-		cmd.Printf("🔐 Step 3: Checking repository access...\n")
-		if err := checkRepositoryAccess(ctx, cmd, repo, verbose); err != nil {
-			return fmt.Errorf("repository access check failed: %w", err)
-		}
-		cmd.Printf("   ✅ Repository access confirmed\n\n")
-
-		// Step 4: Setup GitHub Pages environment
-		cmd.Printf("🌐 Step 4: Setting up GitHub Pages environment...\n")
-		if err := setupPagesEnvironment(ctx, cmd, repo, dryRun, verbose); err != nil {
-			return fmt.Errorf("failed to setup pages environment: %w", err)
-		}
-		cmd.Printf("   ✅ GitHub Pages environment configured\n\n")
-
-		// Step 5: Create initial gh-pages branch if needed
-		cmd.Printf("🌿 Step 5: Setting up gh-pages branch...\n")
-		if err := createInitialGhPagesBranch(ctx, cmd, repo, dryRun, verbose); err != nil {
-			cmd.Printf("   ⚠️  Failed to create initial gh-pages branch: %v\n", err)
-			cmd.Printf("   💡 You may need to create it manually or it will be created on first deployment\n")
-		} else {
-			cmd.Printf("   ✅ gh-pages branch ready\n")
-		}
-		cmd.Printf("\n")
-
-		// Step 6: Configure deployment branch policies
-		cmd.Printf("📋 Step 6: Configuring deployment branch policies...\n")
-		if err := setupDeploymentBranches(ctx, cmd, repo, dryRun, verbose); err != nil {
-			return fmt.Errorf("failed to setup deployment branches: %w", err)
-		}
-		cmd.Printf("   ✅ Deployment branch policies configured\n\n")
-
-		// Step 7: Configure custom domain (if specified)
-		if customDomain != "" {
-			cmd.Printf("🌍 Step 7: Configuring custom domain...\n")
-			if err := setupCustomDomain(ctx, cmd, repo, customDomain, dryRun, verbose); err != nil {
-				cmd.Printf("   ⚠️  Custom domain setup failed: %v\n", err)
-				cmd.Printf("   💡 You can configure this manually in repository settings\n")
+			// Step 2: Determine repository
+			cmd.Printf("📋 Step 2: Determining repository...\n")
+			var repo string
+			if len(args) > 0 {
+				repo = args[0]
+				cmd.Printf("   📝 Using specified repository: %s\n", repo)
 			} else {
-				cmd.Printf("   ✅ Custom domain configured: %s\n", customDomain)
+				var err error
+				repo, err = getRepositoryFromGit(ctx, cmd, verbose)
+				if err != nil {
+					return fmt.Errorf("failed to determine repository: %w", err)
+				}
+				cmd.Printf("   🔍 Auto-detected repository: %s\n", repo)
+			}
+
+			// Validate repository format
+			if !isValidRepositoryFormat(repo) {
+				return fmt.Errorf("repository format '%s': %w", repo, ErrInvalidRepositoryFormat)
 			}
 			cmd.Printf("\n")
-		}
 
-		// Step 8: Setup branch protection (if requested)
-		if protectBranches {
-			cmd.Printf("🛡️  Step 8: Setting up branch protection...\n")
-			if err := setupBranchProtection(ctx, cmd, repo, dryRun, verbose); err != nil {
-				cmd.Printf("   ⚠️  Branch protection setup failed: %v\n", err)
-				cmd.Printf("   💡 You can configure this manually in repository settings\n")
+			// Step 3: Check repository access
+			cmd.Printf("🔐 Step 3: Checking repository access...\n")
+			if err := checkRepositoryAccess(ctx, cmd, repo, verbose); err != nil {
+				return fmt.Errorf("repository access check failed: %w", err)
+			}
+			cmd.Printf("   ✅ Repository access confirmed\n\n")
+
+			// Step 4: Setup GitHub Pages environment
+			cmd.Printf("🌐 Step 4: Setting up GitHub Pages environment...\n")
+			if err := setupPagesEnvironment(ctx, cmd, repo, dryRun, verbose); err != nil {
+				return fmt.Errorf("failed to setup pages environment: %w", err)
+			}
+			cmd.Printf("   ✅ GitHub Pages environment configured\n\n")
+
+			// Step 5: Create initial gh-pages branch if needed
+			cmd.Printf("🌿 Step 5: Setting up gh-pages branch...\n")
+			if err := createInitialGhPagesBranch(ctx, cmd, repo, dryRun, verbose); err != nil {
+				cmd.Printf("   ⚠️  Failed to create initial gh-pages branch: %v\n", err)
+				cmd.Printf("   💡 You may need to create it manually or it will be created on first deployment\n")
 			} else {
-				cmd.Printf("   ✅ Branch protection configured\n")
+				cmd.Printf("   ✅ gh-pages branch ready\n")
 			}
 			cmd.Printf("\n")
-		}
 
-		// Step 9: Verify setup
-		cmd.Printf("✅ Step 9: Verifying configuration...\n")
-		if dryRun {
-			cmd.Printf("   ℹ️  Skipping verification in dry-run mode (environment not created yet)\n")
-			cmd.Printf("   💡 Run without --dry-run to create environment and verify setup\n")
-		} else {
-			if err := verifySetup(ctx, cmd, repo, verbose); err != nil {
-				cmd.Printf("   ⚠️  Verification completed with warnings: %v\n", err)
-			} else {
-				cmd.Printf("   ✅ Configuration verified successfully\n")
+			// Step 6: Configure deployment branch policies
+			cmd.Printf("📋 Step 6: Configuring deployment branch policies...\n")
+			if err := setupDeploymentBranches(ctx, cmd, repo, dryRun, verbose); err != nil {
+				return fmt.Errorf("failed to setup deployment branches: %w", err)
 			}
-		}
-		cmd.Printf("\n")
+			cmd.Printf("   ✅ Deployment branch policies configured\n\n")
 
-		// Step 9: Show next steps
-		showNextSteps(cmd, repo, dryRun)
+			// Step 7: Configure custom domain (if specified)
+			if customDomain != "" {
+				cmd.Printf("🌍 Step 7: Configuring custom domain...\n")
+				if err := setupCustomDomain(ctx, cmd, repo, customDomain, dryRun, verbose); err != nil {
+					cmd.Printf("   ⚠️  Custom domain setup failed: %v\n", err)
+					cmd.Printf("   💡 You can configure this manually in repository settings\n")
+				} else {
+					cmd.Printf("   ✅ Custom domain configured: %s\n", customDomain)
+				}
+				cmd.Printf("\n")
+			}
 
-		return nil
-	},
+			// Step 8: Setup branch protection (if requested)
+			if protectBranches {
+				cmd.Printf("🛡️  Step 8: Setting up branch protection...\n")
+				if err := setupBranchProtection(ctx, cmd, repo, dryRun, verbose); err != nil {
+					cmd.Printf("   ⚠️  Branch protection setup failed: %v\n", err)
+					cmd.Printf("   💡 You can configure this manually in repository settings\n")
+				} else {
+					cmd.Printf("   ✅ Branch protection configured\n")
+				}
+				cmd.Printf("\n")
+			}
+
+			// Step 9: Verify setup
+			cmd.Printf("✅ Step 9: Verifying configuration...\n")
+			if dryRun {
+				cmd.Printf("   ℹ️  Skipping verification in dry-run mode (environment not created yet)\n")
+				cmd.Printf("   💡 Run without --dry-run to create environment and verify setup\n")
+			} else {
+				if err := verifySetup(ctx, cmd, repo, verbose); err != nil {
+					cmd.Printf("   ⚠️  Verification completed with warnings: %v\n", err)
+				} else {
+					cmd.Printf("   ✅ Configuration verified successfully\n")
+				}
+			}
+			cmd.Printf("\n")
+
+			// Step 9: Show next steps
+			showNextSteps(cmd, repo, dryRun)
+
+			return nil
+		},
+	}
+
+	// Add flags
+	cmd.Flags().Bool("dry-run", false, "Preview changes without making them")
+	cmd.Flags().BoolP("verbose", "v", false, "Show detailed output")
+	cmd.Flags().String("custom-domain", "", "Custom domain for GitHub Pages (optional)")
+	cmd.Flags().Bool("protect-branches", false, "Enable branch protection rules")
+
+	return cmd
 }
 
 // checkPrerequisites verifies that gh CLI is installed and authenticated
@@ -807,12 +818,4 @@ func showNextSteps(cmd *cobra.Command, repo string, dryRun bool) {
 	cmd.Printf("   • Check workflow permissions in Settings → Actions → General\n")
 	cmd.Printf("   • Verify GITHUB_TOKEN has required permissions\n")
 	cmd.Printf("   • Review deployment logs in the Actions tab\n")
-}
-
-func init() { //nolint:gochecknoinits // CLI command initialization
-	// Add flags
-	setupPagesCmd.Flags().Bool("dry-run", false, "Preview changes without making them")
-	setupPagesCmd.Flags().BoolP("verbose", "v", false, "Show detailed output")
-	setupPagesCmd.Flags().String("custom-domain", "", "Configure custom domain for GitHub Pages")
-	setupPagesCmd.Flags().Bool("protect-branches", false, "Add branch protection rules for deployment branches")
 }

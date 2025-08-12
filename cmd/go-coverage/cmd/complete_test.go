@@ -217,6 +217,14 @@ func TestGetStatusIcon(t *testing.T) {
 }
 
 func TestCompleteCommandFlags(t *testing.T) {
+	// Create a Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
+
 	// Test that all expected flags exist and have correct defaults
 	expectedFlags := map[string]struct {
 		flagType     string
@@ -231,7 +239,7 @@ func TestCompleteCommandFlags(t *testing.T) {
 
 	for flagName, expected := range expectedFlags {
 		t.Run(fmt.Sprintf("flag_%s", flagName), func(t *testing.T) {
-			flag := completeCmd.Flags().Lookup(flagName)
+			flag := commands.Complete.Flags().Lookup(flagName)
 			require.NotNil(t, flag, "Flag %s should exist", flagName)
 			assert.Equal(t, expected.flagType, flag.Value.Type(), "Flag %s should be %s type", flagName, expected.flagType)
 			assert.Equal(t, expected.defaultValue, flag.DefValue, "Flag %s should have default %s", flagName, expected.defaultValue)
@@ -241,10 +249,18 @@ func TestCompleteCommandFlags(t *testing.T) {
 
 func TestCompleteCommandMetadata(t *testing.T) {
 	// Test command metadata
-	assert.Equal(t, "complete", completeCmd.Use)
-	assert.Equal(t, "Run complete coverage pipeline", completeCmd.Short)
-	assert.Contains(t, completeCmd.Long, "Run the complete coverage pipeline")
-	assert.NotNil(t, completeCmd.RunE)
+	// Create a Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
+
+	assert.Equal(t, "complete", commands.Complete.Use)
+	assert.Equal(t, "Run complete coverage pipeline", commands.Complete.Short)
+	assert.Contains(t, commands.Complete.Long, "Run the complete coverage pipeline")
+	assert.NotNil(t, commands.Complete.RunE)
 }
 
 func TestCompleteCommandDryRun(t *testing.T) {
@@ -264,15 +280,23 @@ github.com/test/repo/utils.go:8.1,10.2 2 2
 
 	// Create command with dry-run flag
 	var buf bytes.Buffer
+	// Create a Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
+
 	testCmd := &cobra.Command{
 		Use:  "complete",
-		RunE: completeCmd.RunE,
+		RunE: commands.Complete.RunE,
 	}
 	testCmd.SetOut(&buf)
 	testCmd.SetErr(&buf)
 
 	// Add flags
-	testCmd.Flags().AddFlagSet(completeCmd.Flags())
+	testCmd.Flags().AddFlagSet(commands.Complete.Flags())
 
 	// Set arguments for dry run
 	testCmd.SetArgs([]string{

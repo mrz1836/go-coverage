@@ -12,21 +12,25 @@ import (
 	"github.com/mrz1836/go-coverage/internal/parser"
 )
 
-var parseCmd = &cobra.Command{ //nolint:gochecknoglobals // CLI command
-	Use:   "parse",
-	Short: "Parse Go coverage profile and display results",
-	Long: `Parse a Go coverage profile file and display coverage analysis results.
+// newParseCmd creates the parse command
+func (c *Commands) newParseCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "parse",
+		Short: "Parse Go coverage profile and display results",
+		Long: `Parse a Go coverage profile file and display coverage analysis results.
 
 This command analyzes Go coverage data and can output results in various formats,
 check coverage thresholds, and save results to a file.`,
-	RunE: runParse,
-}
+		RunE: runParse,
+	}
 
-func init() { //nolint:gochecknoinits // CLI command initialization
-	parseCmd.Flags().StringP("file", "f", "coverage.txt", "Path to coverage profile file")
-	parseCmd.Flags().StringP("output", "o", "", "Output file path (optional)")
-	parseCmd.Flags().String("format", "text", "Output format (text or json)")
-	parseCmd.Flags().Float64("threshold", 0, "Coverage threshold percentage (0-100)")
+	// Add flags
+	cmd.Flags().StringP("file", "f", "coverage.txt", "Path to coverage profile file")
+	cmd.Flags().StringP("output", "o", "", "Output file path (optional)")
+	cmd.Flags().String("format", "text", "Output format (text or json)")
+	cmd.Flags().Float64("threshold", 0, "Coverage threshold percentage (0-100)")
+
+	return cmd
 }
 
 func runParse(cmd *cobra.Command, _ []string) error {

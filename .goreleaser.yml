@@ -19,13 +19,23 @@ changelog:
 # Builder
 # ---------------------------
 builds:
-  - env:
+  - id: go-coverage
+    main: ./cmd/go-coverage
+    binary: go-coverage
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
-      - windows
       - darwin
-    skip: true
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.BuildDate={{.Date}}
 
 # ---------------------------
 # Github Release

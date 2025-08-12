@@ -236,6 +236,13 @@
 		]
 	},
 	"issues": {
-		"uniq-by-line": true
+		"uniq-by-line": true,
+		"exclude-rules": [
+			{
+				"path": "cmd/go-coverage/version.go",
+				"linters": ["gochecknoglobals"],
+				"text": ".*is a global variable"
+			}
+		]
 	}
 }

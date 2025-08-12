@@ -49,3 +49,4 @@ history/*.json
 /internal/badge/testdata
 /internal/urlutil/testdata
 cmd/go-coverage/go-coverage
+/go-coverage

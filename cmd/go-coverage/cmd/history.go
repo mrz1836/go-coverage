@@ -13,51 +13,67 @@ import (
 	"github.com/mrz1836/go-coverage/internal/parser"
 )
 
-var historyCmd = &cobra.Command{ //nolint:gochecknoglobals // CLI command
-	Use:   "history",
-	Short: "Manage coverage history",
-	Long:  `Manage historical coverage data for trend analysis and tracking.`,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		// Get flags
-		inputFile, _ := cmd.Flags().GetString("add")
-		branch, _ := cmd.Flags().GetString("branch")
-		commit, _ := cmd.Flags().GetString("commit")
-		commitURL, _ := cmd.Flags().GetString("commit-url")
-		showTrend, _ := cmd.Flags().GetBool("trend")
-		showStats, _ := cmd.Flags().GetBool("stats")
-		cleanup, _ := cmd.Flags().GetBool("cleanup")
-		days, _ := cmd.Flags().GetInt("days")
-		format, _ := cmd.Flags().GetString("format")
+// newHistoryCmd creates the history command
+func (c *Commands) newHistoryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "history",
+		Short: "Manage coverage history",
+		Long:  `Manage historical coverage data for trend analysis and tracking.`,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			// Get flags
+			inputFile, _ := cmd.Flags().GetString("add")
+			branch, _ := cmd.Flags().GetString("branch")
+			commit, _ := cmd.Flags().GetString("commit")
+			commitURL, _ := cmd.Flags().GetString("commit-url")
+			showTrend, _ := cmd.Flags().GetBool("trend")
+			showStats, _ := cmd.Flags().GetBool("stats")
+			cleanup, _ := cmd.Flags().GetBool("cleanup")
+			days, _ := cmd.Flags().GetInt("days")
+			format, _ := cmd.Flags().GetString("format")
 
-		// Load configuration
-		cfg := config.Load()
+			// Load configuration
+			cfg := config.Load()
 
-		// Create history tracker
-		historyConfig := &history.Config{
-			StoragePath:    cfg.History.StoragePath,
-			RetentionDays:  cfg.History.RetentionDays,
-			MaxEntries:     cfg.History.MaxEntries,
-			AutoCleanup:    cfg.History.AutoCleanup,
-			MetricsEnabled: cfg.History.MetricsEnabled,
-		}
-		tracker := history.NewWithConfig(historyConfig)
+			// Create history tracker
+			historyConfig := &history.Config{
+				StoragePath:    cfg.History.StoragePath,
+				RetentionDays:  cfg.History.RetentionDays,
+				MaxEntries:     cfg.History.MaxEntries,
+				AutoCleanup:    cfg.History.AutoCleanup,
+				MetricsEnabled: cfg.History.MetricsEnabled,
+			}
+			tracker := history.NewWithConfig(historyConfig)
 
-		ctx := context.Background()
+			ctx := context.Background()
 
-		// Handle different operations
-		switch {
-		case inputFile != "":
-			return addToHistory(ctx, tracker, inputFile, branch, commit, commitURL, cfg, cmd)
-		case showTrend:
-			return showTrendData(ctx, tracker, branch, days, format, cmd)
-		case showStats:
-			return showStatistics(ctx, tracker, format, cmd)
-		case cleanup:
-			return cleanupHistory(ctx, tracker, cmd)
-		default:
-			return showLatestEntry(ctx, tracker, branch, format, cmd)
-		}
-	},
+			// Handle different operations
+			switch {
+			case inputFile != "":
+				return addToHistory(ctx, tracker, inputFile, branch, commit, commitURL, cfg, cmd)
+			case showTrend:
+				return showTrendData(ctx, tracker, branch, days, format, cmd)
+			case showStats:
+				return showStatistics(ctx, tracker, format, cmd)
+			case cleanup:
+				return cleanupHistory(ctx, tracker, cmd)
+			default:
+				return showLatestEntry(ctx, tracker, branch, format, cmd)
+			}
+		},
+	}
+
+	// Add flags
+	cmd.Flags().StringP("add", "a", "", "Add coverage file to history")
+	cmd.Flags().StringP("branch", "b", "", "Branch name (for add operation)")
+	cmd.Flags().StringP("commit", "c", "", "Commit SHA (for add operation)")
+	cmd.Flags().String("commit-url", "", "Commit URL (for add operation)")
+	cmd.Flags().Bool("trend", false, "Show coverage trend")
+	cmd.Flags().Bool("stats", false, "Show coverage statistics")
+	cmd.Flags().Bool("cleanup", false, "Clean up old history entries")
+	cmd.Flags().IntP("days", "d", 30, "Number of days to analyze")
+	cmd.Flags().String("format", "text", "Output format (text or json)")
+
+	return cmd
 }
 
 func addToHistory(ctx context.Context, tracker *history.Tracker, inputFile, branch, commit, commitURL string, cfg *config.Config, cmd *cobra.Command) error {
@@ -255,16 +271,4 @@ func showLatestEntry(ctx context.Context, tracker *history.Tracker, branch, form
 	}
 
 	return nil
-}
-
-func init() { //nolint:gochecknoinits // CLI command initialization
-	historyCmd.Flags().StringP("add", "a", "", "Add coverage data file to history")
-	historyCmd.Flags().StringP("branch", "b", "", "Branch name (defaults to main)")
-	historyCmd.Flags().StringP("commit", "c", "", "Commit SHA")
-	historyCmd.Flags().String("commit-url", "", "Commit URL")
-	historyCmd.Flags().Bool("trend", false, "Show trend analysis")
-	historyCmd.Flags().Bool("stats", false, "Show history statistics")
-	historyCmd.Flags().Bool("cleanup", false, "Cleanup old history entries")
-	historyCmd.Flags().Int("days", 30, "Number of days for trend analysis")
-	historyCmd.Flags().String("format", "text", "Output format (text, json)")
 }

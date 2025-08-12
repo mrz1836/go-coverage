@@ -20,11 +20,19 @@ import (
 )
 
 func TestHistoryCommandMetadata(t *testing.T) {
+	// Create a Commands instance for testing
+	versionInfo := VersionInfo{
+		Version:   "test",
+		Commit:    "test-commit",
+		BuildDate: "test-date",
+	}
+	commands := NewCommands(versionInfo)
+
 	// Test command metadata
-	assert.Equal(t, "history", historyCmd.Use)
-	assert.Equal(t, "Manage coverage history", historyCmd.Short)
-	assert.Contains(t, historyCmd.Long, "Manage historical coverage data")
-	assert.NotNil(t, historyCmd.RunE)
+	assert.Equal(t, "history", commands.History.Use)
+	assert.Equal(t, "Manage coverage history", commands.History.Short)
+	assert.Contains(t, commands.History.Long, "Manage historical coverage data")
+	assert.NotNil(t, commands.History.RunE)
 }
 
 func TestHistoryCommandFlags(t *testing.T) {
@@ -46,7 +54,15 @@ func TestHistoryCommandFlags(t *testing.T) {
 
 	for flagName, expected := range expectedFlags {
 		t.Run(fmt.Sprintf("flag_%s", flagName), func(t *testing.T) {
-			flag := historyCmd.Flags().Lookup(flagName)
+			// Create a Commands instance for testing
+			versionInfo := VersionInfo{
+				Version:   "test",
+				Commit:    "test-commit",
+				BuildDate: "test-date",
+			}
+			commands := NewCommands(versionInfo)
+
+			flag := commands.History.Flags().Lookup(flagName)
 			require.NotNil(t, flag, "Flag %s should exist", flagName)
 			assert.Equal(t, expected.flagType, flag.Value.Type(), "Flag %s should be %s type", flagName, expected.flagType)
 			assert.Equal(t, expected.defaultValue, flag.DefValue, "Flag %s should have default %s", flagName, expected.defaultValue)

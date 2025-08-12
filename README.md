@@ -131,6 +131,7 @@ Next, deploy to your main branch and generate coverage reports!
 - 🤖 **GitHub Integration** – PR comments, commit statuses, automated deployments
 - 🚀 **GitHub Pages** – Automated deployment with zero configuration
 - 🔧 **Highly Configurable** – Thresholds, exclusions, templates, and more
+- ⬆️ **Auto-Upgrade** – Built-in upgrade command for easy updates
 
 <br/>
 
@@ -151,7 +152,19 @@ go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ### Verify Installation
 ```bash
 go-coverage --version
-# Go Coverage v1.0.8
+# go-coverage version v1.0...
+```
+
+### Upgrade to Latest Version
+```bash
+# Check for available updates
+go-coverage upgrade --check
+
+# Upgrade to the latest version
+go-coverage upgrade
+
+# Force reinstall even if already on latest
+go-coverage upgrade --force
 ```
 
 <br/>
@@ -334,7 +347,7 @@ Create a `.go-coverage.json` config file:
 * **Coverage History & Trends** – Track coverage changes over time with retention policies, trend analysis, and historical comparisons.
 * **Smart GitHub Integration** – Automated PR comments with coverage analysis, commit status checks, and diff-based coverage reporting.
 * **Multi-Branch Support** – Separate coverage tracking for different branches with automatic main branch detection and PR context handling.
-* **Comprehensive CLI Tool** – Five powerful commands (`complete`, `comment`, `parse`, `history`, `setup-pages`) for all coverage operations.
+* **Comprehensive CLI Tool** – Six powerful commands (`complete`, `comment`, `parse`, `history`, `setup-pages`, `upgrade`) for all coverage operations.
 * **Highly Configurable** – JSON-based configuration for thresholds, exclusions, badge styling, report themes, and integration settings.
 * **Enterprise Ready** – Built with security, performance, and scalability in mind for production environments.
 * **Self-Contained Deployment** – Everything runs in your repository's `.github` folder with no external service dependencies or accounts required.
@@ -510,6 +523,10 @@ go-coverage history --branch master --days 30 --format json
 # Set up GitHub Pages environment for coverage deployment
 go-coverage setup-pages --verbose --dry-run
 go-coverage setup-pages owner/repo --custom-domain example.com
+
+# Upgrade to the latest version
+go-coverage upgrade --check
+go-coverage upgrade --force --verbose
 ```
 
 ### Testing the Coverage System

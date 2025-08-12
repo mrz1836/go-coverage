@@ -180,7 +180,7 @@ func TestCheckPrerequisites(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
-			cmd := setupPagesCmd
+			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
 			err := checkPrerequisites(ctx, cmd, false)
 
 			if tc.expectedError != nil {
@@ -208,7 +208,7 @@ func TestGetRepositoryFromGit(t *testing.T) {
 		t.Skip("not in a git repository")
 	}
 
-	repo, err := getRepositoryFromGit(ctx, setupPagesCmd, false)
+	repo, err := getRepositoryFromGit(ctx, NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages, false)
 
 	// We should either get a valid repository or an error
 	if err != nil {
@@ -281,7 +281,7 @@ func TestSetupPagesCommand(t *testing.T) {
 				t.Skip("Skipping test in CI environment")
 			}
 
-			cmd := setupPagesCmd
+			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
 
 			// Set flags for this test
 			for flag, value := range tc.flags {
@@ -326,7 +326,7 @@ func TestSetupPagesCommand(t *testing.T) {
 }
 
 func TestSetupPagesCommandFlags(t *testing.T) {
-	cmd := setupPagesCmd
+	cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
 
 	// Test that all expected flags are present
 	expectedFlags := []string{
@@ -356,7 +356,7 @@ func TestSetupPagesCommandFlags(t *testing.T) {
 }
 
 func TestSetupPagesCommandHelp(t *testing.T) {
-	cmd := setupPagesCmd
+	cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
 
 	// Test command metadata
 	assert.Equal(t, "setup-pages [repository]", cmd.Use)
@@ -431,7 +431,7 @@ func TestSetupPagesErrorHandling(t *testing.T) {
 
 // Test the command integration with the cobra framework
 func TestSetupPagesCommandIntegration(t *testing.T) {
-	cmd := setupPagesCmd
+	cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
 
 	// Test command is properly configured
 	assert.NotNil(t, cmd.RunE, "Command should have a RunE function")
