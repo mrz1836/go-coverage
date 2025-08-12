@@ -457,7 +457,7 @@ func (m *StatusCheckManager) buildTrendStatus(request *StatusCheckRequest) Statu
 		state = StatusStateSuccess
 		description = fmt.Sprintf("📈 Coverage improved by %.1f%%", change)
 	case change < -1.0:
-		state = StatusFailure
+		state = StatusStateFailure
 		description = fmt.Sprintf("📉 Coverage decreased by %.1f%%", math.Abs(change))
 	default:
 		state = StatusStateSuccess
@@ -495,7 +495,7 @@ func (m *StatusCheckManager) buildQualityStatus(request *StatusCheckRequest) Sta
 		state = StatusStateSuccess
 		description = fmt.Sprintf("⚠️ Quality Grade: %s (%.0f/100)", grade, score)
 	case "D", "F":
-		state = StatusFailure
+		state = StatusStateFailure
 		description = fmt.Sprintf("🚨 Quality Grade: %s (%.0f/100)", grade, score)
 	default:
 		state = StatusStatePending
@@ -528,7 +528,7 @@ func (m *StatusCheckManager) buildComparisonStatus(request *StatusCheckRequest) 
 		state = StatusStateSuccess
 		description = fmt.Sprintf("📈 +%.1f%% vs base (%.1f%% → %.1f%%)", diff, base, current)
 	} else if diff < -0.1 {
-		state = StatusFailure
+		state = StatusStateFailure
 		description = fmt.Sprintf("📉 %.1f%% vs base (%.1f%% → %.1f%%)", diff, base, current)
 	} else {
 		state = StatusStateSuccess
@@ -576,7 +576,7 @@ func (m *StatusCheckManager) buildQualityGateStatus(request *StatusCheckRequest,
 func (m *StatusCheckManager) buildGenericStatus(request *StatusCheckRequest, contextType string) StatusInfo {
 	return StatusInfo{
 		Context:     contextType,
-		State:       StatusSuccess,
+		State:       StatusStateSuccess,
 		Description: fmt.Sprintf("Coverage: %.1f%%", request.Coverage.Percentage),
 		TargetURL:   "",
 		Required:    false,

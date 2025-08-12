@@ -535,3 +535,425 @@ func TestStatusConstants(t *testing.T) {
 	assert.Equal(t, "coverage/total", ContextCoverage)
 	assert.Equal(t, "coverage/trend", ContextTrend)
 }
+
+// Test workflow-related functions
+
+func TestGetWorkflowRuns(t *testing.T) {
+	tests := []struct {
+		name          string
+		limit         int
+		statusCode    int
+		responseBody  string
+		expectedRuns  int
+		expectedTotal int
+		expectError   bool
+	}{
+		{
+			name:       "successful retrieval with limit",
+			limit:      5,
+			statusCode: 200,
+			responseBody: `{
+				"total_count": 25,
+				"workflow_runs": [
+					{
+						"id": 12345,
+						"name": "CI",
+						"status": "completed",
+						"conclusion": "success",
+						"head_sha": "abc123",
+						"created_at": "2023-01-01T10:00:00Z",
+						"updated_at": "2023-01-01T10:05:00Z",
+						"run_started_at": "2023-01-01T10:01:00Z"
+					},
+					{
+						"id": 12346,
+						"name": "Tests",
+						"status": "in_progress",
+						"conclusion": null,
+						"head_sha": "def456",
+						"created_at": "2023-01-01T11:00:00Z",
+						"updated_at": "2023-01-01T11:02:00Z",
+						"run_started_at": "2023-01-01T11:01:00Z"
+					}
+				]
+			}`,
+			expectedRuns:  2,
+			expectedTotal: 25,
+			expectError:   false,
+		},
+		{
+			name:       "successful retrieval without limit",
+			limit:      0,
+			statusCode: 200,
+			responseBody: `{
+				"total_count": 3,
+				"workflow_runs": [
+					{
+						"id": 98765,
+						"name": "Deploy",
+						"status": "completed",
+						"conclusion": "failure",
+						"head_sha": "xyz789",
+						"created_at": "2023-01-01T12:00:00Z",
+						"updated_at": "2023-01-01T12:10:00Z",
+						"run_started_at": "2023-01-01T12:01:00Z"
+					}
+				]
+			}`,
+			expectedRuns:  1,
+			expectedTotal: 3,
+			expectError:   false,
+		},
+		{
+			name:         "API error",
+			limit:        10,
+			statusCode:   403,
+			responseBody: `{"message": "API rate limit exceeded"}`,
+			expectError:  true,
+		},
+		{
+			name:         "invalid JSON response",
+			limit:        5,
+			statusCode:   200,
+			responseBody: `invalid json`,
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "GET", r.Method)
+				assert.Contains(t, r.URL.Path, "/actions/runs")
+				assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
+				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
+				assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+
+				// Check for per_page parameter if limit > 0
+				if tt.limit > 0 {
+					assert.Contains(t, r.URL.RawQuery, fmt.Sprintf("per_page=%d", tt.limit))
+				}
+
+				w.WriteHeader(tt.statusCode)
+				_, _ = w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			client := &Client{
+				token:   "test-token",
+				baseURL: server.URL,
+				httpClient: &http.Client{
+					Timeout: 30 * time.Second,
+				},
+				config: &Config{
+					UserAgent: "test-agent",
+				},
+			}
+
+			ctx := context.Background()
+			response, err := client.GetWorkflowRuns(ctx, "owner", "repo", tt.limit)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Nil(t, response)
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, response)
+				assert.Equal(t, tt.expectedTotal, response.TotalCount)
+				assert.Len(t, response.WorkflowRuns, tt.expectedRuns)
+
+				if len(response.WorkflowRuns) > 0 {
+					run := response.WorkflowRuns[0]
+					assert.NotZero(t, run.ID)
+					assert.NotEmpty(t, run.Name)
+					assert.NotEmpty(t, run.Status)
+					assert.NotEmpty(t, run.HeadSHA)
+				}
+			}
+		})
+	}
+}
+
+func TestGetWorkflowRunsByWorkflow(t *testing.T) {
+	tests := []struct {
+		name             string
+		workflowName     string
+		limit            int
+		workflowsResp    string
+		workflowRunsResp string
+		expectedRuns     int
+		expectError      bool
+	}{
+		{
+			name:         "successful retrieval",
+			workflowName: "CI",
+			limit:        3,
+			workflowsResp: `{
+				"total_count": 2,
+				"workflows": [
+					{
+						"id": 123,
+						"name": "CI",
+						"path": ".github/workflows/ci.yml",
+						"state": "active",
+						"created_at": "2023-01-01T00:00:00Z",
+						"updated_at": "2023-01-01T00:00:00Z"
+					},
+					{
+						"id": 456,
+						"name": "Deploy",
+						"path": ".github/workflows/deploy.yml",
+						"state": "active",
+						"created_at": "2023-01-01T00:00:00Z",
+						"updated_at": "2023-01-01T00:00:00Z"
+					}
+				]
+			}`,
+			workflowRunsResp: `{
+				"total_count": 5,
+				"workflow_runs": [
+					{
+						"id": 111,
+						"name": "CI",
+						"workflow_id": 123,
+						"status": "completed",
+						"conclusion": "success",
+						"head_sha": "abc123",
+						"created_at": "2023-01-01T10:00:00Z",
+						"updated_at": "2023-01-01T10:05:00Z",
+						"run_started_at": "2023-01-01T10:01:00Z"
+					}
+				]
+			}`,
+			expectedRuns: 1,
+			expectError:  false,
+		},
+		{
+			name:         "workflow not found",
+			workflowName: "NonExistent",
+			limit:        5,
+			workflowsResp: `{
+				"total_count": 1,
+				"workflows": [
+					{
+						"id": 123,
+						"name": "CI",
+						"path": ".github/workflows/ci.yml",
+						"state": "active",
+						"created_at": "2023-01-01T00:00:00Z",
+						"updated_at": "2023-01-01T00:00:00Z"
+					}
+				]
+			}`,
+			expectError: true,
+		},
+		{
+			name:         "empty workflow list",
+			workflowName: "CI",
+			limit:        5,
+			workflowsResp: `{
+				"total_count": 0,
+				"workflows": []
+			}`,
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var requestCount int
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requestCount++
+				assert.Equal(t, "GET", r.Method)
+				assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
+				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
+				assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+
+				w.WriteHeader(200)
+				if strings.Contains(r.URL.Path, "/workflows") && !strings.Contains(r.URL.Path, "/runs") {
+					// First request: get workflows
+					_, _ = w.Write([]byte(tt.workflowsResp))
+				} else if strings.Contains(r.URL.Path, "/runs") {
+					// Second request: get workflow runs (only if first succeeded)
+					if !tt.expectError {
+						assert.Contains(t, r.URL.Path, "/workflows/123/runs")
+						if tt.limit > 0 {
+							assert.Contains(t, r.URL.RawQuery, fmt.Sprintf("per_page=%d", tt.limit))
+						}
+						_, _ = w.Write([]byte(tt.workflowRunsResp))
+					}
+				} else {
+					t.Errorf("Unexpected request: %s", r.URL.Path)
+				}
+			}))
+			defer server.Close()
+
+			client := &Client{
+				token:   "test-token",
+				baseURL: server.URL,
+				httpClient: &http.Client{
+					Timeout: 30 * time.Second,
+				},
+				config: &Config{
+					UserAgent: "test-agent",
+				},
+			}
+
+			ctx := context.Background()
+			response, err := client.GetWorkflowRunsByWorkflow(ctx, "owner", "repo", tt.workflowName, tt.limit)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Nil(t, response)
+				if tt.workflowName == "NonExistent" || tt.workflowName == "CI" && strings.Contains(tt.workflowsResp, "[]") {
+					assert.Contains(t, err.Error(), "workflow not found")
+				}
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, response)
+				assert.Len(t, response.WorkflowRuns, tt.expectedRuns)
+				assert.Equal(t, 2, requestCount) // Should make 2 requests: workflows + workflow runs
+
+				if len(response.WorkflowRuns) > 0 {
+					run := response.WorkflowRuns[0]
+					assert.Equal(t, int64(111), run.ID)
+					assert.Equal(t, "CI", run.Name)
+					assert.Equal(t, int64(123), run.WorkflowID)
+					assert.Equal(t, "completed", run.Status)
+					assert.Equal(t, "success", run.Conclusion)
+				}
+			}
+		})
+	}
+}
+
+func TestGetWorkflowRun(t *testing.T) {
+	tests := []struct {
+		name         string
+		runID        int64
+		statusCode   int
+		responseBody string
+		expectedRun  *WorkflowRun
+		expectError  bool
+	}{
+		{
+			name:       "successful retrieval",
+			runID:      12345,
+			statusCode: 200,
+			responseBody: `{
+				"id": 12345,
+				"node_id": "MDEyOldlcmVmcmVxdWVzdDI2M",
+				"name": "CI",
+				"head_branch": "main",
+				"head_sha": "abc123def456",
+				"path": ".github/workflows/ci.yml",
+				"display_title": "Update README",
+				"run_number": 42,
+				"event": "push",
+				"status": "completed",
+				"conclusion": "success",
+				"workflow_id": 456,
+				"check_suite_id": 789,
+				"check_suite_node_id": "MDEyOkNoZWNrU3VpdGUxMjM",
+				"url": "https://api.github.com/repos/owner/repo/actions/runs/12345",
+				"html_url": "https://github.com/owner/repo/actions/runs/12345",
+				"created_at": "2023-01-01T10:00:00Z",
+				"updated_at": "2023-01-01T10:05:00Z",
+				"run_started_at": "2023-01-01T10:01:00Z",
+				"jobs_url": "https://api.github.com/repos/owner/repo/actions/runs/12345/jobs",
+				"logs_url": "https://api.github.com/repos/owner/repo/actions/runs/12345/logs",
+				"check_suite_url": "https://api.github.com/repos/owner/repo/check-suites/789",
+				"artifacts_url": "https://api.github.com/repos/owner/repo/actions/runs/12345/artifacts",
+				"cancel_url": "https://api.github.com/repos/owner/repo/actions/runs/12345/cancel",
+				"rerun_url": "https://api.github.com/repos/owner/repo/actions/runs/12345/rerun",
+				"workflow_url": "https://api.github.com/repos/owner/repo/actions/workflows/456"
+			}`,
+			expectedRun: &WorkflowRun{
+				ID:           12345,
+				NodeID:       "MDEyOldlcmVmcmVxdWVzdDI2M",
+				Name:         "CI",
+				HeadBranch:   "main",
+				HeadSHA:      "abc123def456",
+				Path:         ".github/workflows/ci.yml",
+				DisplayTitle: "Update README",
+				RunNumber:    42,
+				Event:        "push",
+				Status:       "completed",
+				Conclusion:   "success",
+				WorkflowID:   456,
+			},
+			expectError: false,
+		},
+		{
+			name:         "not found",
+			runID:        99999,
+			statusCode:   404,
+			responseBody: `{"message": "Not Found"}`,
+			expectError:  true,
+		},
+		{
+			name:         "unauthorized",
+			runID:        12345,
+			statusCode:   401,
+			responseBody: `{"message": "Bad credentials"}`,
+			expectError:  true,
+		},
+		{
+			name:         "invalid JSON response",
+			runID:        12345,
+			statusCode:   200,
+			responseBody: `invalid json`,
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "GET", r.Method)
+				assert.Contains(t, r.URL.Path, fmt.Sprintf("/actions/runs/%d", tt.runID))
+				assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
+				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
+				assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+
+				w.WriteHeader(tt.statusCode)
+				_, _ = w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			client := &Client{
+				token:   "test-token",
+				baseURL: server.URL,
+				httpClient: &http.Client{
+					Timeout: 30 * time.Second,
+				},
+				config: &Config{
+					UserAgent: "test-agent",
+				},
+			}
+
+			ctx := context.Background()
+			run, err := client.GetWorkflowRun(ctx, "owner", "repo", tt.runID)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Nil(t, run)
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, run)
+				assert.Equal(t, tt.expectedRun.ID, run.ID)
+				assert.Equal(t, tt.expectedRun.NodeID, run.NodeID)
+				assert.Equal(t, tt.expectedRun.Name, run.Name)
+				assert.Equal(t, tt.expectedRun.HeadBranch, run.HeadBranch)
+				assert.Equal(t, tt.expectedRun.HeadSHA, run.HeadSHA)
+				assert.Equal(t, tt.expectedRun.Path, run.Path)
+				assert.Equal(t, tt.expectedRun.DisplayTitle, run.DisplayTitle)
+				assert.Equal(t, tt.expectedRun.RunNumber, run.RunNumber)
+				assert.Equal(t, tt.expectedRun.Event, run.Event)
+				assert.Equal(t, tt.expectedRun.Status, run.Status)
+				assert.Equal(t, tt.expectedRun.Conclusion, run.Conclusion)
+				assert.Equal(t, tt.expectedRun.WorkflowID, run.WorkflowID)
+			}
+		})
+	}
+}

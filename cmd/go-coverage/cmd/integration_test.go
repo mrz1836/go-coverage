@@ -12,6 +12,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// createIsolatedParseCommandForIntegration creates a new parse command with isolated flags for integration testing
+func createIsolatedParseCommandForIntegration() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "parse",
+		Short: "Parse Go coverage profile and display results",
+		Long: `Parse a Go coverage profile file and display coverage analysis results.
+
+This command analyzes Go coverage data and can output results in various formats,
+check coverage thresholds, and save results to a file.`,
+		RunE: runParse,
+	}
+
+	// Add flags (same as in init() but on this isolated command)
+	cmd.Flags().StringP("file", "f", "coverage.txt", "Path to coverage profile file")
+	cmd.Flags().StringP("output", "o", "", "Output file path (optional)")
+	cmd.Flags().String("format", "text", "Output format (text or json)")
+	cmd.Flags().Float64("threshold", 0, "Coverage threshold percentage (0-100)")
+
+	return cmd
+}
+
 // Test coverage data for integration tests
 const testCoverageData = `mode: atomic
 github.com/mrz1836/go-coverage/internal/parser/parser.go:25.23,27.16 2 1
@@ -107,9 +128,9 @@ func TestParseCommand(t *testing.T) {
 			// Capture output
 			var buf bytes.Buffer
 
-			// Create a new root command for each test
+			// Create a new root command for each test with isolated parse command
 			testCmd := &cobra.Command{Use: "test"}
-			testCmd.AddCommand(parseCmd)
+			testCmd.AddCommand(createIsolatedParseCommandForIntegration())
 			testCmd.SetOut(&buf)
 			testCmd.SetErr(&buf)
 			testCmd.SetArgs(tt.args)

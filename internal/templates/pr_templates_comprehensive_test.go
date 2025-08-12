@@ -677,3 +677,417 @@ func TestFilterPackages(t *testing.T) {
 		})
 	}
 }
+
+// Test missing PR template functions
+func TestFilterRecommendations(t *testing.T) {
+	tests := []struct {
+		name               string
+		maxRecommendations int
+		recommendations    []RecommendationData
+		expectedLen        int
+		expectedPriorities []string
+	}{
+		{
+			name:               "sort by priority",
+			maxRecommendations: 10,
+			recommendations: []RecommendationData{
+				{Title: "Low Priority", Priority: "low"},
+				{Title: "High Priority", Priority: "high"},
+				{Title: "Medium Priority", Priority: "medium"},
+			},
+			expectedLen:        3,
+			expectedPriorities: []string{"high", "medium", "low"},
+		},
+		{
+			name:               "limit recommendations",
+			maxRecommendations: 2,
+			recommendations: []RecommendationData{
+				{Title: "Low Priority", Priority: "low"},
+				{Title: "High Priority", Priority: "high"},
+				{Title: "Medium Priority", Priority: "medium"},
+			},
+			expectedLen:        2,
+			expectedPriorities: []string{"high", "medium"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			engine := NewPRTemplateEngine(&TemplateConfig{
+				MaxRecommendations: tt.maxRecommendations,
+			})
+
+			result := engine.filterRecommendations(tt.recommendations)
+			require.Len(t, result, tt.expectedLen)
+
+			for i, expectedPriority := range tt.expectedPriorities {
+				if i < len(result) {
+					require.Equal(t, expectedPriority, result[i].Priority)
+				}
+			}
+		})
+	}
+}
+
+func TestSortFilesByRisk(t *testing.T) {
+	files := []FileCoverageData{
+		{Filename: "low.go", Risk: "low", Change: 1.0},
+		{Filename: "critical.go", Risk: "critical", Change: 5.0},
+		{Filename: "medium.go", Risk: "medium", Change: 3.0},
+		{Filename: "high.go", Risk: "high", Change: 2.0},
+		{Filename: "critical2.go", Risk: "critical", Change: 10.0}, // Higher change
+	}
+
+	engine := NewPRTemplateEngine(nil)
+	result := engine.sortFilesByRisk(files)
+
+	require.Len(t, result, 5)
+	// Should be sorted by risk first (critical > high > medium > low), then by change magnitude
+	require.Equal(t, "critical2.go", result[0].Filename) // critical with highest change
+	require.Equal(t, "critical.go", result[1].Filename)  // critical with lower change
+	require.Equal(t, "high.go", result[2].Filename)      // high risk
+	require.Equal(t, "medium.go", result[3].Filename)    // medium risk
+	require.Equal(t, "low.go", result[4].Filename)       // low risk
+}
+
+func TestSortByChange(t *testing.T) {
+	files := []FileCoverageData{
+		{Filename: "small.go", Change: 1.0},
+		{Filename: "large.go", Change: 10.0},
+		{Filename: "medium.go", Change: 5.0},
+		{Filename: "negative.go", Change: -8.0}, // Should be sorted by absolute value
+	}
+
+	engine := NewPRTemplateEngine(nil)
+	result := engine.sortByChange(files)
+
+	require.Len(t, result, 4)
+	// Should be sorted by absolute change value (descending)
+	require.Equal(t, "large.go", result[0].Filename)    // |10.0|
+	require.Equal(t, "negative.go", result[1].Filename) // |-8.0|
+	require.Equal(t, "medium.go", result[2].Filename)   // |5.0|
+	require.Equal(t, "small.go", result[3].Filename)    // |1.0|
+}
+
+func TestConditionalLogicFunctions(t *testing.T) {
+	engine := NewPRTemplateEngine(nil)
+
+	t.Run("IsSignificant", func(t *testing.T) {
+		tests := []struct {
+			change   float64
+			expected bool
+		}{
+			{1.5, true},
+			{-2.0, true},
+			{0.5, false},
+			{-0.8, false},
+			{1.0, true},
+			{-1.0, true},
+		}
+
+		for _, tt := range tests {
+			result := engine.isSignificant(tt.change)
+			require.Equal(t, tt.expected, result, "Change: %f", tt.change)
+		}
+	})
+
+	t.Run("IsDegraded", func(t *testing.T) {
+		tests := []struct {
+			direction string
+			expected  bool
+		}{
+			{"degraded", true},
+			{"down", true},
+			{"downward", true},
+			{"improved", false},
+			{"up", false},
+			{"stable", false},
+		}
+
+		for _, tt := range tests {
+			result := engine.isDegraded(tt.direction)
+			require.Equal(t, tt.expected, result, "Direction: %s", tt.direction)
+		}
+	})
+
+	t.Run("IsStable", func(t *testing.T) {
+		tests := []struct {
+			direction string
+			expected  bool
+		}{
+			{"stable", true},
+			{"improved", false},
+			{"degraded", false},
+			{"up", false},
+			{"down", false},
+		}
+
+		for _, tt := range tests {
+			result := engine.isStable(tt.direction)
+			require.Equal(t, tt.expected, result, "Direction: %s", tt.direction)
+		}
+	})
+
+	t.Run("NeedsAttention", func(t *testing.T) {
+		engineWithThreshold := NewPRTemplateEngine(&TemplateConfig{
+			WarningThreshold: 80.0,
+		})
+
+		tests := []struct {
+			percentage float64
+			expected   bool
+		}{
+			{85.0, false}, // Above threshold
+			{75.0, true},  // Below threshold
+			{80.0, false}, // At threshold
+			{79.9, true},  // Just below threshold
+		}
+
+		for _, tt := range tests {
+			result := engineWithThreshold.needsAttention(tt.percentage)
+			require.Equal(t, tt.expected, result, "Percentage: %f", tt.percentage)
+		}
+	})
+}
+
+func TestTextUtilityFunctions(t *testing.T) {
+	engine := NewPRTemplateEngine(nil)
+
+	t.Run("Truncate", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    string
+			length   int
+			expected string
+		}{
+			{"ShortString", "hello", 10, "hello"},
+			{"ExactLength", "hello", 5, "hello"},
+			{"LongString", "hello world", 8, "hello..."},
+			{"VeryShort", "hello world", 3, "..."},
+			{"EmptyString", "", 5, ""},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := engine.truncate(tt.input, tt.length)
+				require.Equal(t, tt.expected, result)
+			})
+		}
+	})
+
+	t.Run("Pluralize", func(t *testing.T) {
+		tests := []struct {
+			count    int
+			singular string
+			plural   string
+			expected string
+		}{
+			{0, "file", "files", "files"},
+			{1, "file", "files", "file"},
+			{2, "file", "files", "files"},
+			{5, "test", "tests", "tests"},
+		}
+
+		for _, tt := range tests {
+			result := engine.pluralize(tt.count, tt.singular, tt.plural)
+			require.Equal(t, tt.expected, result, "Count: %d", tt.count)
+		}
+	})
+
+	t.Run("Capitalize", func(t *testing.T) {
+		tests := []struct {
+			input    string
+			expected string
+		}{
+			{"hello", "Hello"},
+			{"HELLO", "HELLO"},
+			{"h", "H"},
+			{"", ""},
+			{"hello world", "Hello world"},
+		}
+
+		for _, tt := range tests {
+			result := engine.capitalize(tt.input)
+			require.Equal(t, tt.expected, result, "Input: %s", tt.input)
+		}
+	})
+}
+
+func TestSliceFunction(t *testing.T) {
+	engine := NewPRTemplateEngine(nil)
+
+	t.Run("FileCoverageData", func(t *testing.T) {
+		files := []FileCoverageData{
+			{Filename: "file1.go"},
+			{Filename: "file2.go"},
+			{Filename: "file3.go"},
+			{Filename: "file4.go"},
+		}
+
+		tests := []struct {
+			name     string
+			start    int
+			end      int
+			expected []string
+		}{
+			{"Normal", 1, 3, []string{"file2.go", "file3.go"}},
+			{"StartFromBeginning", 0, 2, []string{"file1.go", "file2.go"}},
+			{"EndBeyondLength", 2, 10, []string{"file3.go", "file4.go"}},
+			{"NegativeStart", -1, 2, []string{"file1.go", "file2.go"}},
+			{"StartAfterEnd", 3, 1, []string{}},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := engine.slice(files, tt.start, tt.end)
+				slicedFiles, ok := result.([]FileCoverageData)
+				require.True(t, ok)
+
+				require.Len(t, slicedFiles, len(tt.expected))
+				for i, expectedFile := range tt.expected {
+					require.Equal(t, expectedFile, slicedFiles[i].Filename)
+				}
+			})
+		}
+	})
+
+	t.Run("PackageCoverageData", func(t *testing.T) {
+		pkgs := []PackageCoverageData{
+			{Package: "pkg1"},
+			{Package: "pkg2"},
+		}
+
+		result := engine.slice(pkgs, 0, 1)
+		slicedPkgs, ok := result.([]PackageCoverageData)
+		require.True(t, ok)
+		require.Len(t, slicedPkgs, 1)
+		require.Equal(t, "pkg1", slicedPkgs[0].Package)
+	})
+
+	t.Run("RecommendationData", func(t *testing.T) {
+		recs := []RecommendationData{
+			{Title: "rec1"},
+			{Title: "rec2"},
+		}
+
+		result := engine.slice(recs, 1, 2)
+		slicedRecs, ok := result.([]RecommendationData)
+		require.True(t, ok)
+		require.Len(t, slicedRecs, 1)
+		require.Equal(t, "rec2", slicedRecs[0].Title)
+	})
+
+	t.Run("StringSlice", func(t *testing.T) {
+		strs := []string{"a", "b", "c"}
+
+		result := engine.slice(strs, 0, 2)
+		slicedStrs, ok := result.([]string)
+		require.True(t, ok)
+		require.Len(t, slicedStrs, 2)
+		require.Equal(t, "a", slicedStrs[0])
+		require.Equal(t, "b", slicedStrs[1])
+	})
+
+	t.Run("UnsupportedType", func(t *testing.T) {
+		result := engine.slice(123, 0, 1)
+		require.Equal(t, 123, result) // Should return input unchanged
+	})
+}
+
+func TestLengthFunction(t *testing.T) {
+	engine := NewPRTemplateEngine(nil)
+
+	tests := []struct {
+		name     string
+		input    interface{}
+		expected int
+	}{
+		{"FileCoverageData", []FileCoverageData{{}, {}}, 2},
+		{"PackageCoverageData", []PackageCoverageData{{}, {}, {}}, 3},
+		{"RecommendationData", []RecommendationData{{}}, 1},
+		{"StringSlice", []string{"a", "b"}, 2},
+		{"String", "hello", 5},
+		{"EmptyString", "", 0},
+		{"UnsupportedType", 123, 0},
+		{"Nil", nil, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := engine.length(tt.input)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestAddCustomTemplate(t *testing.T) {
+	engine := NewPRTemplateEngine(nil)
+
+	t.Run("ValidTemplate", func(t *testing.T) {
+		templateContent := `Hello {{ .Repository.Name }}`
+		err := engine.AddCustomTemplate("custom", templateContent)
+		require.NoError(t, err)
+
+		// Verify template was added
+		_, exists := engine.templates["custom"]
+		require.True(t, exists)
+	})
+
+	t.Run("InvalidTemplate", func(t *testing.T) {
+		templateContent := `Hello {{ .InvalidSyntax`
+		err := engine.AddCustomTemplate("invalid", templateContent)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to parse custom template")
+	})
+}
+
+func TestFormatGradeMissingCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		includeEmojis bool
+		grade         string
+		expected      string
+	}{
+		{"EmojiDisabled", false, "A+", "A+"},
+		{"UnknownGrade", true, "Z", "Z"},
+		{"CaseInsensitive", true, "a", "a"}, // Should not match since it's case sensitive
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			engine := NewPRTemplateEngine(&TemplateConfig{
+				IncludeEmojis: tt.includeEmojis,
+			})
+			result := engine.formatGrade(tt.grade)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestTrendChartMissingCases(t *testing.T) {
+	engine := NewPRTemplateEngine(&TemplateConfig{
+		IncludeCharts: true,
+	})
+
+	t.Run("AllSameValues", func(t *testing.T) {
+		values := []float64{80.0, 80.0, 80.0}
+		result := engine.trendChart(values)
+		// When all values are the same, should return dashes
+		require.Equal(t, "───", result)
+	})
+
+	t.Run("SingleValueInSlice", func(t *testing.T) {
+		values := []float64{85.0}
+		result := engine.trendChart(values)
+		// Single value should produce one character
+		require.Equal(t, "─", result)
+	})
+
+	t.Run("VariedValues", func(t *testing.T) {
+		values := []float64{10.0, 50.0, 90.0}
+		result := engine.trendChart(values)
+		// Should produce a chart with different heights
+		require.NotEmpty(t, result)
+		require.Len(t, []rune(result), 3)
+	})
+}
