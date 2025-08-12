@@ -34,7 +34,7 @@ func TestExecute(t *testing.T) {
 			name:        "version flag",
 			args:        []string{"--version"},
 			expectError: false,
-			contains:    []string{"go-coverage version 1.0.7"},
+			contains:    []string{"go-coverage version 1.0.8"},
 		},
 		{
 			name:        "debug flag",
@@ -77,7 +77,7 @@ the simplicity and performance that Go developers expect.
 
 Built as a bolt-on solution completely encapsulated within the .github folder,
 this tool replaces Codecov with zero external service dependencies.`,
-				Version: "1.0.7",
+				Version: "1.0.8",
 			}
 
 			// Add flags
@@ -120,7 +120,7 @@ func TestRootCommandSetup(t *testing.T) {
 	assert.Equal(t, "go-coverage", rootCmd.Use)
 	assert.Equal(t, "Go-native coverage system for CI/CD", rootCmd.Short)
 	assert.Contains(t, rootCmd.Long, "Go Coverage is a self-contained")
-	assert.Equal(t, "1.0.7", rootCmd.Version)
+	assert.Equal(t, "1.0.8", rootCmd.Version)
 
 	// Test that all expected flags exist
 	flagNames := []string{"debug", "log-level", "log-format"}
@@ -173,7 +173,7 @@ func TestExecuteWithoutArgs(t *testing.T) {
 		Long: `Go Coverage is a self-contained, Go-native coverage system that provides
 professional coverage tracking, badge generation, and reporting while maintaining
 the simplicity and performance that Go developers expect.`,
-		Version: "1.0.7",
+		Version: "1.0.8",
 		Args:    cobra.NoArgs,
 	}
 
