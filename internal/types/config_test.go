@@ -17,7 +17,7 @@ func TestSlackConfigJSONSerialization(t *testing.T) {
 		{
 			name: "complete config",
 			config: SlackConfig{
-				WebhookURL:   "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+				WebhookURL:   "https://hooks.slack.com/services/T0/B0/XX",
 				Channel:      "#general",
 				Username:     "bot",
 				IconEmoji:    ":robot_face:",
@@ -26,7 +26,7 @@ func TestSlackConfigJSONSerialization(t *testing.T) {
 				Timeout:      30,
 				CustomFields: map[string]string{"env": "prod", "service": "coverage"},
 			},
-			expected: `{"webhook_url":"https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX","channel":"#general","username":"bot","icon_emoji":":robot_face:","icon_url":"https://example.com/icon.png","enabled":true,"timeout":30,"custom_fields":{"env":"prod","service":"coverage"}}`,
+			expected: `{"webhook_url":"https://hooks.slack.com/services/T0/B0/XX","channel":"#general","username":"bot","icon_emoji":":robot_face:","icon_url":"https://example.com/icon.png","enabled":true,"timeout":30,"custom_fields":{"env":"prod","service":"coverage"}}`,
 		},
 		{
 			name: "minimal config",
@@ -192,11 +192,11 @@ func TestWebhookConfigJSONSerialization(t *testing.T) {
 				Headers:     map[string]string{"X-Custom": "value", "User-Agent": "CoverageBot/1.0"},
 				ContentType: "application/json",
 				AuthType:    "bearer",
-				AuthToken:   "eyJhbGciOiJIUzI1NiJ9...",
+				AuthToken:   "eyJh...",
 				Enabled:     true,
 				Timeout:     60,
 			},
-			expected: `{"url":"https://api.example.com/webhook","method":"POST","headers":{"User-Agent":"CoverageBot/1.0","X-Custom":"value"},"content_type":"application/json","auth_type":"bearer","auth_token":"eyJhbGciOiJIUzI1NiJ9...","enabled":true,"timeout":60}`,
+			expected: `{"url":"https://api.example.com/webhook","method":"POST","headers":{"User-Agent":"CoverageBot/1.0","X-Custom":"value"},"content_type":"application/json","auth_type":"bearer","auth_token":"eyJh...","enabled":true,"timeout":60}`,
 		},
 		{
 			name: "basic auth config",
@@ -399,7 +399,7 @@ func TestConfigSpecialCharacters(t *testing.T) {
 			Method:      "POST",
 			Headers:     map[string]string{"Content-Type": "application/json; charset=utf-8", "X-Custom-Header": "value with spaces and special_chars"},
 			ContentType: "application/json; charset=utf-8",
-			AuthToken:   "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+			AuthToken:   "Bearer test-key.test-token",
 			Enabled:     true,
 			Timeout:     45,
 		}
@@ -408,9 +408,9 @@ func TestConfigSpecialCharacters(t *testing.T) {
 		jsonData, err := json.Marshal(config)
 		require.NoError(t, err)
 
-		var unmarshaled WebhookConfig
-		err = json.Unmarshal(jsonData, &unmarshaled)
+		var unmarshalled WebhookConfig
+		err = json.Unmarshal(jsonData, &unmarshalled)
 		require.NoError(t, err)
-		assert.Equal(t, config, unmarshaled)
+		assert.Equal(t, config, unmarshalled)
 	})
 }
