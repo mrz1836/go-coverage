@@ -486,7 +486,7 @@ jobs:
           GITHUB_PR_NUMBER: ${{ inputs.pr-number || github.event.pull_request.number }}
           GITHUB_SHA: ${{ inputs.commit-sha }}
           GITHUB_REF_NAME: ${{ inputs.branch-name }}
-          COVERAGE_HISTORY_PATH: ${{ github.workspace }}/.github/coverage/history
+          GO_COVERAGE_HISTORY_PATH: ${{ github.workspace }}/.github/coverage/history
         run: |
           echo "📊 Processing coverage data with complete pipeline..."
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -495,7 +495,7 @@ jobs:
           echo "🔍 Environment information:"
           echo "  - Current working directory: $(pwd)"
           echo "  - Repository root should be: $(pwd)"
-          echo "  - History path from env: $COVERAGE_HISTORY_PATH"
+          echo "  - History path from env: $GO_COVERAGE_HISTORY_PATH"
           echo "  - GitHub repository: $GITHUB_REPOSITORY"
           echo "  - Branch: $GITHUB_REF_NAME"
           echo "  - Commit SHA: $GITHUB_SHA"
@@ -677,7 +677,7 @@ jobs:
         # Record history for all branches to enable trend tracking
         if: github.event_name == 'push'
         env:
-          COVERAGE_HISTORY_PATH: ${{ github.workspace }}/.github/coverage/history
+          GO_COVERAGE_HISTORY_PATH: ${{ github.workspace }}/.github/coverage/history
         run: |
           echo "📈 Recording coverage history..."
 
