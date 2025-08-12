@@ -693,13 +693,27 @@ jobs:
           fi
 
           # Record coverage in history
-          "$GO_COVERAGE_BINARY" history \
+          if ! "$GO_COVERAGE_BINARY" history \
             --add "$COVERAGE_FILE" \
             --branch "${{ inputs.branch-name }}" \
             --commit "${{ inputs.commit-sha }}" \
-            --format text
+            --format text; then
+            echo "⚠️ Failed to record history"
+            exit 1
+          fi
 
-          echo "✅ History recording completed"
+          # Verify history files were created
+          HISTORY_COUNT=$(find "$GO_COVERAGE_HISTORY_PATH" -name "*.json" -type f 2>/dev/null | wc -l || echo "0")
+          echo "✅ History recording completed - $HISTORY_COUNT history files in directory"
+
+          # Debug: List history files
+          if [[ $HISTORY_COUNT -gt 0 ]]; then
+            echo "📋 History files created:"
+            find "$GO_COVERAGE_HISTORY_PATH" -name "*.json" -type f -exec basename {} \; | head -5
+          else
+            echo "⚠️ WARNING: No history files found after recording"
+            ls -la "$GO_COVERAGE_HISTORY_PATH" 2>/dev/null || echo "Directory not found: $GO_COVERAGE_HISTORY_PATH"
+          fi
 
       # ————————————————————————————————————————————————————————————————
       # Create PR comment (if in PR context)
@@ -2002,6 +2016,26 @@ jobs:
       # ————————————————————————————————————————————————————————————————
       # Upload coverage history for future runs (WORKING SYSTEM - PRESERVED)
       # ————————————————————————————————————————————————————————————————
+      - name: 🔍 Verify history files before upload
+        if: github.event_name == 'push'
+        run: |
+          echo "🔍 Checking history files before upload..."
+          HISTORY_PATH="${{ github.workspace }}/.github/coverage/history"
+          if [[ -d "$HISTORY_PATH" ]]; then
+            FILE_COUNT=$(find "$HISTORY_PATH" -name "*.json" -type f 2>/dev/null | wc -l || echo "0")
+            echo "  - History directory: $HISTORY_PATH"
+            echo "  - JSON files found: $FILE_COUNT"
+            if [[ $FILE_COUNT -gt 0 ]]; then
+              echo "  - Files to upload:"
+              find "$HISTORY_PATH" -name "*.json" -type f -exec basename {} \; | head -5
+              echo "  - Total size: $(du -sh "$HISTORY_PATH" | cut -f1)"
+            else
+              echo "⚠️ No JSON files found in history directory"
+            fi
+          else
+            echo "⚠️ History directory does not exist: $HISTORY_PATH"
+          fi
+
       - name: 📤 Upload coverage history artifacts
         # Upload history for all branches to preserve trend data
         if: github.event_name == 'push'
