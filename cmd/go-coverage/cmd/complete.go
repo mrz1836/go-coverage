@@ -267,7 +267,7 @@ update history, and create GitHub PR comment if in PR context.`,
 				coverageData.WorkflowRunNumber = runNumber
 				// Consider it the first run if run number is 1-3 (allowing for a few initial failures)
 				coverageData.IsFirstRun = runNumber <= 3
-				coverageData.HasPreviousRuns = runNumber > 1
+				// HasPreviousRuns will be determined later based on actual history data availability
 				cmd.Printf("   📊 Workflow run #%d detected\n", runNumber)
 				if coverageData.IsFirstRun {
 					cmd.Printf("   🚀 This appears to be one of the first workflow runs\n")
@@ -460,6 +460,23 @@ update history, and create GitHub PR comment if in PR context.`,
 					}
 					return "none"
 				}())
+		}
+
+		// Set HasPreviousRuns based on actual history data availability, not just run number
+		// This provides more accurate status messages in the dashboard
+		if len(coverageData.History) > 0 || (coverageData.TrendData != nil && coverageData.TrendData.Direction != "none") {
+			coverageData.HasPreviousRuns = false // We have history data, so don't show "failed to record" message
+			cmd.Printf("   ✅ Valid historical data available for trend analysis\n")
+		} else {
+			// Only consider it as "has previous runs" if run number > 1 but no history exists
+			// This will trigger the "Previous workflow runs failed to record history" message
+			if coverageData.WorkflowRunNumber > 1 {
+				coverageData.HasPreviousRuns = true
+				cmd.Printf("   ⚠️ Run #%d but no historical data found - previous runs may have failed\n", coverageData.WorkflowRunNumber)
+			} else {
+				coverageData.HasPreviousRuns = false
+				cmd.Printf("   ℹ️ First few runs, no historical data expected\n")
+			}
 		}
 
 		// Generate dashboard

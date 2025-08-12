@@ -231,9 +231,13 @@ func getDashboardTemplate() string {
                                     {{else if .IsFirstRun}}
                                         Trends will appear after more commits
                                     {{else if .HasPreviousRuns}}
-                                        Previous workflow runs failed to record history
+                                        Previous runs didn't record history - check workflow logs
                                     {{else if .WorkflowRunNumber}}
-                                        Workflow run #{{.WorkflowRunNumber}} {{- if gt .WorkflowRunNumber 10}}(history may be incomplete){{end -}}
+                                        {{if gt .WorkflowRunNumber 10}}
+                                            Workflow run #{{.WorkflowRunNumber}} (history may be incomplete)
+                                        {{else}}
+                                            Workflow run #{{.WorkflowRunNumber}} - building trend data
+                                        {{end}}
                                     {{else}}
                                         Collecting baseline coverage data
                                     {{end}}

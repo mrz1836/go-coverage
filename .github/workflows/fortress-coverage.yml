@@ -262,34 +262,35 @@ jobs:
 
           echo "✅ GitHub CLI is available and authenticated"
 
-          # Get recent successful workflow runs (prioritize current branch, then master)
-          echo "🔍 Fetching recent successful workflow runs..."
+          # Get recent workflow runs that may have recorded history (include failed deployments)
+          echo "🔍 Fetching recent workflow runs with potential history data..."
           CURRENT_BRANCH="${{ inputs.branch-name }}"
           echo "📌 Current branch: $CURRENT_BRANCH"
 
-          # First try to get runs from current branch
+          # First try to get completed runs from current branch (success OR failure after history step)
+          # This includes runs that recorded coverage history but failed in later steps (like deployment)
           WORKFLOW_RUNS=$(gh api repos/${{ github.repository }}/actions/runs \
-            --jq ".workflow_runs[] | select(.status == \"completed\" and .conclusion == \"success\" and .head_branch == \"$CURRENT_BRANCH\") | .id" \
-            --paginate 2>/dev/null | head -5 || echo "")
+            --jq ".workflow_runs[] | select(.status == \"completed\" and (.conclusion == \"success\" or .conclusion == \"failure\") and .head_branch == \"$CURRENT_BRANCH\") | .id" \
+            --paginate 2>/dev/null | head -8 || echo "")
 
           # If no runs found for current branch and it's not master, also get master branch history
           if [[ -z "$WORKFLOW_RUNS" ]] && [[ "$CURRENT_BRANCH" != "master" ]]; then
             echo "ℹ️ No history found for branch '$CURRENT_BRANCH', checking master branch..."
             WORKFLOW_RUNS=$(gh api repos/${{ github.repository }}/actions/runs \
-              --jq '.workflow_runs[] | select(.status == "completed" and .conclusion == "success" and .head_branch == "master") | .id' \
-              --paginate 2>/dev/null | head -3 || echo "")
+              --jq '.workflow_runs[] | select(.status == "completed" and (.conclusion == "success" or .conclusion == "failure") and .head_branch == "master") | .id' \
+              --paginate 2>/dev/null | head -5 || echo "")
           fi
 
           if [[ -z "$WORKFLOW_RUNS" ]]; then
-            echo "ℹ️ No recent successful workflow runs found"
+            echo "ℹ️ No recent workflow runs with potential history found"
             echo "📝 This is normal for:"
             echo "  - First run on this repository"
-            echo "  - First successful run after setup"
+            echo "  - All recent runs were cancelled or timed out"
             echo "  - GitHub API rate limiting or connectivity issues"
             exit 0
           fi
 
-          echo "📊 Found $(echo "$WORKFLOW_RUNS" | wc -l) recent successful runs"
+          echo "📊 Found $(echo "$WORKFLOW_RUNS" | wc -l) recent runs to check for history"
           echo "📋 Workflow run IDs: $(echo "$WORKFLOW_RUNS" | tr '\n' ' ')"
 
           # Download coverage history artifacts from recent runs
@@ -349,9 +350,18 @@ jobs:
                       rm -f "history-$run_id.zip"
                       echo "    ✅ Extracted history from run $run_id"
 
-                      # Show what was extracted
-                      EXTRACTED_FILES=$(find . -name "*.json" -newer "history-$run_id.zip" 2>/dev/null | wc -l || echo "0")
-                      echo "    📄 Extracted $EXTRACTED_FILES JSON files"
+                      # Validate extracted history files contain actual coverage data
+                      EXTRACTED_FILES=$(find . -name "*.json" -type f 2>/dev/null | wc -l || echo "0")
+                      VALID_FILES=0
+                      for json_file in $(find . -name "*.json" -type f 2>/dev/null); do
+                        if [[ -s "$json_file" ]] && grep -q "coverage" "$json_file" 2>/dev/null; then
+                          VALID_FILES=$((VALID_FILES + 1))
+                        else
+                          echo "    ⚠️ Removing invalid history file: $(basename "$json_file")"
+                          rm -f "$json_file"
+                        fi
+                      done
+                      echo "    📄 Extracted $EXTRACTED_FILES files, $VALID_FILES valid history entries"
                     else
                       echo "    ⚠️ Failed to extract history-$run_id.zip (possibly corrupted)"
                       rm -f "history-$run_id.zip"
