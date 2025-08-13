@@ -3,10 +3,26 @@ package main
 import (
 	"runtime/debug"
 	"strings"
+	"sync"
 )
 
+// VersionInfo holds build-time information
+type VersionInfo struct {
+	version   string
+	commit    string
+	buildDate string
+}
+
+// versionInstance holds the singleton instance
+//
+//nolint:gochecknoglobals // Singleton pattern for version info
+var versionInstance *VersionInfo
+
+//nolint:gochecknoglobals // Thread-safe initialization
+var versionOnce sync.Once
+
 // Build-time variables injected via ldflags
-// These are unexported to avoid global state exposure
+// These are only used during initialization and not exposed as globals
 //
 //nolint:gochecknoglobals // These are build-time ldflags variables, not application state
 var (
@@ -15,26 +31,40 @@ var (
 	buildDate = "unknown"
 )
 
+// getVersionInfo returns the singleton VersionInfo instance
+func getVersionInfo() *VersionInfo {
+	versionOnce.Do(func() {
+		versionInstance = &VersionInfo{
+			version:   version,
+			commit:    commit,
+			buildDate: buildDate,
+		}
+	})
+	return versionInstance
+}
+
 // GetVersion returns the version information with fallback to BuildInfo
 func GetVersion() string {
+	info := getVersionInfo()
+
 	// If version was set via ldflags, use it
-	if version != "dev" && version != "" {
-		return version
+	if info.version != "dev" && info.version != "" {
+		return info.version
 	}
 
 	// Try to get version from build info
-	if info, ok := debug.ReadBuildInfo(); ok {
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
 		// Check if there's a module version (from go install @version)
-		if info.Main.Version != "" && info.Main.Version != "(devel)" {
+		if buildInfo.Main.Version != "" && buildInfo.Main.Version != "(devel)" {
 			// Clean up the version string
-			version := info.Main.Version
+			version := buildInfo.Main.Version
 			// Remove 'v' prefix if present for consistency
 			version = strings.TrimPrefix(version, "v")
 			return version
 		}
 
 		// Try to get VCS revision as fallback
-		for _, setting := range info.Settings {
+		for _, setting := range buildInfo.Settings {
 			if setting.Key == "vcs.revision" && setting.Value != "" {
 				// Use short commit hash like we do in Makefile
 				if len(setting.Value) > 7 {
@@ -51,14 +81,16 @@ func GetVersion() string {
 
 // GetCommit returns the commit hash with fallback to BuildInfo
 func GetCommit() string {
+	info := getVersionInfo()
+
 	// If commit was set via ldflags, use it
-	if commit != "none" && commit != "" {
-		return commit
+	if info.commit != "none" && info.commit != "" {
+		return info.commit
 	}
 
 	// Try to get from build info
-	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, setting := range info.Settings {
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range buildInfo.Settings {
 			if setting.Key == "vcs.revision" && setting.Value != "" {
 				return setting.Value
 			}
@@ -70,14 +102,16 @@ func GetCommit() string {
 
 // GetBuildDate returns the build date with fallback to BuildInfo
 func GetBuildDate() string {
+	info := getVersionInfo()
+
 	// If build date was set via ldflags, use it
-	if buildDate != "unknown" && buildDate != "" {
-		return buildDate
+	if info.buildDate != "unknown" && info.buildDate != "" {
+		return info.buildDate
 	}
 
 	// Try to get from build info
-	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, setting := range info.Settings {
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range buildInfo.Settings {
 			if setting.Key == "vcs.time" && setting.Value != "" {
 				return setting.Value
 			}
