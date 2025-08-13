@@ -8,7 +8,6 @@
 #    1. Load .env.base (required) - contains default configuration
 #    2. Load .env.custom (optional) - project-specific overrides
 #    3. Merge with custom values taking precedence
-#    4. Fallback to .env.shared for backward compatibility
 #
 #  Outputs:
 #    env-json: JSON object containing all merged environment variables
@@ -44,7 +43,7 @@ outputs:
     description: "Number of variables loaded from .env.custom"
     value: ${{ steps.load-env.outputs.custom-var-count }}
   config-mode:
-    description: "Configuration mode: new (base+custom), legacy (.env.shared), or hybrid"
+    description: "Configuration mode: new (base+custom) or base-only"
     value: ${{ steps.load-env.outputs.config-mode }}
 
 runs:
@@ -77,7 +76,6 @@ runs:
         # Load configuration files in order of precedence
         BASE_JSON="{}"
         CUSTOM_JSON="{}"
-        LEGACY_JSON="{}"
 
         # 1. Load base configuration (required)
         if [[ -f ".github/.env.base" ]]; then
@@ -100,23 +98,9 @@ runs:
           echo "ℹ️  No custom configuration file found (this is optional)"
         fi
 
-        # 3. Backward compatibility: Load legacy .env.shared if new files don't exist
-        if [[ -f ".github/.env.shared" ]] && [[ ! -f ".github/.env.base" ]]; then
-          echo "⚠️  Fallback: Loading legacy .env.shared (please migrate to .env.base + .env.custom)"
-          LEGACY_JSON=$(parse_env_file ".github/.env.shared")
-          LEGACY_COUNT=$(echo "$LEGACY_JSON" | jq 'keys | length')
-          echo "✅ Loaded $LEGACY_COUNT variables from legacy configuration"
-        fi
-
-        # 4. Merge configurations with precedence: custom > base > legacy
+        # 3. Merge configurations with precedence: custom > base
         echo "🔀 Merging configuration files..."
-        if [[ "$LEGACY_JSON" != "{}" ]]; then
-          # Legacy mode: use .env.shared as base
-          ENV_JSON="$LEGACY_JSON"
-        else
-          # New mode: merge base + custom
-          ENV_JSON=$(echo "$BASE_JSON $CUSTOM_JSON" | jq -s 'add')
-        fi
+        ENV_JSON=$(echo "$BASE_JSON $CUSTOM_JSON" | jq -s 'add')
 
         # Validate merged configuration
         if [[ -z "$ENV_JSON" ]] || [[ "$ENV_JSON" == "null" ]] || [[ "$ENV_JSON" == "{}" ]]; then
@@ -166,9 +150,7 @@ runs:
         fi
 
         # Determine configuration mode
-        if [[ "$LEGACY_JSON" != "{}" ]]; then
-          CONFIG_MODE="legacy"
-        elif [[ "$CUSTOM_FOUND" == "true" ]]; then
+        if [[ "$CUSTOM_FOUND" == "true" ]]; then
           CONFIG_MODE="new"
         else
           CONFIG_MODE="base-only"

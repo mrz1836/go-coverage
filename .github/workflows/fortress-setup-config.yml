@@ -43,7 +43,7 @@ on:
         type: string
         default: "0"
       config-mode:
-        description: "Configuration mode: new, legacy, or base-only"
+        description: "Configuration mode: new or base-only"
         required: false
         type: string
         default: "new"
@@ -431,9 +431,7 @@ jobs:
           CONFIG_MODE="${{ inputs.config-mode }}"
 
           # Show configuration sources
-          if [[ "$CONFIG_MODE" == "legacy" ]]; then
-            echo "- **Configuration Mode**: ⚠️ Legacy (\`.env.shared\` file)" >> $GITHUB_STEP_SUMMARY
-          elif [[ "$CUSTOM_FOUND" == "true" ]]; then
+          if [[ "$CUSTOM_FOUND" == "true" ]]; then
             echo "- **Configuration Sources**: 📂 Base (\`.env.base\`: $BASE_COUNT vars) + 🎨 Custom (\`.env.custom\`: $CUSTOM_COUNT overrides)" >> $GITHUB_STEP_SUMMARY
           else
             echo "- **Configuration Sources**: 📂 Base only (\`.env.base\`: $BASE_COUNT variables)" >> $GITHUB_STEP_SUMMARY
