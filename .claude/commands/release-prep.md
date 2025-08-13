@@ -28,7 +28,6 @@ Prepare for release using **release-manager**, **go-test-runner**, and **coverag
 3. **Release Preparation** (release-manager agent):
    - Determine version (MAJOR.MINOR.PATCH)
    - Generate changelog
-   - Update version in CITATION.cff
    - Prepare release notes
    - Tag strategy
 

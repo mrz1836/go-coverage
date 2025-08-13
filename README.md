@@ -372,12 +372,6 @@ To generate a snapshot (non-versioned) release for testing purposes, run:
 make release-snap
 ```
 
-Before tagging a new version, update the release metadata (version) in the `CITATION.cff` file:
-
-```bash
-make citation version=0.2.1
-```
-
 Then create and push a new Git tag using:
 
 ```bash

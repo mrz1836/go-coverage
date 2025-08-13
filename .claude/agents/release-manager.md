@@ -68,16 +68,7 @@ Bug fixes/documentation only? → PATCH
    make coverage
    ```
 
-2. **Update Version Metadata**
-   ```bash
-   # Update CITATION.cff
-   make citation version=X.Y.Z
-
-   # Verify version in files
-   grep -r "version.*X.Y.Z" .
-   ```
-
-3. **Generate Changelog**
+2**Generate Changelog**
    ```bash
    # Get commit list since last tag
    git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:"- %s"
@@ -86,7 +77,7 @@ Bug fixes/documentation only? → PATCH
    # Added, Changed, Fixed, Security, Deprecated, Removed
    ```
 
-4. **Create Release Tag**
+3**Create Release Tag**
    ```bash
    # Create and push tag (only by codeowners)
    make tag version=X.Y.Z
@@ -96,7 +87,7 @@ Bug fixes/documentation only? → PATCH
    # git push origin vX.Y.Z
    ```
 
-5. **Trigger Release Build**
+4**Trigger Release Build**
    ```bash
    # GitHub Actions automatically runs goreleaser
    # Monitor at: gh run list --workflow=fortress-release.yml
