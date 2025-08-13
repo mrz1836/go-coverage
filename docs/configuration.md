@@ -5,6 +5,7 @@ Complete configuration reference for **go-coverage**, including environment vari
 ## 📖 Table of Contents
 
 - [Overview](#-overview)
+- [Two-File Configuration System](#-two-file-configuration-system)
 - [Environment Variables](#-environment-variables)
 - [Configuration File](#-configuration-file)
 - [GitHub Integration](#-github-integration)
@@ -16,18 +17,46 @@ Complete configuration reference for **go-coverage**, including environment vari
 
 ## 🎯 Overview
 
-Go-coverage supports configuration through:
+Go-coverage supports configuration through multiple methods:
 
-1. **Environment Variables** - Primary configuration method, ideal for CI/CD
-2. **Configuration Files** - JSON-based configuration for complex setups
-3. **Command Line Flags** - Override specific options per command
-4. **Runtime Detection** - Automatic GitHub context detection
+1. **Command Line Flags** - Override specific options per command (highest priority)
+2. **Environment Variables** - Set via `.env.base` and `.env.custom` files
+3. **Configuration Files** - JSON-based configuration for complex setups
+4. **Runtime Detection** - Automatic GitHub context detection (lowest priority)
 
-Configuration follows this precedence order:
-1. Command line flags (highest priority)
-2. Environment variables
-3. Configuration file
-4. Default values (lowest priority)
+## 🗂️ Two-File Configuration System
+
+The GoFortress workflow system uses a two-file configuration approach:
+
+### Base Configuration (`.github/.env.base`)
+- Contains all default settings that work for most Go projects
+- Includes comprehensive documentation for each variable
+- Should be tracked in version control
+- Gets updated with new GoFortress releases
+
+### Custom Configuration (`.github/.env.custom`)
+- Optional file for project-specific overrides
+- Only include variables you want to change from defaults
+- Can be tracked in version control or kept local
+- Takes precedence over base configuration
+
+### Usage Example
+
+1. **Copy the example file:**
+```bash
+cp .github/.env.custom.example .github/.env.custom
+```
+
+2. **Edit your custom configuration:**
+```bash
+# In .github/.env.custom
+GO_COVERAGE_THRESHOLD=85.0
+ENABLE_BENCHMARKS=false
+PRIMARY_RUNNER=macos-15
+```
+
+3. **The system automatically merges:**
+- Base defaults + Custom overrides = Final configuration
 
 ## 🌍 Environment Variables
 
@@ -318,14 +347,9 @@ Allow PR labels to temporarily override coverage thresholds:
 
 ```bash
 export GO_COVERAGE_ALLOW_LABEL_OVERRIDE=true
-export GO_COVERAGE_MIN_OVERRIDE_THRESHOLD=50.0   # Minimum allowed override
-export GO_COVERAGE_MAX_OVERRIDE_THRESHOLD=95.0   # Maximum allowed override
 ```
 
-PR labels that trigger overrides:
-- `coverage-override-50` - Set threshold to 50%
-- `coverage-override-60` - Set threshold to 60%
-- `coverage-override-70` - Set threshold to 70%
+When enabled, PRs with the `coverage-override` label will completely bypass coverage threshold checks. This provides a simple on/off override mechanism for special cases.
 
 ## 🏷️ Badge Configuration
 

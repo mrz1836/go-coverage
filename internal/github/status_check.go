@@ -45,8 +45,6 @@ type StatusCheckConfig struct {
 	QualityThreshold       string  // Minimum quality grade threshold
 	AllowThresholdOverride bool    // Allow threshold override via commit message
 	AllowLabelOverride     bool    // Allow threshold override via PR labels
-	MinOverrideThreshold   float64 // Minimum allowed override threshold
-	MaxOverrideThreshold   float64 // Maximum allowed override threshold
 
 	// Quality gates
 	EnableQualityGates bool          // Enable quality gate checks
@@ -218,8 +216,6 @@ func NewStatusCheckManager(client *Client, config *StatusCheckConfig) *StatusChe
 			QualityThreshold:       "C",
 			AllowThresholdOverride: true,
 			AllowLabelOverride:     false,
-			MinOverrideThreshold:   50.0,
-			MaxOverrideThreshold:   95.0,
 			EnableQualityGates:     true,
 			IncludeTargetURLs:      true,
 			UpdateStrategy:         UpdateAlways,
@@ -344,22 +340,20 @@ func (m *StatusCheckManager) buildStatusChecks(ctx context.Context, request *Sta
 	return statuses
 }
 
-// parseCoverageOverrideFromLabels extracts coverage threshold override from PR labels
-//
-//nolint:unparam // threshold is always 0 for the simplified override implementation
-func (m *StatusCheckManager) parseCoverageOverrideFromLabels(labels []Label) (float64, bool) {
+// hasLabelOverride checks if PR has the coverage override label
+func (m *StatusCheckManager) hasLabelOverride(labels []Label) bool {
 	if !m.config.AllowLabelOverride {
-		return 0, false
+		return false
 	}
 
 	// Check for generic override label that completely ignores coverage requirements
 	for _, label := range labels {
 		if label.Name == "coverage-override" {
-			return 0, true // Return 0% threshold (completely ignores coverage)
+			return true
 		}
 	}
 
-	return 0, false
+	return false
 }
 
 // buildMainCoverageStatus builds the main coverage status
@@ -371,8 +365,8 @@ func (m *StatusCheckManager) buildMainCoverageStatus(ctx context.Context, reques
 	if m.config.AllowLabelOverride && request.PRNumber > 0 {
 		// Fetch PR information to get labels
 		if pr, err := m.client.GetPullRequest(ctx, request.Owner, request.Repository, request.PRNumber); err == nil {
-			if overrideThreshold, hasOverride := m.parseCoverageOverrideFromLabels(pr.Labels); hasOverride {
-				threshold = overrideThreshold
+			if m.hasLabelOverride(pr.Labels) {
+				threshold = 0 // Complete override - ignore coverage requirements
 			}
 		}
 		// Silently continue if PR fetch fails - use default threshold

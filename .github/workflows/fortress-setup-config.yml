@@ -22,6 +22,31 @@ on:
         description: "Primary runner OS"
         required: true
         type: string
+      base-file-found:
+        description: "Whether .env.base file was found"
+        required: false
+        type: string
+        default: "false"
+      custom-file-found:
+        description: "Whether .env.custom file was found"
+        required: false
+        type: string
+        default: "false"
+      base-var-count:
+        description: "Number of variables loaded from .env.base"
+        required: false
+        type: string
+        default: "0"
+      custom-var-count:
+        description: "Number of variables loaded from .env.custom"
+        required: false
+        type: string
+        default: "0"
+      config-mode:
+        description: "Configuration mode: new, legacy, or base-only"
+        required: false
+        type: string
+        default: "new"
     secrets:
       github-token:
         description: "GitHub token for API access"
@@ -397,7 +422,24 @@ jobs:
           MATRIX_COUNT=$(echo "$MATRIX_JSON" | jq '.include | length')
 
           echo "- **Workflow Start Time**: ${{ steps.timer.outputs.start-time }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total Environment Variables**: $ENV_COUNT (from \`.github/.env.shared\`)" >> $GITHUB_STEP_SUMMARY
+
+          # Configuration File Discovery
+          BASE_FOUND="${{ inputs.base-file-found }}"
+          CUSTOM_FOUND="${{ inputs.custom-file-found }}"
+          BASE_COUNT="${{ inputs.base-var-count }}"
+          CUSTOM_COUNT="${{ inputs.custom-var-count }}"
+          CONFIG_MODE="${{ inputs.config-mode }}"
+
+          # Show configuration sources
+          if [[ "$CONFIG_MODE" == "legacy" ]]; then
+            echo "- **Configuration Mode**: ⚠️ Legacy (\`.env.shared\` file)" >> $GITHUB_STEP_SUMMARY
+          elif [[ "$CUSTOM_FOUND" == "true" ]]; then
+            echo "- **Configuration Sources**: 📂 Base (\`.env.base\`: $BASE_COUNT vars) + 🎨 Custom (\`.env.custom\`: $CUSTOM_COUNT overrides)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Configuration Sources**: 📂 Base only (\`.env.base\`: $BASE_COUNT variables)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "- **Total Environment Variables**: $ENV_COUNT" >> $GITHUB_STEP_SUMMARY
           echo "- **Enabled Features**: $ENABLED_FEATURES" >> $GITHUB_STEP_SUMMARY
           echo "- **Disabled Features**: $DISABLED_FEATURES" >> $GITHUB_STEP_SUMMARY
           echo "- **Test Matrix Combinations**: $MATRIX_COUNT" >> $GITHUB_STEP_SUMMARY
@@ -456,7 +498,7 @@ jobs:
             echo "|---------|-------|-------------|" >> $GITHUB_STEP_SUMMARY
             echo "| **Benchmark Mode** | \`${{ env.BENCHMARK_MODE }}\` | $(case "${{ env.BENCHMARK_MODE }}" in quick) echo "Quick runs (50ms)" ;; full) echo "Comprehensive runs (10s)" ;; *) echo "Normal runs (100ms)" ;; esac) |" >> $GITHUB_STEP_SUMMARY
             echo "| **Benchmark Timeout** | \`${{ env.BENCHMARK_TIMEOUT }}\` minutes | Maximum time allowed for benchmark execution |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Available Modes** | quick, normal, full | Set via \`BENCHMARK_MODE\` in .env.shared |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Available Modes** | quick, normal, full | Set via \`BENCHMARK_MODE\` in configuration |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "<br><br>" >> $GITHUB_STEP_SUMMARY
           fi

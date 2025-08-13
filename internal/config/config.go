@@ -15,18 +15,15 @@ import (
 
 // Static error definitions
 var (
-	ErrInvalidCoverageThreshold      = errors.New("coverage threshold must be between 0 and 100")
-	ErrEmptyCoverageInput            = errors.New("coverage input file cannot be empty")
-	ErrMissingGitHubToken            = errors.New("GitHub token is required for GitHub integration")
-	ErrMissingGitHubOwner            = errors.New("GitHub repository owner is required")
-	ErrMissingGitHubRepo             = errors.New("GitHub repository name is required")
-	ErrInvalidBadgeStyle             = errors.New("invalid badge style")
-	ErrInvalidReportTheme            = errors.New("invalid report theme")
-	ErrInvalidRetentionDays          = errors.New("history retention days must be positive")
-	ErrInvalidMaxEntries             = errors.New("history max entries must be positive")
-	ErrInvalidMinOverrideThreshold   = errors.New("min override threshold must be between 0 and 100")
-	ErrInvalidMaxOverrideThreshold   = errors.New("max override threshold must be between 0 and 100")
-	ErrInvalidOverrideThresholdRange = errors.New("min override threshold cannot be greater than max override threshold")
+	ErrInvalidCoverageThreshold = errors.New("coverage threshold must be between 0 and 100")
+	ErrEmptyCoverageInput       = errors.New("coverage input file cannot be empty")
+	ErrMissingGitHubToken       = errors.New("GitHub token is required for GitHub integration")
+	ErrMissingGitHubOwner       = errors.New("GitHub repository owner is required")
+	ErrMissingGitHubRepo        = errors.New("GitHub repository name is required")
+	ErrInvalidBadgeStyle        = errors.New("invalid badge style")
+	ErrInvalidReportTheme       = errors.New("invalid report theme")
+	ErrInvalidRetentionDays     = errors.New("history retention days must be positive")
+	ErrInvalidMaxEntries        = errors.New("history max entries must be positive")
 )
 
 // isMainBranch checks if a branch name is one of the configured main branches
@@ -76,10 +73,6 @@ type CoverageConfig struct {
 	Threshold float64 `json:"threshold"`
 	// Allow threshold override via PR labels
 	AllowLabelOverride bool `json:"allow_label_override"`
-	// Minimum allowed override threshold
-	MinOverrideThreshold float64 `json:"min_override_threshold"`
-	// Maximum allowed override threshold
-	MaxOverrideThreshold float64 `json:"max_override_threshold"`
 	// Paths to exclude from coverage
 	ExcludePaths []string `json:"exclude_paths"`
 	// File patterns to exclude
@@ -190,16 +183,14 @@ type AnalyticsConfig struct {
 func Load() *Config {
 	config := &Config{
 		Coverage: CoverageConfig{
-			InputFile:            getEnvString("GO_COVERAGE_INPUT_FILE", "coverage.txt"),
-			OutputDir:            getEnvString("GO_COVERAGE_OUTPUT_DIR", ".github/coverage"),
-			Threshold:            getEnvFloat("GO_COVERAGE_THRESHOLD", 80.0),
-			AllowLabelOverride:   getEnvBool("GO_COVERAGE_ALLOW_LABEL_OVERRIDE", false),
-			MinOverrideThreshold: getEnvFloat("GO_COVERAGE_MIN_OVERRIDE_THRESHOLD", 50.0),
-			MaxOverrideThreshold: getEnvFloat("GO_COVERAGE_MAX_OVERRIDE_THRESHOLD", 95.0),
-			ExcludePaths:         getEnvStringSlice("GO_COVERAGE_EXCLUDE_PATHS", []string{"vendor/", "test/", "testdata/"}),
-			ExcludeFiles:         getEnvStringSlice("GO_COVERAGE_EXCLUDE_FILES", []string{"*_test.go", "*.pb.go"}),
-			ExcludeTests:         getEnvBool("GO_COVERAGE_EXCLUDE_TESTS", true),
-			ExcludeGenerated:     getEnvBool("GO_COVERAGE_EXCLUDE_GENERATED", true),
+			InputFile:          getEnvString("GO_COVERAGE_INPUT_FILE", "coverage.txt"),
+			OutputDir:          getEnvString("GO_COVERAGE_OUTPUT_DIR", ".github/coverage"),
+			Threshold:          getEnvFloat("GO_COVERAGE_THRESHOLD", 80.0),
+			AllowLabelOverride: getEnvBool("GO_COVERAGE_ALLOW_LABEL_OVERRIDE", false),
+			ExcludePaths:       getEnvStringSlice("GO_COVERAGE_EXCLUDE_PATHS", []string{"vendor/", "test/", "testdata/"}),
+			ExcludeFiles:       getEnvStringSlice("GO_COVERAGE_EXCLUDE_FILES", []string{"*_test.go", "*.pb.go"}),
+			ExcludeTests:       getEnvBool("GO_COVERAGE_EXCLUDE_TESTS", true),
+			ExcludeGenerated:   getEnvBool("GO_COVERAGE_EXCLUDE_GENERATED", true),
 		},
 		GitHub: GitHubConfig{
 			Token:          getEnvString("GITHUB_TOKEN", ""),
@@ -261,19 +252,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("%w, got: %.1f", ErrInvalidCoverageThreshold, c.Coverage.Threshold)
 	}
 
-	// Validate label override settings
-	if c.Coverage.AllowLabelOverride {
-		if c.Coverage.MinOverrideThreshold < 0 || c.Coverage.MinOverrideThreshold > 100 {
-			return fmt.Errorf("%w, got: %.1f", ErrInvalidMinOverrideThreshold, c.Coverage.MinOverrideThreshold)
-		}
-		if c.Coverage.MaxOverrideThreshold < 0 || c.Coverage.MaxOverrideThreshold > 100 {
-			return fmt.Errorf("%w, got: %.1f", ErrInvalidMaxOverrideThreshold, c.Coverage.MaxOverrideThreshold)
-		}
-		if c.Coverage.MaxOverrideThreshold > 0 && c.Coverage.MinOverrideThreshold > c.Coverage.MaxOverrideThreshold {
-			return fmt.Errorf("%w: min=%.1f, max=%.1f", ErrInvalidOverrideThresholdRange,
-				c.Coverage.MinOverrideThreshold, c.Coverage.MaxOverrideThreshold)
-		}
-	}
+	// No additional validation needed for AllowLabelOverride - it's just a boolean
 
 	if c.Coverage.InputFile == "" {
 		return ErrEmptyCoverageInput

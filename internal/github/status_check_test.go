@@ -8,25 +8,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStatusCheckManager_parseCoverageOverrideFromLabels(t *testing.T) {
+func TestStatusCheckManager_hasLabelOverride(t *testing.T) {
 	tests := []struct {
-		name                     string
-		labels                   []Label
-		config                   *StatusCheckConfig
-		expectedThreshold        float64
-		expectedHasOverride      bool
-		expectedOverrideDetected bool
+		name             string
+		labels           []Label
+		config           *StatusCheckConfig
+		expectedOverride bool
 	}{
 		{
 			name:   "no labels",
 			labels: []Label{},
 			config: &StatusCheckConfig{
-				AllowLabelOverride:   true,
-				MinOverrideThreshold: 50.0,
-				MaxOverrideThreshold: 95.0,
+				AllowLabelOverride: true,
 			},
-			expectedThreshold:   0,
-			expectedHasOverride: false,
+			expectedOverride: false,
 		},
 		{
 			name: "generic coverage-override label",
@@ -36,8 +31,7 @@ func TestStatusCheckManager_parseCoverageOverrideFromLabels(t *testing.T) {
 			config: &StatusCheckConfig{
 				AllowLabelOverride: true,
 			},
-			expectedThreshold:   0.0, // Completely ignores coverage
-			expectedHasOverride: true,
+			expectedOverride: true,
 		},
 		{
 			name: "label override disabled",
@@ -47,8 +41,7 @@ func TestStatusCheckManager_parseCoverageOverrideFromLabels(t *testing.T) {
 			config: &StatusCheckConfig{
 				AllowLabelOverride: false,
 			},
-			expectedThreshold:   0,
-			expectedHasOverride: false,
+			expectedOverride: false,
 		},
 		{
 			name: "mixed labels with valid override",
@@ -60,8 +53,7 @@ func TestStatusCheckManager_parseCoverageOverrideFromLabels(t *testing.T) {
 			config: &StatusCheckConfig{
 				AllowLabelOverride: true,
 			},
-			expectedThreshold:   0.0, // Completely ignores coverage
-			expectedHasOverride: true,
+			expectedOverride: true,
 		},
 	}
 
@@ -71,12 +63,9 @@ func TestStatusCheckManager_parseCoverageOverrideFromLabels(t *testing.T) {
 				config: tt.config,
 			}
 
-			threshold, hasOverride := manager.parseCoverageOverrideFromLabels(tt.labels)
+			hasOverride := manager.hasLabelOverride(tt.labels)
 
-			assert.Equal(t, tt.expectedHasOverride, hasOverride, "hasOverride mismatch")
-			if tt.expectedHasOverride {
-				assert.InDelta(t, tt.expectedThreshold, threshold, 0.01, "threshold mismatch")
-			}
+			assert.Equal(t, tt.expectedOverride, hasOverride, "hasOverride mismatch")
 		})
 	}
 }

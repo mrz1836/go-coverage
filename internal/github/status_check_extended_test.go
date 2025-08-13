@@ -58,8 +58,6 @@ func TestNewStatusCheckManager(t *testing.T) {
 				assert.Equal(t, "C", manager.config.QualityThreshold)
 				assert.True(t, manager.config.AllowThresholdOverride)
 				assert.False(t, manager.config.AllowLabelOverride)
-				assert.InEpsilon(t, 50.0, manager.config.MinOverrideThreshold, 0.001)
-				assert.InEpsilon(t, 95.0, manager.config.MaxOverrideThreshold, 0.001)
 				assert.True(t, manager.config.EnableQualityGates)
 				assert.True(t, manager.config.IncludeTargetURLs)
 				assert.Equal(t, UpdateAlways, manager.config.UpdateStrategy)

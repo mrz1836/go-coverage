@@ -115,7 +115,7 @@ Next, deploy to your main branch and generate coverage reports!
 
 ### Basic Usage for (External - Codecov)
 
-First, set the env vars in .env.shared to:
+First, create `.github/.env.custom` with:
 ```text
 GO_COVERAGE_PROVIDER=codecov
 CODECOV_TOKEN_REQUIRED=true
@@ -464,9 +464,13 @@ vet                   ## Run go vet only on your module packages
 
 ### 🎛️ The Workflow Control Center
 
-All GitHub Actions workflows in this repository are powered by a single configuration file: [**.env.shared**](.github/.env.shared) – your one-stop shop for tweaking CI/CD behavior without touching a single YAML file! 🎯
+All GitHub Actions workflows in this repository are powered by a flexible two-file configuration system – your one-stop shop for tweaking CI/CD behavior without touching a single YAML file! 🎯
 
-This magical file controls everything from:
+**Configuration Files:**
+- **[.env.base](.github/.env.base)** – Default configuration that works for most Go projects
+- **[.env.custom](.github/.env.custom.example)** – Optional project-specific overrides
+
+This powerful system controls everything from:
 - **🚀 Go version matrix** (test on multiple versions or just one)
 - **🏃 Runner selection** (Ubuntu or macOS, your wallet decides)
 - **🔬 Feature toggles** (coverage, fuzzing, linting, race detection, benchmarks)
@@ -474,7 +478,7 @@ This magical file controls everything from:
 - **🤖 Auto-merge behaviors** (how aggressive should the bots be?)
 - **🏷️ PR management rules** (size labels, auto-assignment, welcome messages)
 
-> **Pro tip:** Want to disable code coverage? Just flip `ENABLE_CODE_COVERAGE=false` in [.env.shared](.github/.env.shared) and push. No YAML archaeology required!
+> **Pro tip:** Want to disable code coverage? Create `.env.custom` with `ENABLE_CODE_COVERAGE=false` and push. No YAML archaeology required!
 
 <br/>
 

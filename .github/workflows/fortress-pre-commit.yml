@@ -110,7 +110,7 @@ jobs:
       # ————————————————————————————————————————————————————————————————
       - name: 📋 Display pre-commit configuration
         run: |
-          echo "🔧 GoFortress Pre-commit Configuration (from .env.shared)"
+          echo "🔧 GoFortress Pre-commit Configuration"
           echo "=================================================="
           echo ""
           echo "📊 System Settings:"
@@ -200,7 +200,7 @@ jobs:
           # Set environment for CI
           export CI=true
 
-          # The external tool will read environment variables from .env.shared
+          # The external tool will read environment variables from the merged configuration
           # that we've already loaded into the environment
 
           # Run all checks on all files (CI mode)

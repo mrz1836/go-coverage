@@ -63,6 +63,11 @@ jobs:
     outputs:
       env-json: ${{ steps.load-env.outputs.env-json }}
       primary-runner: ${{ steps.load-env.outputs.primary-runner }}
+      base-file-found: ${{ steps.load-env.outputs.base-file-found }}
+      custom-file-found: ${{ steps.load-env.outputs.custom-file-found }}
+      base-var-count: ${{ steps.load-env.outputs.base-var-count }}
+      custom-var-count: ${{ steps.load-env.outputs.custom-var-count }}
+      config-mode: ${{ steps.load-env.outputs.config-mode }}
     steps:
       # ————————————————————————————————————————————————————————————————
       # Check out code to access env file
@@ -71,7 +76,8 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           sparse-checkout: |
-            .github/.env.shared
+            .github/.env.base
+            .github/.env.custom
             .github/actions/load-env
 
       # ————————————————————————————————————————————————————————————————
@@ -93,6 +99,11 @@ jobs:
     with:
       env-json: ${{ needs.load-env.outputs.env-json }}
       primary-runner: ${{ needs.load-env.outputs.primary-runner }}
+      base-file-found: ${{ needs.load-env.outputs.base-file-found }}
+      custom-file-found: ${{ needs.load-env.outputs.custom-file-found }}
+      base-var-count: ${{ needs.load-env.outputs.base-var-count }}
+      custom-var-count: ${{ needs.load-env.outputs.custom-var-count }}
+      config-mode: ${{ needs.load-env.outputs.config-mode }}
     secrets:
       github-token: ${{ secrets.GH_PAT_TOKEN != '' && secrets.GH_PAT_TOKEN || secrets.GITHUB_TOKEN }}
   # ----------------------------------------------------------------------------------
