@@ -316,6 +316,13 @@ func checkRepositoryAccess(ctx context.Context, cmd *cobra.Command, repo string,
 		cmd.Printf("   🔍 Checking access to repository: %s\n", repo)
 	}
 
+	// Validate repository format before making API call
+	if repo == "" || !isValidRepositoryFormat(repo) {
+		cmd.Printf("   ❌ Invalid repository format: '%s'\n", repo)
+		cmd.Printf("   💡 Repository must be in 'owner/repo' format\n")
+		return ErrRepositoryNotFound
+	}
+
 	// Try to view the repository
 	viewCmd := exec.CommandContext(ctx, "gh", "repo", "view", repo)
 	viewCmd.Stdout = nil // Suppress output
@@ -338,14 +345,14 @@ func setupPagesEnvironment(ctx context.Context, cmd *cobra.Command, repo string,
 		cmd.Printf("   🔧 Creating/updating github-pages environment...\n")
 	}
 
-	if dryRun {
-		cmd.Printf("   🧪 DRY RUN: Would create/update github-pages environment\n")
-		return nil
-	}
-
 	// Validate repo format to prevent command injection
 	if !isValidRepositoryFormat(repo) {
 		return fmt.Errorf("repository format '%s': %w", repo, ErrInvalidRepositoryFormat)
+	}
+
+	if dryRun {
+		cmd.Printf("   🧪 DRY RUN: Would create/update github-pages environment\n")
+		return nil
 	}
 
 	// Create or update the github-pages environment with proper deployment policy
