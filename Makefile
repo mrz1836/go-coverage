@@ -28,17 +28,17 @@ BUILD_FLAGS := -trimpath
 ## Override the default build-go to build from the cmd directory
 .PHONY: build-go
 build-go: ## Build the Go application (locally)
-	@echo "Building $(BINARY_NAME) v$(VERSION)..."
+	@echo "Building $(BINARY_NAME) $(VERSION)..."
 	@mkdir -p bin
 	@$(GO) build $(BUILD_FLAGS) $(LDFLAGS) -o $(BINARY_PATH) $(TAGS) $(GOFLAGS) ./cmd/$(BINARY_NAME)
-	@echo "Binary built: $(BINARY_PATH) (v$(VERSION))"
+	@echo "Binary built: $(BINARY_PATH) ($(VERSION))"
 
 ## Override the default install to install from the cmd directory
 .PHONY: install
 install: ## Install the application binary to GOPATH/bin
-	@echo "Installing $(BINARY_NAME) v$(VERSION)..."
+	@echo "Installing $(BINARY_NAME) $(VERSION)..."
 	@$(GO) install $(BUILD_FLAGS) $(LDFLAGS) $(TAGS) $(GOFLAGS) ./cmd/$(BINARY_NAME)
-	@echo "$(BINARY_NAME) installed (v$(VERSION))"
+	@echo "$(BINARY_NAME) installed ($(VERSION))"
 
 ## build: Build the pre-commit binary (alias for build-go)
 .PHONY: build
