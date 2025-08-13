@@ -325,13 +325,25 @@ Create a `.go-coverage.json` config file:
 
 ## 📚 Documentation
 
+### Quick Start Guides
+- **[⚡ Quickstart](docs/quickstart.md)** – Get started in 5 minutes with installation and basic setup
+- **[📚 User Guide](docs/user-guide.md)** – Complete usage guide with examples and workflows
+
+### Reference Documentation
+- **[🛠️ CLI Reference](docs/cli-reference.md)** – Detailed command-line reference and options
+- **[⚙️ Configuration](docs/configuration.md)** – Environment variables and configuration options
 - **CLI Reference** – Complete command documentation at [pkg.go.dev/github.com/mrz1836/go-coverage](https://pkg.go.dev/github.com/mrz1836/go-coverage)
+
+### Developer Resources
+- **[🤝 Contributing](docs/contributing.md)** – How to contribute code, tests, and documentation
+- **[🏗️ Architecture](docs/architecture.md)** – Technical architecture and design decisions
+
+### Features Overview
 - **Coverage Analysis** – Parse Go coverage profiles with exclusions and thresholds
 - **Badge Generation** – Create SVG badges with custom styling and themes
 - **Report Generation** – Build HTML dashboards and detailed coverage reports
 - **History Tracking** – Monitor coverage trends over time with retention policies
 - **GitHub Integration** – PR comments, commit statuses, and automated deployments
-- **Configuration** – Comprehensive settings for all coverage system features
 
 <br/>
 
