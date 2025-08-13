@@ -6,20 +6,20 @@ import (
 )
 
 // Build-time variables injected via ldflags
-// These are intentionally global as they are set at build time via ldflags
+// These are unexported to avoid global state exposure
 //
 //nolint:gochecknoglobals // These are build-time ldflags variables, not application state
 var (
-	Version   = "dev"
-	Commit    = "none"
-	BuildDate = "unknown"
+	version   = "dev"
+	commit    = "none"
+	buildDate = "unknown"
 )
 
 // GetVersion returns the version information with fallback to BuildInfo
 func GetVersion() string {
 	// If version was set via ldflags, use it
-	if Version != "dev" && Version != "" {
-		return Version
+	if version != "dev" && version != "" {
+		return version
 	}
 
 	// Try to get version from build info
@@ -52,8 +52,8 @@ func GetVersion() string {
 // GetCommit returns the commit hash with fallback to BuildInfo
 func GetCommit() string {
 	// If commit was set via ldflags, use it
-	if Commit != "none" && Commit != "" {
-		return Commit
+	if commit != "none" && commit != "" {
+		return commit
 	}
 
 	// Try to get from build info
@@ -71,8 +71,8 @@ func GetCommit() string {
 // GetBuildDate returns the build date with fallback to BuildInfo
 func GetBuildDate() string {
 	// If build date was set via ldflags, use it
-	if BuildDate != "unknown" && BuildDate != "" {
-		return BuildDate
+	if buildDate != "unknown" && buildDate != "" {
+		return buildDate
 	}
 
 	// Try to get from build info

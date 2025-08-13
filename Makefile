@@ -20,9 +20,9 @@ COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE := $(shell date -u '+%Y-%m-%d_%H:%M:%S_UTC' 2>/dev/null || echo "unknown")
 
 LDFLAGS := -ldflags="-s -w \
-	-X main.Version=$(VERSION) \
-	-X main.Commit=$(COMMIT) \
-	-X main.BuildDate=$(BUILD_DATE)"
+	-X main.version=$(VERSION) \
+	-X main.commit=$(COMMIT) \
+	-X main.buildDate=$(BUILD_DATE)"
 BUILD_FLAGS := -trimpath
 
 ## Override the default build-go to build from the cmd directory
