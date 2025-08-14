@@ -211,8 +211,7 @@ https://yourname.github.io/yourrepo/
 ├── coverage.svg              # Live coverage badge
 ├── index.html                # Coverage dashboard
 ├── coverage.html             # Detailed coverage report
-├── reports/branch/master/    # Branch-specific reports
-└── pr/123/                   # PR-specific reports
+└── reports/branch/master/    # Branch-specific reports
 ```
 
 <details>

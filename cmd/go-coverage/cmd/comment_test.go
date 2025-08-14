@@ -261,8 +261,6 @@ func TestBuildTemplateData(t *testing.T) {
 	require.Equal(t, badgeURL, result.Resources.BadgeURL)
 	require.Equal(t, reportURL, result.Resources.ReportURL)
 	require.Equal(t, "https://testowner.github.io/testrepo/coverage/", result.Resources.DashboardURL)
-	require.Equal(t, "https://testowner.github.io/testrepo/coverage/pr/123/badge.svg", result.Resources.PRBadgeURL)
-	require.Equal(t, "https://testowner.github.io/testrepo/coverage/pr/123/", result.Resources.PRReportURL)
 	require.Equal(t, "https://testowner.github.io/testrepo/coverage/trends/", result.Resources.HistoricalURL)
 
 	require.WithinDuration(t, time.Now(), result.Timestamp, time.Second)

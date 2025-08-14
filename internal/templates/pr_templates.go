@@ -198,8 +198,6 @@ type ResourceLinks struct {
 	BadgeURL      string `json:"badge_url"`
 	ReportURL     string `json:"report_url"`
 	DashboardURL  string `json:"dashboard_url"`
-	PRBadgeURL    string `json:"pr_badge_url"`
-	PRReportURL   string `json:"pr_report_url"`
 	HistoricalURL string `json:"historical_url"`
 }
 

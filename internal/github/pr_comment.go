@@ -34,8 +34,7 @@ type PRCommentConfig struct {
 	ShowCoverageHistory    bool // Show historical coverage data
 
 	// Badge settings
-	GeneratePRBadges bool   // Generate PR-specific badges
-	BadgeStyle       string // Badge style (flat, flat-square, for-the-badge)
+	BadgeStyle string // Badge style (flat, flat-square, for-the-badge)
 
 	// Status check settings
 	EnableStatusChecks  bool // Enable GitHub status checks
@@ -117,7 +116,6 @@ func NewPRCommentManager(client *Client, config *PRCommentConfig) *PRCommentMana
 			IncludeCoverageDetails:   true,
 			IncludeFileAnalysis:      false,
 			ShowCoverageHistory:      true,
-			GeneratePRBadges:         true,
 			BadgeStyle:               "flat",
 			EnableStatusChecks:       true,
 			FailBelowThreshold:       true,

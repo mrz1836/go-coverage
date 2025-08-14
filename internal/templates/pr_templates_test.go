@@ -89,8 +89,6 @@ func TestRenderComment(t *testing.T) {
 			BadgeURL:     "https://testowner.github.io/testrepo/coverage/badge.svg",
 			ReportURL:    "https://testowner.github.io/testrepo/coverage/",
 			DashboardURL: "https://testowner.github.io/testrepo/coverage/",
-			PRBadgeURL:   "https://testowner.github.io/testrepo/coverage/pr/123/badge.svg",
-			PRReportURL:  "https://testowner.github.io/testrepo/coverage/pr/123/",
 		},
 		Trends: TrendData{
 			Direction: "up",

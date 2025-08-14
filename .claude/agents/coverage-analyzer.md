@@ -179,8 +179,7 @@ https://yourname.github.io/yourrepo/
 ├── coverage.svg              # Latest badge
 ├── index.html                # Dashboard
 ├── coverage.html             # Detailed report
-├── reports/branch/master/    # Branch reports
-└── pr/123/                   # PR reports
+└── reports/branch/master/    # Branch reports
 ```
 
 ### Deployment Process

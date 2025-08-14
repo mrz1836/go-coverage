@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/mrz1836/go-coverage/internal/analysis"
-	"github.com/mrz1836/go-coverage/internal/analytics/report"
 	"github.com/mrz1836/go-coverage/internal/badge"
 	"github.com/mrz1836/go-coverage/internal/config"
 	"github.com/mrz1836/go-coverage/internal/github"
@@ -171,7 +169,6 @@ Features:
 				IncludeCoverageDetails:   true,
 				IncludeFileAnalysis:      enableAnalysis,
 				ShowCoverageHistory:      true,
-				GeneratePRBadges:         generateBadges,
 				EnableStatusChecks:       createStatus,
 				FailBelowThreshold:       true,
 				BlockMergeOnFailure:      blockOnFailure,
@@ -320,96 +317,6 @@ Features:
 				cmd.Printf("Change: %+.2f%% vs base\n", comparison.Difference)
 			}
 			cmd.Printf("Action taken: %s (%s)\n", result.Action, result.Reason)
-
-			// Generate PR-specific badges if requested
-			if generateBadges {
-				badgeGenerator := badge.New()
-				// Configure badge manager to use /tmp/pr-badges for workflow compatibility
-				badgeConfig := &badge.PRBadgeConfig{
-					OutputBasePath:         "/tmp/pr-badges",
-					CreateDirectories:      true,
-					DirectoryPermissions:   0o755,
-					FilePermissions:        0o644,
-					CoveragePattern:        "badge-coverage-{style}.svg",
-					TrendPattern:           "badge-trend-{style}.svg",
-					StatusPattern:          "badge-status-{style}.svg",
-					ComparisonPattern:      "badge-comparison-{style}.svg",
-					Styles:                 []string{"flat"},
-					DefaultStyle:           "flat",
-					GenerateMultipleStyles: false,
-				}
-				prBadgeManager := badge.NewPRBadgeManager(badgeGenerator, badgeConfig)
-
-				badgeRequest := &badge.PRBadgeRequest{
-					Repository:   cfg.GitHub.Repository,
-					Owner:        cfg.GitHub.Owner,
-					PRNumber:     prNumber,
-					Branch:       "current",
-					CommitSHA:    cfg.GitHub.CommitSHA,
-					BaseBranch:   "master",
-					Coverage:     coverage.Percentage,
-					BaseCoverage: comparison.BaseCoverage.Percentage,
-					Trend:        determineBadgeTrend(comparison.TrendAnalysis.Direction),
-					QualityGrade: calculateQualityGrade(coverage.Percentage),
-					Types:        []badge.PRBadgeType{badge.PRBadgeCoverage, badge.PRBadgeTrend, badge.PRBadgeStatus},
-					Timestamp:    time.Now(),
-				}
-
-				badgeResult, err := prBadgeManager.GenerateStandardPRBadges(ctx, badgeRequest)
-				if err != nil {
-					cmd.Printf("Warning: failed to generate PR badges: %v\n", err)
-				} else {
-					cmd.Printf("Generated %d PR-specific badges\n", badgeResult.TotalBadges)
-					for badgeType, urls := range badgeResult.PublicURLs {
-						if len(urls) > 0 {
-							cmd.Printf("  %s: %s\n", badgeType, urls[0])
-						}
-					}
-				}
-
-				// Generate PR-specific coverage report
-				cmd.Printf("Generating PR coverage report...\n")
-
-				// Get branch name from environment with PR context awareness
-				// For file URLs in PRs, we want to use the base branch (master) not the PR branch
-				// This ensures the URLs remain valid after the PR is merged
-				branchName := os.Getenv("GITHUB_BASE_REF") // Base branch for PRs
-				if branchName == "" {
-					branchName = os.Getenv("GITHUB_REF_NAME") // Push branch name
-				}
-				if branchName == "" {
-					branchName = "master" // Fallback
-				}
-
-				// Create PR report directory
-				prReportDir := fmt.Sprintf("/tmp/pr-badges/pr/%d", prNumber)
-				if err := os.MkdirAll(prReportDir, 0o750); err != nil {
-					cmd.Printf("Warning: failed to create PR report directory: %v\n", err)
-				}
-
-				reportConfig := &report.Config{
-					OutputDir:       prReportDir,
-					RepositoryOwner: cfg.GitHub.Owner,
-					RepositoryName:  cfg.GitHub.Repository,
-					BranchName:      branchName,
-					CommitSHA:       cfg.GitHub.CommitSHA,
-					PRNumber:        fmt.Sprintf("%d", prNumber),
-				}
-
-				reportGen := report.NewGenerator(reportConfig)
-				if err := reportGen.Generate(ctx, coverage); err != nil {
-					cmd.Printf("Warning: failed to generate PR report: %v\n", err)
-				} else {
-					cmd.Printf("PR report saved to: %s/coverage.html\n", prReportDir)
-
-					// Also copy index.html to support both coverage.html and index.html access
-					if htmlData, err := os.ReadFile(fmt.Sprintf("%s/coverage.html", prReportDir)); err == nil {
-						if err := os.WriteFile(fmt.Sprintf("%s/index.html", prReportDir), htmlData, 0o600); err != nil {
-							cmd.Printf("Warning: failed to create index.html copy: %v\n", err)
-						}
-					}
-				}
-			}
 
 			// Create status checks if requested
 			if createStatus && cfg.GitHub.CommitSHA != "" {
@@ -592,8 +499,6 @@ func buildTemplateData(cfg *config.Config, prNumber int, comparison *github.Cove
 			BadgeURL:      badgeURL,
 			ReportURL:     reportURL,
 			DashboardURL:  fmt.Sprintf("https://%s.github.io/%s/coverage/", cfg.GitHub.Owner, cfg.GitHub.Repository),
-			PRBadgeURL:    fmt.Sprintf("https://%s.github.io/%s/coverage/pr/%d/badge.svg", cfg.GitHub.Owner, cfg.GitHub.Repository, prNumber),
-			PRReportURL:   fmt.Sprintf("https://%s.github.io/%s/coverage/pr/%d/", cfg.GitHub.Owner, cfg.GitHub.Repository, prNumber),
 			HistoricalURL: fmt.Sprintf("https://%s.github.io/%s/coverage/trends/", cfg.GitHub.Owner, cfg.GitHub.Repository),
 		},
 	}

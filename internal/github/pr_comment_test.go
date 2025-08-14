@@ -32,7 +32,6 @@ func TestNewPRCommentManager(t *testing.T) {
 				IncludeCoverageDetails:   true,
 				IncludeFileAnalysis:      false,
 				ShowCoverageHistory:      true,
-				GeneratePRBadges:         true,
 				BadgeStyle:               "flat",
 				EnableStatusChecks:       true,
 				FailBelowThreshold:       true,
@@ -46,14 +45,12 @@ func TestNewPRCommentManager(t *testing.T) {
 				MaxCommentsPerPR:         2,
 				CommentSignature:         "custom-signature",
 				IncludeTrend:             false,
-				GeneratePRBadges:         false,
 			},
 			expected: &PRCommentConfig{
 				MinUpdateIntervalMinutes: 10,
 				MaxCommentsPerPR:         2,
 				CommentSignature:         "custom-signature",
 				IncludeTrend:             false,
-				GeneratePRBadges:         false,
 			},
 		},
 	}
@@ -69,13 +66,11 @@ func TestNewPRCommentManager(t *testing.T) {
 				require.Equal(t, tt.expected.MaxCommentsPerPR, manager.config.MaxCommentsPerPR)
 				require.Equal(t, tt.expected.CommentSignature, manager.config.CommentSignature)
 				require.Equal(t, tt.expected.IncludeTrend, manager.config.IncludeTrend)
-				require.Equal(t, tt.expected.GeneratePRBadges, manager.config.GeneratePRBadges)
 			} else {
 				require.Equal(t, tt.expected.MinUpdateIntervalMinutes, manager.config.MinUpdateIntervalMinutes)
 				require.Equal(t, tt.expected.MaxCommentsPerPR, manager.config.MaxCommentsPerPR)
 				require.Equal(t, tt.expected.CommentSignature, manager.config.CommentSignature)
 				require.Equal(t, tt.expected.IncludeTrend, manager.config.IncludeTrend)
-				require.Equal(t, tt.expected.GeneratePRBadges, manager.config.GeneratePRBadges)
 			}
 
 			require.NotNil(t, manager.logger)

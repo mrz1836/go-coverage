@@ -277,13 +277,8 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 	// Build badge URL for GitHub Pages
 	badgeURL := ""
 	if repositoryOwner != "" && repositoryName != "" {
-		if prNumber != "" {
-			// PR-specific badge
-			badgeURL = fmt.Sprintf("https://%s.github.io/%s/coverage/pr/%s/coverage.svg", repositoryOwner, repositoryName, prNumber)
-		} else {
-			// Main branch badge
-			badgeURL = fmt.Sprintf("https://%s.github.io/%s/coverage.svg", repositoryOwner, repositoryName)
-		}
+		// Use branch-based badge URL
+		badgeURL = fmt.Sprintf("https://%s.github.io/%s/coverage.svg", repositoryOwner, repositoryName)
 	}
 
 	return &Data{
