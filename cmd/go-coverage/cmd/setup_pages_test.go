@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -1036,4 +1037,153 @@ func TestSetupPagesIntegrationDryRun(t *testing.T) {
 
 		assert.True(t, hasAllowedError, "Unexpected error: %v", err)
 	}
+}
+
+// TestNewSetupPagesCmd tests the newSetupPagesCmd function structure and flags
+func TestNewSetupPagesCmd(t *testing.T) {
+	commands := &Commands{}
+	cmd := commands.newSetupPagesCmd()
+
+	// Test command structure
+	require.NotNil(t, cmd)
+	require.Equal(t, "setup-pages [repository]", cmd.Use)
+	require.Equal(t, "Set up GitHub Pages environment for coverage deployment", cmd.Short)
+	require.NotNil(t, cmd.RunE)
+
+	// Test that flags are set up properly
+	require.NotNil(t, cmd.Flags().Lookup("dry-run"))
+	require.NotNil(t, cmd.Flags().Lookup("verbose"))
+	require.NotNil(t, cmd.Flags().Lookup("custom-domain"))
+	require.NotNil(t, cmd.Flags().Lookup("protect-branches"))
+
+	// Test flag defaults
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	require.False(t, dryRun)
+
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	require.False(t, verbose)
+
+	customDomain, _ := cmd.Flags().GetString("custom-domain")
+	require.Empty(t, customDomain)
+
+	protectBranches, _ := cmd.Flags().GetBool("protect-branches")
+	require.False(t, protectBranches)
+}
+
+// TestNewSetupPagesCmdValidation tests validation scenarios that don't require external GitHub CLI
+func TestNewSetupPagesCmdValidation(t *testing.T) {
+	tests := []struct {
+		name          string
+		args          []string
+		flags         map[string]interface{}
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:          "too many arguments",
+			args:          []string{"owner/repo1", "owner/repo2"},
+			expectError:   true,
+			errorContains: "accepts at most 1 arg(s)",
+		},
+		{
+			name: "invalid repository format",
+			args: []string{"invalid-repo-format"},
+			flags: map[string]interface{}{
+				"dry-run": true,
+			},
+			expectError:   true,
+			errorContains: "invalid repository format",
+		},
+		{
+			name: "empty repository format",
+			args: []string{""},
+			flags: map[string]interface{}{
+				"dry-run": true,
+			},
+			expectError:   true,
+			errorContains: "invalid repository format",
+		},
+		{
+			name: "repository with spaces",
+			args: []string{"owner with spaces/repo"},
+			flags: map[string]interface{}{
+				"dry-run": true,
+			},
+			expectError:   true,
+			errorContains: "invalid repository format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create command
+			commands := &Commands{}
+			cmd := commands.newSetupPagesCmd()
+
+			// Set flags
+			for flag, value := range tt.flags {
+				switch v := value.(type) {
+				case bool:
+					require.NoError(t, cmd.Flags().Set(flag, fmt.Sprintf("%t", v)))
+				case string:
+					require.NoError(t, cmd.Flags().Set(flag, v))
+				}
+			}
+
+			// Execute command through Cobra's normal execution path
+			cmd.SetArgs(tt.args)
+			err := cmd.Execute()
+			if tt.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorContains)
+			} else {
+				// Even valid repos will likely fail due to GitHub CLI not being available in tests
+				// but we're testing the argument validation happens first
+				if err != nil {
+					// Allow GitHub CLI related errors
+					allowedErrors := []string{
+						"prerequisites check failed",
+						"github CLI",
+						"not found",
+						"not authenticated",
+					}
+
+					errStr := strings.ToLower(err.Error())
+					hasAllowedError := false
+					for _, allowed := range allowedErrors {
+						if strings.Contains(errStr, allowed) {
+							hasAllowedError = true
+							break
+						}
+					}
+					require.True(t, hasAllowedError, "Unexpected error (should be GitHub CLI related): %v", err)
+				}
+			}
+		})
+	}
+}
+
+// TestNewSetupPagesCmdFlags tests flag setting and parsing
+func TestNewSetupPagesCmdFlags(t *testing.T) {
+	commands := &Commands{}
+	cmd := commands.newSetupPagesCmd()
+
+	// Test setting flags
+	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+	require.NoError(t, cmd.Flags().Set("verbose", "true"))
+	require.NoError(t, cmd.Flags().Set("custom-domain", "example.com"))
+	require.NoError(t, cmd.Flags().Set("protect-branches", "true"))
+
+	// Test getting flags
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	require.True(t, dryRun)
+
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	require.True(t, verbose)
+
+	customDomain, _ := cmd.Flags().GetString("custom-domain")
+	require.Equal(t, "example.com", customDomain)
+
+	protectBranches, _ := cmd.Flags().GetBool("protect-branches")
+	require.True(t, protectBranches)
 }

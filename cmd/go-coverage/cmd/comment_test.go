@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -618,6 +620,270 @@ func TestConvertPRFiles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := convertPRFiles(tt.files)
 			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// TestNewCommentCmd tests the newCommentCmd function
+func TestNewCommentCmd(t *testing.T) {
+	commands := &Commands{}
+	cmd := commands.newCommentCmd()
+
+	// Test command structure
+	require.NotNil(t, cmd)
+	require.Equal(t, "comment", cmd.Use)
+	require.Equal(t, "Create PR coverage comment with analysis and templates", cmd.Short)
+	require.NotNil(t, cmd.RunE)
+
+	// Test that flags are set up properly
+	require.NotNil(t, cmd.Flags().Lookup("pr"))
+	require.NotNil(t, cmd.Flags().Lookup("coverage"))
+	require.NotNil(t, cmd.Flags().Lookup("base-coverage"))
+	require.NotNil(t, cmd.Flags().Lookup("badge-url"))
+	require.NotNil(t, cmd.Flags().Lookup("report-url"))
+	require.NotNil(t, cmd.Flags().Lookup("status"))
+	require.NotNil(t, cmd.Flags().Lookup("block-merge"))
+	require.NotNil(t, cmd.Flags().Lookup("generate-badges"))
+	require.NotNil(t, cmd.Flags().Lookup("enable-analysis"))
+	require.NotNil(t, cmd.Flags().Lookup("anti-spam"))
+	require.NotNil(t, cmd.Flags().Lookup("dry-run"))
+}
+
+// TestNewCommentCmdValidationErrors tests error scenarios in the comment command
+func TestNewCommentCmdValidationErrors(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupEnv      func() func()
+		flags         map[string]interface{}
+		expectedError error
+	}{
+		{
+			name: "missing github token",
+			setupEnv: func() func() {
+				// Clear all GitHub-related environment variables
+				originalToken := os.Getenv("GITHUB_TOKEN")
+				originalAuth := os.Getenv("GITHUB_AUTH_TOKEN")
+				originalPAT := os.Getenv("GH_TOKEN")
+				originalOwner := os.Getenv("GITHUB_REPOSITORY_OWNER")
+				originalRepo := os.Getenv("GITHUB_REPOSITORY")
+
+				require.NoError(t, os.Unsetenv("GITHUB_TOKEN"))
+				require.NoError(t, os.Unsetenv("GITHUB_AUTH_TOKEN"))
+				require.NoError(t, os.Unsetenv("GH_TOKEN"))
+
+				require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner"))
+				require.NoError(t, os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo"))
+
+				return func() {
+					if originalToken != "" {
+						_ = os.Setenv("GITHUB_TOKEN", originalToken)
+					} else {
+						_ = os.Unsetenv("GITHUB_TOKEN")
+					}
+					if originalAuth != "" {
+						_ = os.Setenv("GITHUB_AUTH_TOKEN", originalAuth)
+					} else {
+						_ = os.Unsetenv("GITHUB_AUTH_TOKEN")
+					}
+					if originalPAT != "" {
+						_ = os.Setenv("GH_TOKEN", originalPAT)
+					} else {
+						_ = os.Unsetenv("GH_TOKEN")
+					}
+					if originalOwner != "" {
+						_ = os.Setenv("GITHUB_REPOSITORY_OWNER", originalOwner)
+					} else {
+						_ = os.Unsetenv("GITHUB_REPOSITORY_OWNER")
+					}
+					if originalRepo != "" {
+						_ = os.Setenv("GITHUB_REPOSITORY", originalRepo)
+					} else {
+						_ = os.Unsetenv("GITHUB_REPOSITORY")
+					}
+				}
+			},
+			flags: map[string]interface{}{
+				"pr": 123,
+			},
+			expectedError: ErrGitHubTokenRequired,
+		},
+		{
+			name: "missing github owner",
+			setupEnv: func() func() {
+				originalOwner := os.Getenv("GITHUB_REPOSITORY_OWNER")
+				originalRepo := os.Getenv("GITHUB_REPOSITORY")
+				originalToken := os.Getenv("GITHUB_TOKEN")
+
+				require.NoError(t, os.Setenv("GITHUB_TOKEN", "test-token"))
+				require.NoError(t, os.Unsetenv("GITHUB_REPOSITORY_OWNER"))
+				require.NoError(t, os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo"))
+
+				return func() {
+					if originalOwner != "" {
+						_ = os.Setenv("GITHUB_REPOSITORY_OWNER", originalOwner)
+					} else {
+						_ = os.Unsetenv("GITHUB_REPOSITORY_OWNER")
+					}
+					if originalRepo != "" {
+						_ = os.Setenv("GITHUB_REPOSITORY", originalRepo)
+					} else {
+						_ = os.Unsetenv("GITHUB_REPOSITORY")
+					}
+					if originalToken != "" {
+						_ = os.Setenv("GITHUB_TOKEN", originalToken)
+					} else {
+						_ = os.Unsetenv("GITHUB_TOKEN")
+					}
+				}
+			},
+			flags: map[string]interface{}{
+				"pr": 123,
+			},
+			expectedError: ErrGitHubOwnerRequired,
+		},
+		{
+			name: "missing github repository",
+			setupEnv: func() func() {
+				// Clear all GitHub-related environment variables to start fresh
+				originalToken := os.Getenv("GITHUB_TOKEN")
+				originalOwner := os.Getenv("GITHUB_REPOSITORY_OWNER")
+				originalRepo := os.Getenv("GITHUB_REPOSITORY")
+				originalAuth := os.Getenv("GITHUB_AUTH_TOKEN")
+				originalPAT := os.Getenv("GH_TOKEN")
+
+				require.NoError(t, os.Unsetenv("GITHUB_TOKEN"))
+				require.NoError(t, os.Unsetenv("GITHUB_AUTH_TOKEN"))
+				require.NoError(t, os.Unsetenv("GH_TOKEN"))
+				require.NoError(t, os.Unsetenv("GITHUB_REPOSITORY_OWNER"))
+				require.NoError(t, os.Unsetenv("GITHUB_REPOSITORY"))
+
+				// Set up only the required env vars for this test
+				require.NoError(t, os.Setenv("GITHUB_TOKEN", "test-token"))
+				require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner"))
+				// Deliberately not setting GITHUB_REPOSITORY (which would provide repo name)
+
+				return func() {
+					if originalToken != "" {
+						_ = os.Setenv("GITHUB_TOKEN", originalToken)
+					} else {
+						_ = os.Unsetenv("GITHUB_TOKEN")
+					}
+					if originalAuth != "" {
+						_ = os.Setenv("GITHUB_AUTH_TOKEN", originalAuth)
+					} else {
+						_ = os.Unsetenv("GITHUB_AUTH_TOKEN")
+					}
+					if originalPAT != "" {
+						_ = os.Setenv("GH_TOKEN", originalPAT)
+					} else {
+						_ = os.Unsetenv("GH_TOKEN")
+					}
+					if originalOwner != "" {
+						_ = os.Setenv("GITHUB_REPOSITORY_OWNER", originalOwner)
+					} else {
+						_ = os.Unsetenv("GITHUB_REPOSITORY_OWNER")
+					}
+					if originalRepo != "" {
+						_ = os.Setenv("GITHUB_REPOSITORY", originalRepo)
+					} else {
+						_ = os.Unsetenv("GITHUB_REPOSITORY")
+					}
+				}
+			},
+			flags: map[string]interface{}{
+				"pr": 123,
+			},
+			expectedError: ErrGitHubRepoRequired,
+		},
+		{
+			name: "missing PR number",
+			setupEnv: func() func() {
+				// Clear all GitHub-related environment variables to start fresh
+				originalToken := os.Getenv("GITHUB_TOKEN")
+				originalOwner := os.Getenv("GITHUB_REPOSITORY_OWNER")
+				originalRepo := os.Getenv("GITHUB_REPOSITORY")
+				originalAuth := os.Getenv("GITHUB_AUTH_TOKEN")
+				originalPAT := os.Getenv("GH_TOKEN")
+				originalPR := os.Getenv("GITHUB_PR_NUMBER")
+
+				require.NoError(t, os.Unsetenv("GITHUB_TOKEN"))
+				require.NoError(t, os.Unsetenv("GITHUB_AUTH_TOKEN"))
+				require.NoError(t, os.Unsetenv("GH_TOKEN"))
+				require.NoError(t, os.Unsetenv("GITHUB_REPOSITORY_OWNER"))
+				require.NoError(t, os.Unsetenv("GITHUB_REPOSITORY"))
+				require.NoError(t, os.Unsetenv("GITHUB_PR_NUMBER"))
+
+				// Set up the required env vars but no PR number
+				require.NoError(t, os.Setenv("GITHUB_TOKEN", "test-token"))
+				require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner"))
+				require.NoError(t, os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo"))
+
+				return func() {
+					if originalToken != "" {
+						_ = os.Setenv("GITHUB_TOKEN", originalToken)
+					} else {
+						_ = os.Unsetenv("GITHUB_TOKEN")
+					}
+					if originalAuth != "" {
+						_ = os.Setenv("GITHUB_AUTH_TOKEN", originalAuth)
+					} else {
+						_ = os.Unsetenv("GITHUB_AUTH_TOKEN")
+					}
+					if originalPAT != "" {
+						_ = os.Setenv("GH_TOKEN", originalPAT)
+					} else {
+						_ = os.Unsetenv("GH_TOKEN")
+					}
+					if originalOwner != "" {
+						_ = os.Setenv("GITHUB_REPOSITORY_OWNER", originalOwner)
+					} else {
+						_ = os.Unsetenv("GITHUB_REPOSITORY_OWNER")
+					}
+					if originalRepo != "" {
+						_ = os.Setenv("GITHUB_REPOSITORY", originalRepo)
+					} else {
+						_ = os.Unsetenv("GITHUB_REPOSITORY")
+					}
+					if originalPR != "" {
+						_ = os.Setenv("GITHUB_PR_NUMBER", originalPR)
+					} else {
+						_ = os.Unsetenv("GITHUB_PR_NUMBER")
+					}
+				}
+			},
+			flags: map[string]interface{}{
+				"pr": 0, // No PR number provided
+			},
+			expectedError: ErrPRNumberRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup environment
+			cleanup := tt.setupEnv()
+			defer cleanup()
+
+			// Create command
+			commands := &Commands{}
+			cmd := commands.newCommentCmd()
+
+			// Set flags
+			for flag, value := range tt.flags {
+				switch v := value.(type) {
+				case int:
+					require.NoError(t, cmd.Flags().Set(flag, fmt.Sprintf("%d", v)))
+				case string:
+					require.NoError(t, cmd.Flags().Set(flag, v))
+				case bool:
+					require.NoError(t, cmd.Flags().Set(flag, fmt.Sprintf("%t", v)))
+				}
+			}
+
+			// Execute command and check error
+			err := cmd.RunE(cmd, []string{})
+			require.Error(t, err)
+			require.ErrorIs(t, err, tt.expectedError)
 		})
 	}
 }

@@ -2,6 +2,7 @@ package version
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -9,10 +10,87 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestGetLatestRelease is disabled because it requires HTTP client mocking
-// which is complex without refactoring the function to accept an HTTP client interface
-func TestGetLatestRelease_DISABLED(t *testing.T) {
-	t.Skip("Disabled due to HTTP client mocking complexity. Function requires integration testing or refactoring.")
+// TestGetLatestRelease tests the GetLatestRelease function with HTTP integration
+// Since the function has a hardcoded GitHub API URL, this is effectively an integration test
+// that will make real HTTP requests to GitHub. In a production environment, this would be refactored
+// to inject an HTTP client interface for proper mocking.
+func TestGetLatestRelease(t *testing.T) {
+	// Test error handling for malformed owner/repo
+	t.Run("InvalidOwnerRepo", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			owner string
+			repo  string
+		}{
+			{
+				name:  "empty owner",
+				owner: "",
+				repo:  "test-repo",
+			},
+			{
+				name:  "empty repo",
+				owner: "test-owner",
+				repo:  "",
+			},
+			{
+				name:  "nonexistent repository",
+				owner: "nonexistent-owner-12345",
+				repo:  "nonexistent-repo-12345",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				_, err := GetLatestRelease(tt.owner, tt.repo)
+				require.Error(t, err)
+				// Should get a GitHub API error (likely 404 or similar)
+			})
+		}
+	})
+
+	// Test with a well-known repository that should always have releases
+	// This is more of an integration test but necessary given the current function design
+	t.Run("ValidRepository", func(t *testing.T) {
+		// Use a well-known repository that should always have releases
+		// Using the go-coverage repository itself for testing
+		release, err := GetLatestRelease("mrz1836", "go-coverage")
+		if err != nil {
+			// Allow network-related errors in CI environments
+			errStr := strings.ToLower(err.Error())
+			networkErrors := []string{
+				"connection",
+				"timeout",
+				"network",
+				"dns",
+				"no such host",
+				"temporary failure",
+				"rate limit",
+			}
+
+			hasNetworkError := false
+			for _, netErr := range networkErrors {
+				if strings.Contains(errStr, netErr) {
+					hasNetworkError = true
+					break
+				}
+			}
+
+			if hasNetworkError {
+				t.Skip("Skipping test due to network connectivity issues")
+				return
+			}
+
+			// If it's not a network error, fail the test
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		// Verify the release structure
+		require.NotNil(t, release)
+		require.NotEmpty(t, release.TagName)
+		require.NotEmpty(t, release.Name)
+		// PublishedAt should be a valid time
+		require.False(t, release.PublishedAt.IsZero())
+	})
 }
 
 func TestCompareVersions(t *testing.T) {

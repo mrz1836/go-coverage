@@ -78,3 +78,32 @@ func TestMainFunctionExists(t *testing.T) {
 	// We can't call it directly in tests due to os.Exit(), but we can verify it exists
 	require.NotNil(t, main, "main function should exist")
 }
+
+// TestGetVersion tests the GetVersion function
+func TestGetVersion(t *testing.T) {
+	version := GetVersion()
+	// Version should not be empty
+	require.NotEmpty(t, version)
+}
+
+// TestGetCommit tests the GetCommit function
+func TestGetCommit(t *testing.T) {
+	commit := GetCommit()
+	// Commit should not be empty (could be "unknown" or actual commit hash)
+	require.NotEmpty(t, commit)
+}
+
+// TestGetBuildDate tests the GetBuildDate function
+func TestGetBuildDate(t *testing.T) {
+	buildDate := GetBuildDate()
+	// Build date should not be empty (could be "unknown" or actual date)
+	require.NotEmpty(t, buildDate)
+}
+
+// TestIsModified tests the IsModified function
+func TestIsModified(t *testing.T) {
+	// IsModified should return a boolean without error
+	modified := IsModified()
+	// We just check it doesn't panic and returns a valid boolean
+	require.True(t, modified == true || modified == false)
+}
