@@ -103,8 +103,9 @@
 ```bash
 go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ```
+<br>
 
-### Basic Usage (Internal Coverage)
+### Use Internal Coverage System (GitHub Pages)
 
 First, set up GitHub Pages environment for coverage deployment
 ```text
@@ -113,7 +114,9 @@ go-coverage setup-pages
 
 Next, deploy to your main branch and generate coverage reports!
 
-### Basic Usage for (External - Codecov)
+<br>
+
+### OR Use External Coverage System (Codecov)
 
 First, create `.github/.env.custom` with:
 ```text
@@ -122,6 +125,8 @@ CODECOV_TOKEN_REQUIRED=true
 ```
 
 Next, deploy to your main branch and generate coverage reports!
+
+<br><br>
 
 ### Core Features
 
