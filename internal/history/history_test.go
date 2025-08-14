@@ -338,7 +338,7 @@ func TestGetChangeStatus(t *testing.T) {
 		status, prevPercentage, err := manager.GetChangeStatus(85.5)
 		require.NoError(t, err)
 		assert.Equal(t, "stable", status)
-		assert.Equal(t, 0.0, prevPercentage) //nolint:testifylint // comparing with zero
+		assert.Zero(t, prevPercentage)
 	})
 
 	t.Run("Get change status with corrupted history", func(t *testing.T) {
@@ -349,7 +349,7 @@ func TestGetChangeStatus(t *testing.T) {
 		status, prevPercentage, err := manager.GetChangeStatus(85.5)
 		require.Error(t, err)
 		assert.Equal(t, "stable", status)
-		assert.Equal(t, 0.0, prevPercentage) //nolint:testifylint // comparing with zero
+		assert.Zero(t, prevPercentage)
 		assert.Contains(t, err.Error(), "failed to unmarshal history")
 	})
 

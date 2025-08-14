@@ -258,7 +258,7 @@ func TestMathHelpers(t *testing.T) {
 		for _, tt := range tests {
 			result := mul(tt.a, tt.b)
 			if tt.expected == 0.0 {
-				assert.Equal(t, tt.expected, result) //nolint:testifylint // comparing with zero
+				assert.Zero(t, result)
 			} else {
 				assert.InEpsilon(t, tt.expected, result, 0.001)
 			}
@@ -282,7 +282,7 @@ func TestMathHelpers(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				result := div(tt.a, tt.b)
 				if tt.expected == 0.0 {
-					assert.Equal(t, tt.expected, result) //nolint:testifylint // comparing with zero
+					assert.Zero(t, result)
 				} else {
 					assert.InEpsilon(t, tt.expected, result, 0.001)
 				}

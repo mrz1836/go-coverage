@@ -576,16 +576,16 @@ func TestStructZeroValues(t *testing.T) {
 
 	t.Run("CoverageData zero values", func(t *testing.T) {
 		var c CoverageData
-		assert.Equal(t, 0.0, c.Current)  //nolint:testifylint // comparing with zero
-		assert.Equal(t, 0.0, c.Previous) //nolint:testifylint // comparing with zero
-		assert.Equal(t, 0.0, c.Change)   //nolint:testifylint // comparing with zero
-		assert.Equal(t, 0.0, c.Target)   //nolint:testifylint // comparing with zero
+		assert.Zero(t, c.Current)
+		assert.Zero(t, c.Previous)
+		assert.Zero(t, c.Change)
+		assert.Zero(t, c.Target)
 	})
 
 	t.Run("TrendData zero values", func(t *testing.T) {
 		var trend TrendData
 		assert.Empty(t, trend.Direction)
-		assert.Equal(t, 0.0, trend.Confidence) //nolint:testifylint // comparing with zero
+		assert.Zero(t, trend.Confidence)
 	})
 
 	t.Run("RichContent zero values", func(t *testing.T) {
