@@ -106,18 +106,26 @@ Examples:
 				cmd.Printf("🧪 DRY RUN MODE - No changes will be made\n\n")
 			}
 
-			// Step 1: Check prerequisites
+			// Step 1: Validate repository format (if explicitly provided)
+			var repo string
+			if len(args) > 0 {
+				repo = args[0]
+				// Validate repository format early if explicitly provided
+				if !isValidRepositoryFormat(repo) {
+					return fmt.Errorf("repository format '%s': %w", repo, ErrInvalidRepositoryFormat)
+				}
+			}
+
+			// Step 2: Check prerequisites
 			cmd.Printf("🔍 Step 1: Checking prerequisites...\n")
 			if err := checkPrerequisites(ctx, cmd, verbose); err != nil {
 				return fmt.Errorf("prerequisites check failed: %w", err)
 			}
 			cmd.Printf("   ✅ GitHub CLI is installed and authenticated\n\n")
 
-			// Step 2: Determine repository
+			// Step 3: Determine repository (if not already done)
 			cmd.Printf("📋 Step 2: Determining repository...\n")
-			var repo string
 			if len(args) > 0 {
-				repo = args[0]
 				cmd.Printf("   📝 Using specified repository: %s\n", repo)
 			} else {
 				var err error
@@ -126,11 +134,11 @@ Examples:
 					return fmt.Errorf("failed to determine repository: %w", err)
 				}
 				cmd.Printf("   🔍 Auto-detected repository: %s\n", repo)
-			}
 
-			// Validate repository format
-			if !isValidRepositoryFormat(repo) {
-				return fmt.Errorf("repository format '%s': %w", repo, ErrInvalidRepositoryFormat)
+				// Validate repository format for auto-detected repos
+				if !isValidRepositoryFormat(repo) {
+					return fmt.Errorf("repository format '%s': %w", repo, ErrInvalidRepositoryFormat)
+				}
 			}
 			cmd.Printf("\n")
 
