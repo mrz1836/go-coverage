@@ -354,18 +354,31 @@ func createLargeCoverageData() *CoverageData {
 
 func createBenchmarkTemplateData() map[string]interface{} {
 	return map[string]interface{}{
-		"ProjectName":  "BenchmarkProject",
-		"Coverage":     75.5,
-		"TotalLines":   5000,
-		"CoveredLines": 3775,
-		"Timestamp":    time.Now().Format(time.RFC3339),
-		"Packages":     createPackageList(),
-		"TopFiles":     createTopFilesList(),
+		"ProjectName":     "BenchmarkProject",
+		"RepositoryOwner": "test",
+		"RepositoryName":  "benchmark-repo",
+		"Coverage":        75.5,
+		"TotalCoverage":   75.5,
+		"TotalLines":      5000,
+		"CoveredLines":    3775,
+		"CoveredFiles":    8,
+		"TotalFiles":      10,
+		"PackagesTracked": 5,
+		"Timestamp":       time.Now(),
+		"RepositoryURL":   "https://github.com/test/benchmark-repo",
+		"Branch":          "main",
+		"CommitSHA":       "abc123d",
+		"CoverageTrend":   "2.5",
+		"HasHistory":      false,
+		"HistoryJSON":     "[]",
+		"Packages":        createPackageList(),
+		"TopFiles":        createTopFilesList(),
 	}
 }
 
 func createBenchmarkTemplateDataWithHistory() map[string]interface{} {
 	data := createBenchmarkTemplateData()
+	data["HasHistory"] = true
 	data["History"] = createBenchmarkHistoryData()
 	data["ChartData"] = createChartDataPoints()
 	return data

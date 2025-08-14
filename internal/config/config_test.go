@@ -1150,7 +1150,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 		setup        func() string // Returns expected root directory
 		cleanup      func()
 		expectError  bool
-		validatePath func(t *testing.T, result string, expectedRoot string)
+		validatePath func(t *testing.T, result, expectedRoot string)
 	}{
 		{
 			name:        "absolute path should return as-is",
@@ -1162,7 +1162,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 			},
 			cleanup:     func() {},
 			expectError: false,
-			validatePath: func(t *testing.T, result string, expectedRoot string) {
+			validatePath: func(t *testing.T, result, expectedRoot string) {
 				assert.Equal(t, "/absolute/path/to/history", result)
 			},
 		},
@@ -1188,7 +1188,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 			},
 			cleanup:     func() {},
 			expectError: false,
-			validatePath: func(t *testing.T, result string, expectedRoot string) {
+			validatePath: func(t *testing.T, result, expectedRoot string) {
 				expectedPath := filepath.Join(expectedRoot, ".github/coverage/history")
 				expectedAbs, err := filepath.Abs(expectedPath)
 				require.NoError(t, err)
@@ -1225,7 +1225,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 			},
 			cleanup:     func() {},
 			expectError: false,
-			validatePath: func(t *testing.T, result string, expectedRoot string) {
+			validatePath: func(t *testing.T, result, expectedRoot string) {
 				expectedPath := filepath.Join(expectedRoot, "history")
 				expectedAbs, err := filepath.Abs(expectedPath)
 				require.NoError(t, err)
@@ -1262,7 +1262,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 			},
 			cleanup:     func() {},
 			expectError: false,
-			validatePath: func(t *testing.T, result string, expectedRoot string) {
+			validatePath: func(t *testing.T, result, expectedRoot string) {
 				expectedAbs, err := filepath.Abs(expectedRoot)
 				require.NoError(t, err)
 
@@ -1302,7 +1302,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 			},
 			cleanup:     func() {},
 			expectError: false,
-			validatePath: func(t *testing.T, result string, expectedRoot string) {
+			validatePath: func(t *testing.T, result, expectedRoot string) {
 				expectedPath := filepath.Join(expectedRoot, "../coverage/history")
 				expectedAbs, err := filepath.Abs(expectedPath)
 				require.NoError(t, err)
@@ -1333,7 +1333,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 			},
 			cleanup:     func() {},
 			expectError: false,
-			validatePath: func(t *testing.T, result string, expectedRoot string) {
+			validatePath: func(t *testing.T, result, expectedRoot string) {
 				if runtime.GOOS == "windows" {
 					assert.Equal(t, `C:\absolute\path\to\history`, result)
 				} else {
