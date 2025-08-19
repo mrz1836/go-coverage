@@ -4,7 +4,6 @@ package badge
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -299,7 +298,7 @@ func FuzzResolveLogo(f *testing.F) {
 			}
 		}()
 
-		result := generator.resolveLogo(logo, "")
+		result := generator.resolveLogo(context.Background(), logo, "")
 
 		// Validate output (can be empty string for invalid logos)
 		assert.IsType(t, "", result, "Should return string")
@@ -316,9 +315,11 @@ func FuzzResolveLogo(f *testing.F) {
 			if strings.HasPrefix(logo, "http") || strings.HasPrefix(logo, "data:") {
 				assert.Equal(t, logo, result, "valid URL/data URI should be returned as-is")
 			} else if isValidSimpleIconName(strings.ToLower(logo)) {
-				// Valid Simple Icons name should return a CDN URL
-				expectedURL := fmt.Sprintf("https://cdn.simpleicons.org/%s", strings.ToLower(logo))
-				assert.Equal(t, expectedURL, result, "valid Simple Icons name should return CDN URL")
+				// Valid Simple Icons name should return either a base64 data URI (if fetch succeeds) or empty string (if fetch fails)
+				if result != "" {
+					assert.True(t, strings.HasPrefix(result, "data:image/svg+xml;base64,"),
+						"valid Simple Icons name should return base64 data URI or empty string, got: %s", result)
+				}
 			} else {
 				assert.Empty(t, result, "invalid logo should return empty string")
 			}
@@ -438,9 +439,18 @@ func FuzzGenerateBadgeWithOptions(f *testing.F) {
 		}()
 
 		result, err := generator.Generate(ctx, percentage, options...)
-
-		// Should not return error
-		require.NoError(t, err, "Generate with options should not return error")
+		// Should not return error, except for network-related errors during logo fetching
+		if err != nil {
+			// Allow network errors during logo fetching (e.g., timeout, DNS failure, etc.)
+			if strings.Contains(err.Error(), "context deadline exceeded") ||
+				strings.Contains(err.Error(), "failed to fetch icon") ||
+				strings.Contains(err.Error(), "no such host") ||
+				strings.Contains(err.Error(), "connection refused") {
+				t.Skipf("Skipping test due to network error (expected in fuzzing): %v", err)
+				return
+			}
+			require.NoError(t, err, "Generate with options should not return error")
+		}
 
 		// Validate SVG output
 		assert.NotEmpty(t, result, "Should return non-empty SVG")

@@ -4,11 +4,18 @@ package badge
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"io"
 	"math"
+	"net/http"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
+
+// ErrIconFetchFailed is returned when fetching an icon from Simple Icons CDN fails
+var ErrIconFetchFailed = errors.New("failed to fetch icon")
 
 // Generator creates professional SVG badges matching GitHub's design language
 type Generator struct {
@@ -110,7 +117,7 @@ func (g *Generator) Generate(ctx context.Context, percentage float64, options ..
 		Message:   message,
 		Color:     color,
 		Style:     sanitizeUTF8(opts.Style),
-		Logo:      g.resolveLogo(opts.Logo, sanitizeUTF8(opts.LogoColor)),
+		Logo:      g.resolveLogo(ctx, opts.Logo, sanitizeUTF8(opts.LogoColor)),
 		LogoColor: sanitizeUTF8(opts.LogoColor),
 		AriaLabel: fmt.Sprintf("Code coverage: %.1f percent", percentage),
 	}
@@ -150,7 +157,7 @@ func (g *Generator) GenerateTrendBadge(ctx context.Context, current, previous fl
 		Message:   trend,
 		Color:     color,
 		Style:     sanitizeUTF8(opts.Style),
-		Logo:      g.resolveLogo(opts.Logo, sanitizeUTF8(opts.LogoColor)),
+		Logo:      g.resolveLogo(ctx, opts.Logo, sanitizeUTF8(opts.LogoColor)),
 		LogoColor: sanitizeUTF8(opts.LogoColor),
 		AriaLabel: fmt.Sprintf("Coverage trend: %s", trend),
 	}
@@ -193,7 +200,7 @@ func (g *Generator) getColorByName(name string) string {
 }
 
 // resolveLogo converts common logo names to SVG data URIs or URLs
-func (g *Generator) resolveLogo(logo, color string) string {
+func (g *Generator) resolveLogo(ctx context.Context, logo, color string) string {
 	switch strings.ToLower(logo) {
 	case "example":
 		// Example logo - simple star icon as SVG data URI for testing/documentation purposes
@@ -211,13 +218,12 @@ func (g *Generator) resolveLogo(logo, color string) string {
 		// but trust the Simple Icons CDN to handle requests for non-existent logos gracefully
 		logoName := strings.ToLower(logo)
 		if isValidSimpleIconName(logoName) {
-			// Include color in Simple Icons URL if specified
-			if color != "" {
-				// Remove # from hex colors for Simple Icons CDN
-				cleanColor := strings.TrimPrefix(color, "#")
-				return fmt.Sprintf("https://cdn.simpleicons.org/%s/%s", logoName, cleanColor)
+			// Fetch the icon from Simple Icons CDN and embed it as base64
+			if dataURI, err := fetchSimpleIcon(ctx, logoName, color); err == nil {
+				return dataURI
 			}
-			return fmt.Sprintf("https://cdn.simpleicons.org/%s", logoName)
+			// If fetch fails, return empty string (no logo) rather than broken external URL
+			return ""
 		}
 		// Return empty string for obviously invalid logo names (special chars, too long, etc)
 		return ""
@@ -277,6 +283,54 @@ func (g *Generator) processLogoColor(logoURL, color string) string {
 	// Re-encode to base64
 	newBase64 := base64.StdEncoding.EncodeToString([]byte(modifiedSVG))
 	return "data:image/svg+xml;base64," + newBase64
+}
+
+// fetchSimpleIcon fetches an SVG icon from Simple Icons CDN and returns it as a base64 data URI
+func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error) {
+	// Build the URL for Simple Icons CDN
+	var url string
+	if color != "" {
+		// Remove # from hex colors for Simple Icons CDN
+		cleanColor := strings.TrimPrefix(color, "#")
+		url = fmt.Sprintf("https://cdn.simpleicons.org/%s/%s", iconName, cleanColor)
+	} else {
+		url = fmt.Sprintf("https://cdn.simpleicons.org/%s", iconName)
+	}
+
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	// Create request with context
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request for %s: %w", url, err)
+	}
+
+	// Make the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch icon from %s: %w", url, err)
+	}
+	defer func() {
+		_ = resp.Body.Close() // Explicitly ignore close error to satisfy linter
+	}()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("%w: HTTP %d from %s", ErrIconFetchFailed, resp.StatusCode, url)
+	}
+
+	// Read the SVG content
+	svgContent, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read SVG content: %w", err)
+	}
+
+	// Encode as base64 data URI
+	base64Content := base64.StdEncoding.EncodeToString(svgContent)
+	return "data:image/svg+xml;base64," + base64Content, nil
 }
 
 // renderSVG generates the actual SVG content
