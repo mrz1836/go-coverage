@@ -111,7 +111,8 @@ Customize coverage badge appearance and behavior.
 ```bash
 # Badge Styling
 export GO_COVERAGE_BADGE_STYLE="flat"                 # Badge style: flat, flat-square, for-the-badge, plastic
-export GO_COVERAGE_BADGE_LOGO="go"                    # Logo: go, github, or custom URL
+export GO_COVERAGE_BADGE_LOGO="go"                    # Logo: go, github, 2fas, nodejs, python, etc. or custom URL
+export GO_COVERAGE_BADGE_LOGO_COLOR="white"           # Logo color: white, red, blue, green, etc.
 export GO_COVERAGE_BADGE_LABEL="coverage"             # Badge label text
 
 # Badge Colors
@@ -366,12 +367,31 @@ When enabled, PRs with the `coverage-override` label will completely bypass cove
 # Built-in logos
 export GO_COVERAGE_BADGE_LOGO="go"          # Go gopher logo
 export GO_COVERAGE_BADGE_LOGO="github"      # GitHub logo
+export GO_COVERAGE_BADGE_LOGO="2fas"        # 2FAS authentication app logo
+
+# Simple Icons (supports 2800+ logos - see https://simpleicons.org)
+export GO_COVERAGE_BADGE_LOGO="nodejs"      # Node.js logo
+export GO_COVERAGE_BADGE_LOGO="python"      # Python logo
+export GO_COVERAGE_BADGE_LOGO="rust"        # Rust logo  
+export GO_COVERAGE_BADGE_LOGO="docker"      # Docker logo
+export GO_COVERAGE_BADGE_LOGO="kubernetes"  # Kubernetes logo
+export GO_COVERAGE_BADGE_LOGO="react"       # React logo
+export GO_COVERAGE_BADGE_LOGO="typescript"  # TypeScript logo
+export GO_COVERAGE_BADGE_LOGO="postgresql"  # PostgreSQL logo
+export GO_COVERAGE_BADGE_LOGO="redis"       # Redis logo
+# ... and 2800+ more! See https://simpleicons.org for full list
+# Note: Use lowercase names with hyphens (e.g., "visual-studio-code", not "Visual Studio Code")
 
 # Custom logo URL
 export GO_COVERAGE_BADGE_LOGO="https://example.com/logo.svg"
 
 # No logo
 export GO_COVERAGE_BADGE_LOGO=""
+
+# Logo colorization (applied to compatible SVG logos)
+export GO_COVERAGE_BADGE_LOGO_COLOR="white"   # Default
+export GO_COVERAGE_BADGE_LOGO_COLOR="red"     # Red logo
+export GO_COVERAGE_BADGE_LOGO_COLOR="#3498db" # Custom hex color
 ```
 
 ### Color Customization

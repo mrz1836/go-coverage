@@ -4,6 +4,7 @@ package badge
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -318,6 +319,10 @@ func FuzzResolveLogo(f *testing.F) {
 		default:
 			if strings.HasPrefix(logo, "http") || strings.HasPrefix(logo, "data:") {
 				assert.Equal(t, logo, result, "valid URL/data URI should be returned as-is")
+			} else if isValidSimpleIconName(strings.ToLower(logo)) {
+				// Valid Simple Icons name should return a CDN URL
+				expectedURL := fmt.Sprintf("https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/%s.svg", strings.ToLower(logo))
+				assert.Equal(t, expectedURL, result, "valid Simple Icons name should return CDN URL")
 			} else {
 				assert.Empty(t, result, "invalid logo should return empty string")
 			}

@@ -200,6 +200,9 @@ func (g *Generator) resolveLogo(logo string) string {
 	case "github":
 		// Simple GitHub icon as SVG data URI
 		return `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZmZmIj48cGF0aCBkPSJNMTIgMGMtNi42MjYgMC0xMiA1LjM3My0xMiAxMiAwIDUuMzAyIDMuNDM4IDkuOCA4LjIwNyAxMS4zODcuNTk5LjExMS43OTMtLjI2MS43OTMtLjU3N3YtMi4yMzRjLTMuMzM4LjcyNi00LjAzMy0xLjQxNi00LjAzMy0xLjQxNi0uNTQ2LTEuMzg3LTEuMzMzLTEuNzU2LTEuMzMzLTEuNzU2LTEuMDg5LS43NDUuMDgzLS43MjkuMDgzLS43MjkgMS4yMDUuMDg0IDEuODM5IDEuMjM3IDEuODM5IDEuMjM3IDEuMDcgMS44MzQgMi44MDcgMS4zMDQgMy40OTIuOTk3LjEwNy0uNzc1LjQxOC0xLjMwNS43NjItMS42MDQtMi42NjUtLjMwNS01LjQ2Ny0xLjMzNC01LjQ2Ny01LjkzMSAwLTEuMzExLjQ2OS0yLjM4MSAxLjIzNi0zLjIyMS0uMTI0LS4zMDMtLjUzNS0xLjUyNC4xMTctMy4xNzYgMCAwIDEuMDA4LS4zMjIgMy4zMDEgMS4yMy45NTgtLjI2NiAxLjk4My0uMzk5IDMuMDAzLS40MDQgMS4wMi4wMDUgMi4wNDcuMTM4IDMuMDA2LjQwNCAyLjI5MS0xLjU1MiAzLjI5Ny0xLjIzIDMuMjk3LTEuMjMuNjUzIDEuNjUzLjI0MiAyLjg3NC4xMTggMy4xNzYuNzcuODQgMS4yMzUgMS45MTEgMS4yMzUgMy4yMjEgMCA0LjYwOS0yLjgwNyA1LjYyNC01LjQ3OSA1LjkyMS40My4zNzIuODIzIDEuMTAyLjgyMyAyLjIyMnYzLjI5M2MwIC4zMTkuMTkyLjY5NC44MDEuNTc2IDQuNzY1LTEuNTg5IDguMTk5LTYuMDg2IDguMTk5LTExLjM4NiAwLTYuNjI3LTUuMzczLTEyLTEyLTEyeiIvPjwvc3ZnPg==`
+	case "2fas":
+		// 2FAS logo with currentColor support for colorization
+		return `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0xMiAwQzUuMzczIDAgMCA1LjM3MyAwIDEyczUuMzczIDEyIDEyIDEyIDEyLTUuMzczIDEyLTEyUzE4LjYyNyAwIDEyIDB6bTAgMS44NzVBMTAuMTI1IDEwLjEyNSAwIDAgMSAyMi4xMjUgMTIgMTAuMTI1IDEwLjEyNSAwIDAgMSAxMiAyMi4xMjUgMTAuMTI1IDEwLjEyNSAwIDAgMSAxLjg3NSAxMiAxMC4xMjUgMTAuMTI1IDAgMCAxIDEyIDEuODc1ek04LjUgN2ExLjUgMS41IDAgMSAxIDAgMyAxLjUgMS41IDAgMCAxLTEuNSAxLjUgMS41IDEuNSAwIDAgMS0xLjUtMS41QTEuNSAxLjUgMCAwIDEgOC41IDd6bTcgMGExLjUgMS41IDAgMSAxIDAgMyAxLjUgMS41IDAgMCAxLTEuNSAxLjUgMS41IDEuNSAwIDAgMS0xLjUtMS41QTEuNSAxLjUgMCAwIDEgMTUuNSA7ek0xMiAxNGMtMi4yIDAtNCAuOTYtNCAzIDAtLjUzIDEuMzItMyAxLjMyLTNoNS4zNmMwIDAgMS4zMiAyLjQ3IDEuMzIgM0MxNiAxNC45NiAxNC4yIDE0IDEyIDE0eiIvPjwvc3ZnPg==`
 	case "":
 		// Empty string means no logo
 		return ""
@@ -208,9 +211,36 @@ func (g *Generator) resolveLogo(logo string) string {
 		if strings.HasPrefix(logo, "http") || strings.HasPrefix(logo, "data:") {
 			return logo
 		}
-		// Otherwise, assume it's invalid and return empty string
+		// Check if it's a potentially valid Simple Icons logo name
+		// We use conservative validation to avoid obviously invalid names,
+		// but trust the Simple Icons CDN to handle requests for non-existent logos gracefully
+		logoName := strings.ToLower(logo)
+		if isValidSimpleIconName(logoName) {
+			return fmt.Sprintf("https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/%s.svg", logoName)
+		}
+		// Return empty string for obviously invalid logo names (special chars, too long, etc)
 		return ""
 	}
+}
+
+// isValidSimpleIconName checks if a logo name is valid for Simple Icons
+// Simple Icons uses lowercase letters, numbers, and hyphens only
+func isValidSimpleIconName(name string) bool {
+	// Must not be empty and should be reasonable length
+	if len(name) == 0 || len(name) > 50 {
+		return false
+	}
+
+	// Simple Icons naming convention: lowercase letters, numbers, hyphens only
+	for _, r := range name {
+		if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+			return false
+		}
+	}
+
+	// Must start with a letter or number (some icons like "2fas" start with numbers)
+	firstChar := name[0]
+	return (firstChar >= 'a' && firstChar <= 'z') || (firstChar >= '0' && firstChar <= '9')
 }
 
 // renderSVG generates the actual SVG content
@@ -274,7 +304,12 @@ func (g *Generator) renderFlatBadge(data Data, width, labelWidth, messageWidth, 
 	logoSvg := ""
 
 	if data.Logo != "" {
-		logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, data.Logo)
+		// Apply logo color if specified and different from white (default)
+		if data.LogoColor != "" && data.LogoColor != "white" {
+			logoSvg = fmt.Sprintf(`<g style="color: %s;"><image x="5" y="3" width="14" height="14" xlink:href="%s"/></g>`, data.LogoColor, data.Logo)
+		} else {
+			logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, data.Logo)
+		}
 	}
 
 	return []byte(fmt.Sprintf(template,
@@ -311,7 +346,12 @@ func (g *Generator) renderFlatSquareBadge(data Data, width, height, labelWidth, 
 	logoSvg := ""
 
 	if data.Logo != "" {
-		logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, data.Logo)
+		// Apply logo color if specified and different from white (default)
+		if data.LogoColor != "" && data.LogoColor != "white" {
+			logoSvg = fmt.Sprintf(`<g style="color: %s;"><image x="5" y="3" width="14" height="14" xlink:href="%s"/></g>`, data.LogoColor, data.Logo)
+		} else {
+			logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, data.Logo)
+		}
 	}
 
 	return []byte(fmt.Sprintf(template,
@@ -344,7 +384,12 @@ func (g *Generator) renderForTheBadge(data Data, width, height, labelWidth, mess
 	logoSvg := ""
 
 	if data.Logo != "" {
-		logoSvg = fmt.Sprintf(`<image x="5" y="6" width="16" height="16" xlink:href="%s"/>`, data.Logo)
+		// Apply logo color if specified and different from white (default)
+		if data.LogoColor != "" && data.LogoColor != "white" {
+			logoSvg = fmt.Sprintf(`<g style="color: %s;"><image x="5" y="6" width="16" height="16" xlink:href="%s"/></g>`, data.LogoColor, data.Logo)
+		} else {
+			logoSvg = fmt.Sprintf(`<image x="5" y="6" width="16" height="16" xlink:href="%s"/>`, data.Logo)
+		}
 	}
 
 	// Convert to uppercase for "for-the-badge" style

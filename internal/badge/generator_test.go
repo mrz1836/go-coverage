@@ -469,8 +469,13 @@ func TestResolveLogo(t *testing.T) {
 			expected: "data:image/svg+xml;base64,PHN2Zw==",
 		},
 		{
-			name:     "invalid logo name",
+			name:     "valid simple icon name",
 			input:    "invalid-logo",
+			contains: "https://cdn.jsdelivr.net/npm/simple-icons",
+		},
+		{
+			name:     "actually invalid logo name",
+			input:    "invalid logo with spaces",
 			expected: "",
 		},
 		{
@@ -507,7 +512,8 @@ func TestGenerateWithResolvedLogos(t *testing.T) {
 		{"no logo", "", false},
 		{"go logo", "go", true},
 		{"github logo", "github", true},
-		{"invalid logo", "invalid", false},
+		{"valid simple icon", "invalid", true},
+		{"actually invalid logo", "invalid logo name", false},
 	}
 
 	for _, tt := range tests {
@@ -519,7 +525,12 @@ func TestGenerateWithResolvedLogos(t *testing.T) {
 			svgStr := string(svg)
 			if tt.hasImage {
 				assert.Contains(t, svgStr, "<image")
-				assert.Contains(t, svgStr, "xlink:href=\"data:")
+				// Check for either data URI or Simple Icons CDN URL
+				if strings.Contains(svgStr, "xlink:href=\"data:") || strings.Contains(svgStr, "xlink:href=\"https://cdn.jsdelivr.net/npm/simple-icons") {
+					// Valid image reference found
+				} else {
+					t.Errorf("Expected image element to have valid xlink:href")
+				}
 			} else {
 				assert.NotContains(t, svgStr, "<image")
 			}
