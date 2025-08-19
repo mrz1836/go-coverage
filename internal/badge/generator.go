@@ -3,6 +3,7 @@ package badge
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"math"
 	"strings"
@@ -243,6 +244,41 @@ func isValidSimpleIconName(name string) bool {
 	return (firstChar >= 'a' && firstChar <= 'z') || (firstChar >= '0' && firstChar <= '9')
 }
 
+// processLogoColor applies color to logos that use currentColor
+func (g *Generator) processLogoColor(logoURL, color string) string {
+	// Skip processing if no color specified
+	if color == "" {
+		return logoURL
+	}
+
+	// Only process data URIs with base64 content
+	if !strings.HasPrefix(logoURL, "data:image/svg+xml;base64,") {
+		// For Simple Icons CDN URLs, we need to fetch and modify
+		if strings.Contains(logoURL, "simple-icons") {
+			// TODO: Implement fetching and color processing for Simple Icons
+			// For now, return as-is (external CDN requests require HTTP client)
+			return logoURL
+		}
+		return logoURL
+	}
+
+	// Extract and decode base64 content
+	base64Content := strings.TrimPrefix(logoURL, "data:image/svg+xml;base64,")
+	svgBytes, err := base64.StdEncoding.DecodeString(base64Content)
+	if err != nil {
+		return logoURL // Return original if decode fails
+	}
+
+	svgContent := string(svgBytes)
+	
+	// Replace currentColor with the specified color
+	modifiedSVG := strings.ReplaceAll(svgContent, "currentColor", color)
+	
+	// Re-encode to base64
+	newBase64 := base64.StdEncoding.EncodeToString([]byte(modifiedSVG))
+	return "data:image/svg+xml;base64," + newBase64
+}
+
 // renderSVG generates the actual SVG content
 func (g *Generator) renderSVG(ctx context.Context, data Data) ([]byte, error) {
 	select {
@@ -304,12 +340,9 @@ func (g *Generator) renderFlatBadge(data Data, width, labelWidth, messageWidth, 
 	logoSvg := ""
 
 	if data.Logo != "" {
-		// Apply logo color if specified and different from white (default)
-		if data.LogoColor != "" && data.LogoColor != "white" {
-			logoSvg = fmt.Sprintf(`<g style="color: %s;"><image x="5" y="3" width="14" height="14" xlink:href="%s"/></g>`, data.LogoColor, data.Logo)
-		} else {
-			logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, data.Logo)
-		}
+		// Process logo to apply color (for currentColor logos)
+		processedLogo := g.processLogoColor(data.Logo, data.LogoColor)
+		logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, processedLogo)
 	}
 
 	return []byte(fmt.Sprintf(template,
@@ -346,12 +379,9 @@ func (g *Generator) renderFlatSquareBadge(data Data, width, height, labelWidth, 
 	logoSvg := ""
 
 	if data.Logo != "" {
-		// Apply logo color if specified and different from white (default)
-		if data.LogoColor != "" && data.LogoColor != "white" {
-			logoSvg = fmt.Sprintf(`<g style="color: %s;"><image x="5" y="3" width="14" height="14" xlink:href="%s"/></g>`, data.LogoColor, data.Logo)
-		} else {
-			logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, data.Logo)
-		}
+		// Process logo to apply color (for currentColor logos)
+		processedLogo := g.processLogoColor(data.Logo, data.LogoColor)
+		logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, processedLogo)
 	}
 
 	return []byte(fmt.Sprintf(template,
@@ -384,12 +414,9 @@ func (g *Generator) renderForTheBadge(data Data, width, height, labelWidth, mess
 	logoSvg := ""
 
 	if data.Logo != "" {
-		// Apply logo color if specified and different from white (default)
-		if data.LogoColor != "" && data.LogoColor != "white" {
-			logoSvg = fmt.Sprintf(`<g style="color: %s;"><image x="5" y="6" width="16" height="16" xlink:href="%s"/></g>`, data.LogoColor, data.Logo)
-		} else {
-			logoSvg = fmt.Sprintf(`<image x="5" y="6" width="16" height="16" xlink:href="%s"/>`, data.Logo)
-		}
+		// Process logo to apply color (for currentColor logos)
+		processedLogo := g.processLogoColor(data.Logo, data.LogoColor)
+		logoSvg = fmt.Sprintf(`<image x="5" y="6" width="16" height="16" xlink:href="%s"/>`, processedLogo)
 	}
 
 	// Convert to uppercase for "for-the-badge" style

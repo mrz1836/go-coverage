@@ -372,7 +372,7 @@ export GO_COVERAGE_BADGE_LOGO="2fas"        # 2FAS authentication app logo
 # Simple Icons (supports 2800+ logos - see https://simpleicons.org)
 export GO_COVERAGE_BADGE_LOGO="nodejs"      # Node.js logo
 export GO_COVERAGE_BADGE_LOGO="python"      # Python logo
-export GO_COVERAGE_BADGE_LOGO="rust"        # Rust logo  
+export GO_COVERAGE_BADGE_LOGO="rust"        # Rust logo
 export GO_COVERAGE_BADGE_LOGO="docker"      # Docker logo
 export GO_COVERAGE_BADGE_LOGO="kubernetes"  # Kubernetes logo
 export GO_COVERAGE_BADGE_LOGO="react"       # React logo
