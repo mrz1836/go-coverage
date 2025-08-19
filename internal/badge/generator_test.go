@@ -445,18 +445,13 @@ func TestResolveLogo(t *testing.T) {
 			expected: "",
 		},
 		{
-			name:     "go logo",
-			input:    "go",
+			name:     "example logo",
+			input:    "example",
 			contains: "data:image/svg+xml;base64,",
 		},
 		{
-			name:     "GitHub logo",
-			input:    "github",
-			contains: "data:image/svg+xml;base64,",
-		},
-		{
-			name:     "case insensitive go",
-			input:    "GO",
+			name:     "case insensitive example",
+			input:    "EXAMPLE",
 			contains: "data:image/svg+xml;base64,",
 		},
 		{
@@ -472,7 +467,7 @@ func TestResolveLogo(t *testing.T) {
 		{
 			name:     "valid simple icon name",
 			input:    "invalid-logo",
-			contains: "https://cdn.jsdelivr.net/npm/simple-icons",
+			contains: "https://cdn.simpleicons.org",
 		},
 		{
 			name:     "actually invalid logo name",
@@ -511,8 +506,7 @@ func TestGenerateWithResolvedLogos(t *testing.T) {
 		hasImage bool
 	}{
 		{"no logo", "", false},
-		{"go logo", "go", true},
-		{"github logo", "github", true},
+		{"example logo", "example", true},
 		{"valid simple icon", "invalid", true},
 		{"actually invalid logo", "invalid logo name", false},
 	}
@@ -527,7 +521,7 @@ func TestGenerateWithResolvedLogos(t *testing.T) {
 			if tt.hasImage {
 				assert.Contains(t, svgStr, "<image")
 				// Check for either data URI or Simple Icons CDN URL
-				if strings.Contains(svgStr, "xlink:href=\"data:") || strings.Contains(svgStr, "xlink:href=\"https://cdn.jsdelivr.net/npm/simple-icons") {
+				if strings.Contains(svgStr, "xlink:href=\"data:") || strings.Contains(svgStr, "xlink:href=\"https://cdn.simpleicons.org") {
 					// Valid image reference found
 				} else {
 					t.Errorf("Expected image element to have valid xlink:href")
@@ -577,7 +571,7 @@ func TestProcessLogoColor(t *testing.T) {
 		},
 		{
 			name:         "simple icons CDN URL",
-			logoURL:      "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/nodejs.svg",
+			logoURL:      "https://cdn.simpleicons.org/nodejs",
 			color:        "green",
 			shouldModify: false, // Not implemented yet
 		},

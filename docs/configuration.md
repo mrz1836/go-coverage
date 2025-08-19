@@ -111,7 +111,7 @@ Customize coverage badge appearance and behavior.
 ```bash
 # Badge Styling
 export GO_COVERAGE_BADGE_STYLE="flat"                 # Badge style: flat, flat-square, for-the-badge, plastic
-export GO_COVERAGE_BADGE_LOGO="go"                    # Logo: go, github, 2fas, nodejs, python, etc. or custom URL
+export GO_COVERAGE_BADGE_LOGO="go"                 # Logo: nodejs, python, react, docker, etc. (Simple Icons) or custom URL
 export GO_COVERAGE_BADGE_LOGO_COLOR="white"           # Logo color: white, red, blue, green, etc.
 export GO_COVERAGE_BADGE_LABEL="coverage"             # Badge label text
 
@@ -364,13 +364,11 @@ When enabled, PRs with the `coverage-override` label will completely bypass cove
 ### Logo Options
 
 ```bash
-# Built-in logos
-export GO_COVERAGE_BADGE_LOGO="go"          # Go gopher logo
-export GO_COVERAGE_BADGE_LOGO="github"      # GitHub logo
-export GO_COVERAGE_BADGE_LOGO="2fas"        # 2FAS authentication app logo
+# Example logo (for testing)
+export GO_COVERAGE_BADGE_LOGO="example"     # Simple star icon for testing/documentation
 
 # Simple Icons (supports 2800+ logos - see https://simpleicons.org)
-export GO_COVERAGE_BADGE_LOGO="nodejs"      # Node.js logo
+export GO_COVERAGE_BADGE_LOGO="go"          # Go logo
 export GO_COVERAGE_BADGE_LOGO="python"      # Python logo
 export GO_COVERAGE_BADGE_LOGO="rust"        # Rust logo
 export GO_COVERAGE_BADGE_LOGO="docker"      # Docker logo

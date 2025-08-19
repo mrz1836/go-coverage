@@ -264,10 +264,9 @@ func FuzzGetColorByName(f *testing.F) {
 func FuzzResolveLogo(f *testing.F) {
 	// Seed corpus with valid and invalid logo inputs
 	f.Add("")
-	f.Add("go")
-	f.Add("github")
-	f.Add("Go") // uppercase
-	f.Add("GO")
+	f.Add("example")
+	f.Add("Example") // uppercase
+	f.Add("EXAMPLE")
 	f.Add("GitHub")
 	f.Add("GITHUB")
 	f.Add("http://example.com/logo.svg")
@@ -308,12 +307,9 @@ func FuzzResolveLogo(f *testing.F) {
 		// Test specific logo mappings
 		lowerLogo := strings.ToLower(logo)
 		switch lowerLogo {
-		case "go":
-			assert.True(t, strings.HasPrefix(result, "data:image/svg+xml;base64,"), "go logo should return data URI")
-			assert.NotEmpty(t, result, "go logo should not be empty")
-		case "github":
-			assert.True(t, strings.HasPrefix(result, "data:image/svg+xml;base64,"), "github logo should return data URI")
-			assert.NotEmpty(t, result, "github logo should not be empty")
+		case "example":
+			assert.True(t, strings.HasPrefix(result, "data:image/svg+xml;base64,"), "example logo should return data URI")
+			assert.NotEmpty(t, result, "example logo should not be empty")
 		case "":
 			assert.Empty(t, result, "empty logo should return empty string")
 		default:
@@ -321,7 +317,7 @@ func FuzzResolveLogo(f *testing.F) {
 				assert.Equal(t, logo, result, "valid URL/data URI should be returned as-is")
 			} else if isValidSimpleIconName(strings.ToLower(logo)) {
 				// Valid Simple Icons name should return a CDN URL
-				expectedURL := fmt.Sprintf("https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/%s.svg", strings.ToLower(logo))
+				expectedURL := fmt.Sprintf("https://cdn.simpleicons.org/%s", strings.ToLower(logo))
 				assert.Equal(t, expectedURL, result, "valid Simple Icons name should return CDN URL")
 			} else {
 				assert.Empty(t, result, "invalid logo should return empty string")
@@ -333,7 +329,7 @@ func FuzzResolveLogo(f *testing.F) {
 		// Only check UTF-8 validity for our predefined logos
 		if result != "" {
 			lowerLogo := strings.ToLower(logo)
-			if lowerLogo == "go" || lowerLogo == "github" {
+			if lowerLogo == "example" {
 				// These are our built-in logos, should always be valid UTF-8
 				assert.True(t, utf8.ValidString(result), "Built-in logo result should be valid UTF-8")
 			}
@@ -408,12 +404,11 @@ func FuzzGenerateBadge(f *testing.F) {
 func FuzzGenerateBadgeWithOptions(f *testing.F) {
 	// Seed corpus with different option combinations
 	f.Add(75.0, "flat", "coverage", "", "white")
-	f.Add(85.0, "flat-square", "test", "go", "blue")
-	f.Add(95.0, "for-the-badge", "build", "github", "red")
+	f.Add(85.0, "flat-square", "test", "example", "blue")
 	f.Add(50.0, "invalid-style", "cov", "invalid-logo", "green")
 	f.Add(0.0, "", "", "", "")
 	f.Add(100.0, "unicode🔥", "unicode🔥", "unicode🔥", "unicode🔥")
-	f.Add(math.NaN(), "flat", "coverage", "go", "white")
+	f.Add(math.NaN(), "flat", "coverage", "example", "white")
 
 	f.Fuzz(func(t *testing.T, percentage float64, style, label, logo, logoColor string) {
 		generator := New()

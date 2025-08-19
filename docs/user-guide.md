@@ -355,9 +355,8 @@ go-coverage badge --color-excellent brightgreen --color-good yellow --color-poor
 ### Logos
 
 ```bash
-# Built-in logos
-go-coverage badge --logo go
-go-coverage badge --logo github
+# Built-in example logo
+go-coverage badge --logo example
 
 # Custom logo URL
 go-coverage badge --logo https://example.com/logo.svg
