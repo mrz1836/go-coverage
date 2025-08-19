@@ -76,7 +76,6 @@
 
 ## 🗂️ Table of Contents
 * [Quickstart](#-quickstart)
-* [Installation](#-installation)
 * [GitHub Pages Setup](#-github-pages-setup)
 * [Starting a New Project](#-starting-a-new-project)
 * [Documentation](#-documentation)
@@ -84,7 +83,6 @@
 * [Performance](#-performance)
 * [Code Standards](#-code-standards)
 * [AI Compliance](#-ai-compliance)
-* [Claude Code Sub-Agents](#-claude-code-sub-agents)
 * [Maintainers](#-maintainers)
 * [Contributing](#-contributing)
 * [License](#-license)
@@ -95,14 +93,45 @@
 
 **Go Coverage** is a complete replacement for Codecov that runs entirely in your CI/CD pipeline with zero external dependencies. Get coverage reports, badges, and dashboards deployed to GitHub Pages automatically.
 
-### Install the CLI
+<br>
 
+### Installation
+
+**Go Coverage** requires a [supported release of Go](https://golang.org/doc/devel/release.html#policy).
+
+**Install CLI Tool** (recommended):
 ```bash
 go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ```
+
+**Or install go-coverage as a Library**:
+```bash
+go get -u github.com/mrz1836/go-coverage
+```
+
+**Verify Installation**:
+```bash
+go-coverage --version
+# go-coverage version v1.0...
+```
+
+**Upgrade to Latest Version**:
+```bash
+# Check for available updates
+go-coverage upgrade --check
+
+# Upgrade to the latest version
+go-coverage upgrade
+
+# Force reinstall even if already on latest
+go-coverage upgrade --force
+```
+
 <br>
 
-### Install [MAGE-X](https://github.com/mrz1836/mage-x) build tool
+### Development Setup
+
+Install [MAGE-X](https://github.com/mrz1836/mage-x) build tool for development:
 
 ```bash
 # Install MAGE-X for development and building
@@ -110,28 +139,28 @@ go install github.com/mrz1836/mage-x/cmd/magex@latest
 magex update:install
 ```
 
-### Use Internal Coverage System (GitHub Pages)
+<br>
 
-First, set up GitHub Pages environment for coverage deployment
-```text
+### Choose Your Coverage System
+
+**Option 1: Internal Coverage System (GitHub Pages)** - Recommended
+
+Set up GitHub Pages environment for coverage deployment:
+```bash
 go-coverage setup-pages
 ```
 
-Next, deploy to your main branch and generate coverage reports!
+**Option 2: External Coverage System (Codecov)**
 
-<br>
-
-### OR Use External Coverage System (Codecov)
-
-First, create `.github/.env.custom` with:
-```text
+Create `.github/.env.custom` with:
+```bash
 GO_COVERAGE_PROVIDER=codecov
 CODECOV_TOKEN_REQUIRED=true
 ```
 
-Next, deploy to your main branch and generate coverage reports!
+**Next, deploy to your main branch and generate coverage reports!**
 
-<br><br>
+<br>
 
 ### Core Features
 
@@ -145,39 +174,6 @@ Next, deploy to your main branch and generate coverage reports!
 
 <br/>
 
-## 📦 Installation
-
-**Go Coverage** requires a [supported release of Go](https://golang.org/doc/devel/release.html#policy).
-
-### Install as a Library
-```shell script
-go get -u github.com/mrz1836/go-coverage
-```
-
-### Install the CLI Tool
-```shell script
-go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
-```
-
-### Verify Installation
-```bash
-go-coverage --version
-# go-coverage version v1.0...
-```
-
-### Upgrade to Latest Version
-```bash
-# Check for available updates
-go-coverage upgrade --check
-
-# Upgrade to the latest version
-go-coverage upgrade
-
-# Force reinstall even if already on latest
-go-coverage upgrade --force
-```
-
-<br/>
 
 ## 🚀 GitHub Pages Setup
 
@@ -561,6 +557,9 @@ The **Go Coverage** system is optimized for speed and efficiency in CI/CD enviro
 magex bench
 ```
 
+<details>
+<summary><strong>⚡ Benchmark Results & Performance Metrics</strong></summary>
+
 ### Benchmark Results
 
 | Component     | Operation           | Time/op | Memory/op | Allocs/op | Description                        |
@@ -614,6 +613,8 @@ benchstat old.txt new.txt
 
 > Performance benchmarks measured on GitHub Actions runners (10-core CPU) with production Go projects.
 
+</details>
+
 <br/>
 
 ## 🛠️ Code Standards
@@ -622,6 +623,7 @@ Read more about this Go project's [code standards](.github/CODE_STANDARDS.md).
 <br/>
 
 ## 🤖 AI Compliance
+
 This project documents expectations for AI assistants using a few dedicated files:
 
 - [AGENTS.md](.github/AGENTS.md) — canonical rules for coding style, workflows, and pull requests used by [Codex](https://chatgpt.com/codex).
@@ -631,9 +633,10 @@ This project documents expectations for AI assistants using a few dedicated file
 
 Edit `AGENTS.md` first when adjusting these policies, and keep the other files in sync within the same pull request.
 
-<br/>
+<details>
+<summary><strong>🤖 Claude Code Sub-Agents & Commands</strong></summary>
 
-## 🤖 Claude Code Sub-Agents
+### Sub-Agents Overview
 
 This project leverages a comprehensive team of specialized Claude Code sub-agents to manage development, testing, and deployment workflows. Each agent has specific expertise and can work independently or collaboratively to maintain the go-coverage system.
 
@@ -714,6 +717,8 @@ The project includes **20 powerful slash commands** that orchestrate our sub-age
 - **Workflow**: `/pr-ready`, `/debug-ci`, `/release-prep`, `/benchmark`, `/commit`
 
 See the complete [**Claude Code Commands Reference**](docs/claude-commands.md) for detailed usage, examples, and best practices.
+
+</details>
 
 <br/>
 
