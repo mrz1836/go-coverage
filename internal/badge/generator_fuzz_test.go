@@ -299,7 +299,7 @@ func FuzzResolveLogo(f *testing.F) {
 			}
 		}()
 
-		result := generator.resolveLogo(logo)
+		result := generator.resolveLogo(logo, "")
 
 		// Validate output (can be empty string for invalid logos)
 		assert.IsType(t, "", result, "Should return string")

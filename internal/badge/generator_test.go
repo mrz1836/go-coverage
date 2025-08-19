@@ -483,7 +483,7 @@ func TestResolveLogo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := generator.resolveLogo(tt.input)
+			result := generator.resolveLogo(tt.input, "")
 
 			if tt.expected != "" {
 				assert.Equal(t, tt.expected, result)

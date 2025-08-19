@@ -110,7 +110,7 @@ func (g *Generator) Generate(ctx context.Context, percentage float64, options ..
 		Message:   message,
 		Color:     color,
 		Style:     sanitizeUTF8(opts.Style),
-		Logo:      g.resolveLogo(opts.Logo),
+		Logo:      g.resolveLogo(opts.Logo, sanitizeUTF8(opts.LogoColor)),
 		LogoColor: sanitizeUTF8(opts.LogoColor),
 		AriaLabel: fmt.Sprintf("Code coverage: %.1f percent", percentage),
 	}
@@ -150,7 +150,7 @@ func (g *Generator) GenerateTrendBadge(ctx context.Context, current, previous fl
 		Message:   trend,
 		Color:     color,
 		Style:     sanitizeUTF8(opts.Style),
-		Logo:      g.resolveLogo(opts.Logo),
+		Logo:      g.resolveLogo(opts.Logo, sanitizeUTF8(opts.LogoColor)),
 		LogoColor: sanitizeUTF8(opts.LogoColor),
 		AriaLabel: fmt.Sprintf("Coverage trend: %s", trend),
 	}
@@ -193,7 +193,7 @@ func (g *Generator) getColorByName(name string) string {
 }
 
 // resolveLogo converts common logo names to SVG data URIs or URLs
-func (g *Generator) resolveLogo(logo string) string {
+func (g *Generator) resolveLogo(logo, color string) string {
 	switch strings.ToLower(logo) {
 	case "example":
 		// Example logo - simple star icon as SVG data URI for testing/documentation purposes
@@ -211,6 +211,12 @@ func (g *Generator) resolveLogo(logo string) string {
 		// but trust the Simple Icons CDN to handle requests for non-existent logos gracefully
 		logoName := strings.ToLower(logo)
 		if isValidSimpleIconName(logoName) {
+			// Include color in Simple Icons URL if specified
+			if color != "" {
+				// Remove # from hex colors for Simple Icons CDN
+				cleanColor := strings.TrimPrefix(color, "#")
+				return fmt.Sprintf("https://cdn.simpleicons.org/%s/%s", logoName, cleanColor)
+			}
 			return fmt.Sprintf("https://cdn.simpleicons.org/%s", logoName)
 		}
 		// Return empty string for obviously invalid logo names (special chars, too long, etc)
@@ -248,9 +254,9 @@ func (g *Generator) processLogoColor(logoURL, color string) string {
 	// Only process data URIs with base64 content
 	if !strings.HasPrefix(logoURL, "data:image/svg+xml;base64,") {
 		// For Simple Icons CDN URLs, we need to fetch and modify
-		if strings.Contains(logoURL, "simple-icons") {
-			// TODO: Implement fetching and color processing for Simple Icons
-			// For now, return as-is (external CDN requests require HTTP client)
+		if strings.Contains(logoURL, "simpleicons.org") {
+			// Simple Icons CDN URLs should already have color applied during resolveLogo
+			// No further processing needed
 			return logoURL
 		}
 		return logoURL
