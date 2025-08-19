@@ -1,0 +1,16 @@
+project:
+  name: go-coverage
+  binary: go-coverage
+  module: github.com/mrz1836/go-coverage
+  main: ./cmd/go-coverage
+
+build:
+  # Custom ldflags with version injection
+  ldflags:
+    - "-s -w"
+    - "-X main.version={{.Version}}"
+    - "-X main.commit={{.Commit}}"
+    - "-X main.buildDate={{.Date}}"
+  flags:
+    - "-trimpath"
+  output: "./cmd/go-coverage/go-coverage"
