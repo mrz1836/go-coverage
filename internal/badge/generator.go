@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -218,14 +219,30 @@ func (g *Generator) resolveLogo(ctx context.Context, logo, color string) string 
 		// but trust the Simple Icons CDN to handle requests for non-existent logos gracefully
 		logoName := strings.ToLower(logo)
 		if isValidSimpleIconName(logoName) {
-			// Fetch the icon from Simple Icons CDN and embed it as base64
+			// First attempt: Fetch the icon with color (if specified)
 			if dataURI, err := fetchSimpleIcon(ctx, logoName, color); err == nil {
 				return dataURI
+			} else {
+				log.Printf("Warning: Failed to fetch logo '%s' with color '%s': %v", logoName, color, err)
 			}
-			// If fetch fails, return empty string (no logo) rather than broken external URL
+
+			// Fallback attempt: Try fetching without color if the first attempt failed and color was specified
+			if color != "" {
+				log.Printf("Retrying logo '%s' without color...", logoName)
+				if dataURI, err := fetchSimpleIcon(ctx, logoName, ""); err == nil {
+					log.Printf("Success: Fetched logo '%s' without color", logoName)
+					return dataURI
+				} else {
+					log.Printf("Error: Failed to fetch logo '%s' even without color: %v", logoName, err)
+				}
+			}
+
+			// If all attempts fail, log the failure and return empty string
+			log.Printf("Error: Unable to fetch logo '%s' from Simple Icons CDN after all attempts", logoName)
 			return ""
 		}
-		// Return empty string for obviously invalid logo names (special chars, too long, etc)
+		// Log invalid logo names for debugging
+		log.Printf("Warning: Invalid logo name '%s' - must contain only lowercase letters, numbers, and hyphens", logo)
 		return ""
 	}
 }
@@ -285,7 +302,7 @@ func (g *Generator) processLogoColor(logoURL, color string) string {
 	return "data:image/svg+xml;base64," + newBase64
 }
 
-// fetchSimpleIcon fetches an SVG icon from Simple Icons CDN and returns it as a base64 data URI
+// fetchSimpleIcon fetches an SVG icon from Simple Icons CDN with retry logic and returns it as a base64 data URI
 func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error) {
 	// Build the URL for Simple Icons CDN
 	var url string
@@ -297,40 +314,76 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 		url = fmt.Sprintf("https://cdn.simpleicons.org/%s", iconName)
 	}
 
-	// Create HTTP client with timeout
-	client := &http.Client{
-		Timeout: 10 * time.Second,
+	// Retry configuration
+	const maxRetries = 3
+	const baseDelay = 500 * time.Millisecond
+
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Check if context was canceled
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
+
+		// Create HTTP client with timeout
+		client := &http.Client{
+			Timeout: 15 * time.Second, // Increased timeout for slower networks
+		}
+
+		// Create request with context
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to create request for %s: %w", url, err)
+			continue
+		}
+
+		// Add User-Agent header (some CDNs require this)
+		req.Header.Set("User-Agent", "go-coverage/1.0 (+https://github.com/mrz1836/go-coverage)")
+
+		// Make the request
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
+			// Wait before retry with exponential backoff
+			if attempt < maxRetries-1 {
+				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				time.Sleep(delay)
+			}
+			continue
+		}
+
+		// Check response status
+		if resp.StatusCode != http.StatusOK {
+			_ = resp.Body.Close()
+			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, url, attempt+1, maxRetries)
+			// Wait before retry with exponential backoff
+			if attempt < maxRetries-1 {
+				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				time.Sleep(delay)
+			}
+			continue
+		}
+
+		// Read the SVG content
+		svgContent, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		if err != nil {
+			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
+			// Wait before retry with exponential backoff
+			if attempt < maxRetries-1 {
+				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				time.Sleep(delay)
+			}
+			continue
+		}
+
+		// Success! Encode as base64 data URI
+		base64Content := base64.StdEncoding.EncodeToString(svgContent)
+		return "data:image/svg+xml;base64," + base64Content, nil
 	}
 
-	// Create request with context
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request for %s: %w", url, err)
-	}
-
-	// Make the request
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch icon from %s: %w", url, err)
-	}
-	defer func() {
-		_ = resp.Body.Close() // Explicitly ignore close error to satisfy linter
-	}()
-
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("%w: HTTP %d from %s", ErrIconFetchFailed, resp.StatusCode, url)
-	}
-
-	// Read the SVG content
-	svgContent, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read SVG content: %w", err)
-	}
-
-	// Encode as base64 data URI
-	base64Content := base64.StdEncoding.EncodeToString(svgContent)
-	return "data:image/svg+xml;base64," + base64Content, nil
+	// All retries failed
+	return "", fmt.Errorf("failed to fetch icon after %d attempts: %w", maxRetries, lastErr)
 }
 
 // renderSVG generates the actual SVG content
