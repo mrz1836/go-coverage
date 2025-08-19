@@ -13,7 +13,7 @@ model: sonnet
 Run and analyze benchmarks using the **performance-optimizer** agent:
 
 1. **Run Benchmarks**:
-   - Execute: `make bench`
+   - Execute: `magex bench`
    - Or: `go test -bench=. -benchmem ./...`
    - Multiple runs for stability: `-count=10`
    - With CPU profile: `-cpuprofile=cpu.prof`

@@ -20,7 +20,7 @@ You optimize system performance:
 
 1. **Run Benchmarks**
    ```bash
-   make bench
+   magex bench
    go test -bench=. -benchmem ./...
    ```
 
@@ -420,7 +420,7 @@ func TestPerformanceRegression(t *testing.T) {
 
 ```bash
 # Benchmarking
-make bench
+magex bench
 go test -bench=. -benchmem ./...
 go test -bench=Parse -benchtime=10s ./internal/parser
 

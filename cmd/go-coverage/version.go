@@ -66,7 +66,7 @@ func GetVersion() string {
 		// Try to get VCS revision as fallback
 		for _, setting := range buildInfo.Settings {
 			if setting.Key == "vcs.revision" && setting.Value != "" {
-				// Use short commit hash like we do in Makefile
+				// Use short commit hash
 				if len(setting.Value) > 7 {
 					return setting.Value[:7]
 				}

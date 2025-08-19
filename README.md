@@ -53,9 +53,6 @@
         <a href=".github/AGENTS.md">
           <img src="https://img.shields.io/badge/AGENTS.md-found-40b814?style=flat&logo=openai" alt="AGENTS.md rules">
         </a><br/>
-        <a href="Makefile">
-          <img src="https://img.shields.io/badge/Makefile-supported-brightgreen?style=flat&logo=probot&logoColor=white" alt="Makefile Supported">
-        </a><br/>
 		<a href=".github/dependabot.yml">
           <img src="https://img.shields.io/badge/dependencies-automatic-blue?logo=dependabot&style=flat" alt="Dependabot">
         </a>
@@ -104,6 +101,14 @@
 go install github.com/mrz1836/go-coverage/cmd/go-coverage@latest
 ```
 <br>
+
+### Install [MAGE-X](https://github.com/mrz1836/mage-x) build tool
+
+```bash
+# Install MAGE-X for development and building
+go install github.com/mrz1836/mage-x/cmd/magex@latest
+magex update:install
+```
 
 ### Use Internal Coverage System (GitHub Pages)
 
@@ -382,16 +387,10 @@ brew install goreleaser
 
 The release process is defined in the [.goreleaser.yml](.goreleaser.yml) configuration file.
 
-To generate a snapshot (non-versioned) release for testing purposes, run:
-
-```bash
-make release-snap
-```
-
 Then create and push a new Git tag using:
 
 ```bash
-make tag version=x.y.z
+magex version:bump push=true bump=patch
 ```
 
 This process ensures consistent, repeatable releases with properly versioned artifacts and citation metadata.
@@ -399,65 +398,14 @@ This process ensures consistent, repeatable releases with properly versioned art
 </details>
 
 <details>
-<summary><strong><code>Makefile Commands</code></strong></summary>
+<summary><strong><code>Build Commands</code></strong></summary>
 <br/>
 
-View all `makefile` commands
+View all build commands
 
 ```bash script
-make help
+magex help
 ```
-
-List of all current commands:
-
-<!-- make-help-start -->
-```text
-bench                 ## Run all benchmarks in the Go application
-build-go              ## Build the Go application (locally)
-citation              ## Update version in CITATION.cff (use version=X.Y.Z)
-clean-mods            ## Remove all the Go mod cache
-coverage              ## Show test coverage
-diff                  ## Show git diff and fail if uncommitted changes exist
-fumpt                 ## Run fumpt to format Go code
-generate              ## Run go generate in the base of the repo
-godocs                ## Trigger GoDocs tag sync
-govulncheck-install   ## Install govulncheck (pass VERSION= to override)
-govulncheck           ## Scan for vulnerabilities
-help                  ## Display this help message
-install-go            ## Install using go install with specific version
-install-releaser      ## Install GoReleaser
-install-stdlib        ## Install the Go standard library for the host platform
-install               ## Install the application binary
-lint-version          ## Show the golangci-lint version
-lint                  ## Run the golangci-lint application (install if not found)
-loc                   ## Total lines of code table
-mod-download          ## Download Go module dependencies
-mod-tidy              ## Clean up go.mod and go.sum
-pre-build             ## Pre-build all packages to warm cache
-release-snap          ## Build snapshot binaries
-release-test          ## Run release dry-run (no publish)
-release               ## Run production release (requires github_token)
-tag-remove            ## Remove local and remote tag (use version=X.Y.Z)
-tag-update            ## Force-update tag to current commit (use version=X.Y.Z)
-tag                   ## Create and push a new tag (use version=X.Y.Z)
-test-ci-no-race       ## CI test suite without race detector
-test-ci               ## CI test runs tests with race detection and coverage (no lint - handled separately)
-test-cover-race       ## Runs unit tests with race detector and outputs coverage
-test-cover            ## Unit tests with coverage (no race)
-test-fuzz             ## Run fuzz tests only (no unit tests)
-test-no-lint          ## Run only tests (no lint)
-test-parallel         ## Run tests in parallel (faster for large repos)
-test-race             ## Unit tests with race detector (no coverage)
-test-short            ## Run tests excluding integration tests (no lint)
-test                  ## Default testing uses lint + unit tests (fast)
-uninstall             ## Uninstall the Go binary
-update-linter         ## Upgrade golangci-lint (macOS only)
-update-releaser       ## Reinstall GoReleaser
-update                ## Update dependencies
-vet-parallel          ## Run go vet in parallel (faster for large repos)
-vet                   ## Run go vet only on your module packages
-```
-<!-- make-help-end -->
 
 </details>
 
@@ -472,7 +420,7 @@ All GitHub Actions workflows in this repository are powered by a flexible two-fi
 
 **Configuration Files:**
 - **[.env.base](.github/.env.base)** – Default configuration that works for most Go projects
-- **[.env.custom](.github/.env.custom.example)** – Optional project-specific overrides
+- **[.env.custom](.github/.env.custom)** – Optional project-specific overrides
 
 This powerful system controls everything from:
 - **🚀 Go version matrix** (test on multiple versions or just one)
@@ -506,10 +454,10 @@ This powerful system controls everything from:
 To update all dependencies (Go modules, linters, and related tools), run:
 
 ```bash
-make update
+magex deps:update
 ```
 
-This command ensures all dependencies are brought up to date in a single step, including Go modules and any tools managed by the Makefile. It is the recommended way to keep your development environment and CI in sync with the latest versions.
+This command ensures all dependencies are brought up to date in a single step, including Go modules and any tools managed by MAGE-X. It is the recommended way to keep your development environment and CI in sync with the latest versions.
 
 </details>
 
@@ -548,12 +496,12 @@ go-coverage upgrade --force --verbose
 Run all tests (fast):
 
 ```bash script
-make test
+magex test
 ```
 
 Run all tests with race detector (slower):
 ```bash script
-make test-race
+magex test:race
 ```
 
 <details>
@@ -577,8 +525,8 @@ go test -fuzz=FuzzBuildGitHubCommitURL -fuzztime=10s ./internal/urlutil/
 go test -fuzz=FuzzGetColorForPercentage -fuzztime=10s ./internal/badge/
 go test -fuzz=FuzzParseStatementSimple -fuzztime=10s ./internal/parser/
 
-# Run all fuzz tests (via Makefile)
-make test-fuzz
+# Run all fuzz tests (via MAGE-X)
+magex test-fuzz
 ```
 
 #### Fuzz Test Features
@@ -610,7 +558,7 @@ The system generates comprehensive coverage reports:
 The **Go Coverage** system is optimized for speed and efficiency in CI/CD environments.
 
 ```bash script
-make bench
+magex bench
 ```
 
 ### Benchmark Results
@@ -640,7 +588,7 @@ make bench
 
 ```bash
 # Run all benchmarks
-make bench
+magex bench
 
 # Run specific component benchmarks
 go test -bench=. ./internal/parser/...
@@ -701,7 +649,6 @@ This project leverages a comprehensive team of specialized Claude Code sub-agent
 | **[ci-workflow](.claude/agents/ci-workflow.md)**                     | GitHub Actions, pipeline optimization                 | Read, Edit, Bash       | Workflow failures, CI updates   |
 | **[code-reviewer](.claude/agents/code-reviewer.md)**                 | Code quality, security review, best practices         | Read, Grep, Glob       | After code writing/modification |
 | **[documentation-manager](.claude/agents/documentation-manager.md)** | README, API docs, changelog maintenance               | Read, Edit, WebFetch   | API changes, new features       |
-| **[release-manager](.claude/agents/release-manager.md)**             | Versioning, releases, deployment coordination         | Bash, Edit, Task       | Version bumps, release prep     |
 | **[performance-optimizer](.claude/agents/performance-optimizer.md)** | Benchmarking, profiling, optimization                 | Bash, Edit, Grep       | Performance issues, benchmarks  |
 | **[security-scanner](.claude/agents/security-scanner.md)**           | Vulnerability detection, compliance checks            | Bash, Grep, WebFetch   | Security advisories, scans      |
 | **[debugger](.claude/agents/debugger.md)**                           | Error analysis, test debugging, issue resolution      | Read, Edit, Bash       | Test failures, errors, panics   |
@@ -724,7 +671,6 @@ Sub-agents work together cohesively:
 - **go-test-runner** → triggers **coverage-analyzer** after successful tests
 - **code-reviewer** → invokes **go-linter** for style issues
 - **dependency-manager** → calls **security-scanner** for vulnerability checks
-- **release-manager** → coordinates with multiple agents for release preparation
 
 ### Configuration
 

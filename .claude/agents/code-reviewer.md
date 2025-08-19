@@ -299,9 +299,9 @@ for _, item := range items {
 ### Pre-commit Checks
 ```bash
 # Run before allowing commit
-make lint
-make test
-go vet ./...
+magex lint
+magex test
+magex vet
 gosec ./...
 ```
 
@@ -309,8 +309,8 @@ gosec ./...
 ```bash
 #!/bin/bash
 # .git/hooks/pre-push
-make lint || exit 1
-make test || exit 1
+magex lint || exit 1
+magex test || exit 1
 echo "Code review checks passed!"
 ```
 

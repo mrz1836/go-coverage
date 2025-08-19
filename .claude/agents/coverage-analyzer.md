@@ -252,9 +252,8 @@ go-coverage history --branch master --days 30
 go tool cover -func=coverage.txt
 go tool cover -html=coverage.txt -o coverage.html
 
-# Makefile targets
-make coverage
-make test-cover
+# Mage-X targets
+magex test:cover
 ```
 
 ## Troubleshooting

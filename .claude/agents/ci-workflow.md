@@ -155,9 +155,9 @@ jobs:
 - name: Run tests
   run: |
     if [[ "${{ env.ENABLE_RACE_DETECTOR }}" == "true" ]]; then
-      make test-race
+      magex test:race
     else
-      make test
+      magex test
     fi
 
 - name: Upload coverage
@@ -173,8 +173,7 @@ jobs:
 - name: Run govulncheck
   if: env.ENABLE_GOVULNCHECK == 'true'
   run: |
-    make govulncheck-install VERSION=${{ env.GOVULNCHECK_VERSION }}
-    make govulncheck
+    magex deps:audit
 
 - name: Run gosec
   uses: securego/gosec@[sha]
@@ -221,7 +220,7 @@ jobs:
      with:
        timeout_minutes: 10
        max_attempts: 3
-       command: make test
+       command: magex test
    ```
 
 4. **Permission Errors**

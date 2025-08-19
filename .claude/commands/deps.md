@@ -27,11 +27,10 @@ Manage dependencies using **dependency-manager** and **security-scanner** agents
    - Verify license compliance
 
 3. **Update Process**:
-   - Update dependencies: `go get -u ./...`
-   - Clean up: `go mod tidy`
+   - Update dependencies: `magex deps:update`
+   - Clean up: `magex tidy`
    - Verify: `go mod verify`
-   - Test: `make test`
-   - Scan: `make govulncheck`
+   - Test: `magex test`
 
 4. **Risk Assessment**:
    - Breaking changes in major versions

@@ -85,18 +85,18 @@ When working with this coverage system, follow these domain-specific standards:
 6. **Branch‑prefix and commit‑message standards**
    They drive auto‑labeling and CI gates for the coverage workflow
 7. **Never tag releases**
-   Only repository code‑owners run `make tag` / `make release`
+   Only repository code‑owners run `magex version:bump` / `magex release`
 8. **Pass CI including coverage**
-   Run tests with coverage: `make test-cover` before opening PR
+   Run tests with coverage: `magex test:cover` before opening PR
 
 ### **Common Operations**
 
 ```bash
 # Test the coverage system itself
-make test-cover
+magex test:cover
 
 # Build CLI tool locally
-make build-go
+magex build
 
 # Run the complete coverage pipeline
 go-coverage complete -i coverage.txt -o coverage-output

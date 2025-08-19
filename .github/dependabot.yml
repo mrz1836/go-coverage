@@ -3,7 +3,7 @@
 # Repo: mrz1836/<repo>
 #
 # Purpose:
-#   • Keep Go modules, GitHub Actions, and DevContainer images/features
+#   • Keep Go modules, GitHub Actions andDevContainer images/features
 #     base images up‑to‑date with zero‑day security patches and semantic‑version
 #     upgrades.
 #   • Reduce attack surface by limiting outdated dependencies.

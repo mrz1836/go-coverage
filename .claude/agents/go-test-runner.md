@@ -25,10 +25,10 @@ You are responsible for:
 
 2. **Run Appropriate Tests**
    - For specific package changes: `go test ./path/to/package/...`
-   - For full test suite: `make test`
-   - For coverage: `make test-cover`
-   - For race detection: `make test-race`
-   - For CI simulation: `make test-ci`
+   - For full test suite: `magex test`
+   - For coverage: `magex test:cover`
+   - For race detection: `magex test:race`
+   - For CI simulation: `magex test:coverrace`
 
 3. **Analyze Results**
    - Parse test output for failures
@@ -131,11 +131,10 @@ When tests fail:
 
 ```bash
 # Quick test commands
-make test              # Fast unit tests with lint
-make test-no-lint      # Tests only, no linting
-make test-race         # Tests with race detector
-make test-cover        # Tests with coverage output
-make test-ci           # Full CI test suite
+magex test              # Fast unit tests with lint
+magex test:race         # Tests with race detector
+magex test:cover        # Tests with coverage output
+magex test:coverrace    # Full CI test suite
 
 # Specific test targeting
 go test ./internal/parser/...  # Test specific package

@@ -26,7 +26,7 @@ You are the guardian of dependency health:
 
 2. **Run Security Scan**
    ```bash
-   make govulncheck
+   magex deps:audit
    ```
 
 3. **Check for Updates**
@@ -59,7 +59,7 @@ go mod tidy
 go mod verify
 
 # Update all dependencies
-make update
+magex deps:update
 ```
 
 ## Security Scanning Process
@@ -67,13 +67,7 @@ make update
 ### Vulnerability Detection
 ```bash
 # Install govulncheck if needed
-make govulncheck-install
-
-# Run vulnerability scan
-govulncheck ./...
-
-# Check specific package
-govulncheck -json ./... | jq '.Vulns[]'
+magex deps:audit
 
 # Alternative scanners
 nancy go.sum
@@ -113,10 +107,10 @@ go mod tidy
 go mod verify
 
 # 5. Run tests
-make test
+magex test
 
 # 6. Check for vulnerabilities
-make govulncheck
+magex deps:audit
 ```
 
 ### Major Version Updates
@@ -275,11 +269,11 @@ go list -m -json all > deps.json
 ## Common Commands
 
 ```bash
-# Makefile commands
-make update           # Update all dependencies
-make mod-tidy         # Run go mod tidy
-make mod-download     # Download dependencies
-make govulncheck      # Security scan
+# MageX commands
+magex deps:update     # Update all dependencies
+magex tidy            # Run go mod tidy
+magex deps:download   # Download dependencies
+magex deps:audit      # Security scan
 
 # Direct commands
 go mod init

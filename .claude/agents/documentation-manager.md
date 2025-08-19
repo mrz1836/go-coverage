@@ -297,7 +297,6 @@ aspell check README.md
 ### Information Sources
 - **go-test-runner**: Test documentation
 - **coverage-analyzer**: Coverage metrics
-- **release-manager**: Version information
 - **ci-workflow**: CI/CD documentation
 
 ### Updates Triggered By

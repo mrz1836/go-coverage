@@ -6,9 +6,9 @@ model: opus
 
 ## Context
 - CI status: !`gh run list --limit 3 --json status,conclusion | grep -E "status|conclusion"`
-- Test status: !`go test ./... 2>&1 | tail -5`
+- Test status: !`magex test 2>&1 | tail -5`
 - Coverage: !`go test -cover ./... 2>&1 | grep coverage | tail -5`
-- Linting: !`make lint 2>&1 | tail -10`
+- Linting: !`magex lint 2>&1 | tail -10`
 
 ## Task
 

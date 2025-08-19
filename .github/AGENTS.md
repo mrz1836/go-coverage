@@ -10,8 +10,6 @@ It is designed to help AI assistants (e.g., Codex, Claude, Cursor, Sweep AI) and
 
 Additional `AGENTS.md` files **may exist in subdirectories** to provide more contextual or specialized guidance. These local agent files are allowed to **extend or override** the root rules to fit the needs of specific packages, services, or engineering domains—while still respecting the spirit of consistency and quality defined here.
 
-<br/>
-
 ---
 
 <br/>
@@ -377,8 +375,8 @@ govulncheck ./...
 go get -u ./...  # Update to latest minor/patch versions
 go mod tidy
 
-# ✅ Use Makefile for common tasks
-make update # updates dependencies and runs go mod tidy
+# ✅ Use build commands for common tasks
+magex deps:update # updates dependencies and runs go mod tidy
 
 # 🚫 Avoid using `replace` unless absolutely necessary
 # go.mod
@@ -396,7 +394,7 @@ replace github.com/some/dependency => github.com/some/dependency v1.2.3
 
 Write code that performs well by default, and measure when optimization is needed.
 
-* **Use `make bench`** to establish performance baselines
+* **Use `magex bench:run`** to establish performance baselines
 * **Profile with `go tool pprof`** when investigating performance issues
 * **Avoid premature optimization** — write clear code first, optimize bottlenecks later
 * **Use benchmarks** to validate that optimizations actually improve performance
@@ -441,11 +439,7 @@ func processUsers(users []User) []ProcessedUser {
 Code must be cleanly formatted and pass all linters before being committed.
 
 ```bash
-go fmt ./...
-goimports -w .
-gofumpt -w .
-make lint
-go vet ./...
+magex lint
 ```
 
 > Refer to `.golangci.json` for the full set of enabled linters and formatters.
@@ -518,9 +512,9 @@ Run tests locally with:
 go test ./...
 ```
 
-Or use our makefile:
+Or use our build commands:
 ```bash
-make test
+magex test
 ```
 
 > All tests must pass in CI prior to merge.
@@ -547,10 +541,10 @@ Best practices:
 
 <br/>
 
-## 🛠 Makefile Overview
+## 🛠 Build System Overview
 
-The repository's `Makefile` includes reusable targets from `.make/common.mk` and
-`.make/go.mk`. The root file exposes a few high-level commands while the files
+The repository includes build commands from `.make/common.mk` and
+`.make/go.mk`. The root configuration exposes high-level commands while the files
 under `.make` contain the bulk of the build logic.
 
 `common.mk` provides utility tasks for releasing with GoReleaser, tagging
@@ -559,9 +553,9 @@ commands used across projects.
 
 `go.mk` supplies Go-specific helpers for linting, testing, generating code,
 building binaries, and updating dependencies. Targets such as `lint`, `test`,
-`test-ci`, and `coverage` are defined here and invoked by the root `Makefile`.
+`test-ci`, and `coverage` are defined here and invoked by the root configuration.
 
-Use `make help` to view the full list of supported commands.
+Use `magex help` to view the full list of supported commands.
 
 <br/>
 
@@ -660,11 +654,11 @@ Every exported function **must** include a Go-style comment that:
 * Starts with the function name
 * States its purpose clearly
 * Documents:
-  * **Steps**: Include if the function performs a non-obvious sequence of operations.
-  * **Parameters**: Always describe all parameters when present.
-  * **Return values**: Document return types and their meaning if not trivially understood.
-  * **Side effects**: Note any I/O, database writes, external calls, or mutations that aren't local to the function.
-  * **Notes**: Include any assumptions, constraints, or important context that the caller should know.
+	* **Steps**: Include if the function performs a non-obvious sequence of operations.
+	* **Parameters**: Always describe all parameters when present.
+	* **Return values**: Document return types and their meaning if not trivially understood.
+	* **Side effects**: Note any I/O, database writes, external calls, or mutations that aren't local to the function.
+	* **Notes**: Include any assumptions, constraints, or important context that the caller should know.
 
 Here is a template for function comments that is recommended to use:
 
@@ -701,9 +695,9 @@ Here is a template for function comments that is recommended to use:
 * Each package **must** include a package-level comment in a file named after the package (e.g., `auth.go` for package `auth`).
 * If no logical file fits, add a `doc.go` with the comment block.
 * Use it to explain:
-    * The package purpose
-    * High-level API boundaries
-    * Expected use-cases and design notes
+	* The package purpose
+	* High-level API boundaries
+	* Expected use-cases and design notes
 
 Here is a template for package comments that is recommended to use:
 
@@ -754,9 +748,9 @@ Use inline comments **strategically**, not excessively.
 * Keep your tone **precise, confident, and modern**—you're not writing a novel, but you're also not writing legacy COBOL.
 * Avoid filler like "simple function" or "just does X".
 * Don't leave TODOs unless:
-    * They are immediately actionable
-    * (or) they reference an issue
-    * They include a timestamp or owner
+	* They are immediately actionable
+	* (or) they reference an issue
+	* They include a timestamp or owner
 
 <br/><br/>
 
@@ -831,27 +825,6 @@ docs(README): improve installation instructions
 ```
 
 > Commits that only tweak whitespace, comments, or docs inside a PR may be squashed; otherwise preserve granular commits.
-
-<br/><br/>
-
-### 📝 Pre-Commit Hooks (Optional)
-To ensure consistent commit messages, we use a pre-commit hook that checks the format before allowing a commit. The hook is defined in `.pre-commit-config.yaml` and can be installed with:
-
-```bash
-pre-commit install
-```
-
-If you don't have `pre-commit` installed, you can install it via Homebrew:
-```bash
-brew install pre-commit
-```
-
-Run the pre-commit hook manually with:
-```bash
-pre-commit run --all-files
-```
-
-> The pre-commit hook will automatically check your commit messages against the defined format and prevent commits that do not comply.
 
 <br/><br/>
 
@@ -974,8 +947,8 @@ We follow **Semantic Versioning (✧ SemVer)**:
 
 | Step | Command                         | Purpose                                                                                            |
 |------|---------------------------------|----------------------------------------------------------------------------------------------------|
-| 1    | `make release-snap`             | Build & upload a **snapshot** (pre‑release) for quick CI validation.                               |
-| 2    | `make tag version=X.Y.Z`        | Create and push a signed Git tag. Triggers GitHub Actions to package the release                   |
+| 1    | `goreleaser release --snapshot` | Build & upload a **snapshot** (pre‑release) for quick CI validation.                               |
+| 2    | `git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z` | Create and push a signed Git tag. Triggers GitHub Actions to package the release |
 | 3    | GitHub Actions                  | CI runs `goreleaser release` on the tag; artifacts and changelog are published to GitHub Releases. |
 
 > **Note for AI Agents:** Do not create or push tags automatically. Only the repository [codeowners](CODEOWNERS) are authorized to tag and publish official releases.
@@ -1057,9 +1030,9 @@ Current labels are located in `.github/labels.yml` and automatically synced into
 CI automatically runs on every PR to verify:
 
 * Formatting (`go fmt` and `goimports` and `gofumpt`)
-* Linting (`make lint`)
-* Tests (`make test`)
-* Fuzz tests (if applicable) (`make run-fuzz-tests`)
+* Linting (`magex lint`)
+* Tests (`magex test`)
+* Fuzz tests (if applicable) (`magex test:fuzz`)
 * This codebase uses GitHub Actions; test workflows reside in `.github/workflows/fortress.yml` and `.github/workflows/fortress-test-suite.yml`.
 * Pin each external GitHub Action to a **full commit SHA** (e.g., `actions/checkout@2f3b4a2e0e471e13e2ea2bc2a350e888c9cf9b75`) as recommended by GitHub's [security hardening guidance](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-pinned-actions). Dependabot will track and update these pinned versions automatically.
 
@@ -1104,9 +1077,9 @@ Dependency hygiene is critical for security, reproducibility, and developer expe
   govulncheck ./...
 ```
 
-* Run via make command:
+* Run via build command:
 ```bash
-  make govulncheck
+  magex deps:audit
 ```
 
 * Run [gitleaks](https://github.com/gitleaks/gitleaks) before committing code to detect hardcoded secrets or sensitive data in the repository:
@@ -1144,9 +1117,9 @@ Security is a first-class requirement. If you discover a vulnerability—no matt
 * **Do not** open a public issue or pull request.
 * Follow the instructions in [`SECURITY.md`](SECURITY.md).
 * Include:
-  * A clear, reproducible description of the issue
-  * Proof‑of‑concept code or steps (if possible)
-  * Any known mitigations or workarounds
+	* A clear, reproducible description of the issue
+	* Proof‑of‑concept code or steps (if possible)
+	* Any known mitigations or workarounds
 * You will receive an acknowledgment within **72 hours** and status updates until the issue is resolved.
 
 > For general hardening guidance (e.g., `govulncheck`, dependency pinning), see the [🔐Dependency Management](#-dependency-management) section.
@@ -1212,7 +1185,7 @@ name: [workflow-name]
 # Trigger Configuration
 # ————————————————————————————————————————————————————————————————
 on:
-  [trigger-events]
+	[trigger-events]
 
 # ————————————————————————————————————————————————————————————————
 # Permissions
@@ -1223,31 +1196,31 @@ permissions: read-all
 # Concurrency Control
 # ————————————————————————————————————————————————————————————————
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+	group: ${{ github.workflow }}-${{ github.ref }}
+	cancel-in-progress: true
 
 jobs:
-  [job-name]:
-    runs-on: ubuntu-latest
-    permissions:
-      [specific-permissions]: [read|write]
-    steps:
-      # ————————————————————————————————————————————————————————————————
-      # [Step Category/Purpose]
-      # ————————————————————————————————————————————————————————————————
-      - name: [Step Name]
-        uses: [action@full-commit-sha]
-        with:
-          [parameters]
+	[job-name]:
+		runs-on: ubuntu-latest
+		permissions:
+			[specific-permissions]: [read|write]
+		steps:
+			# ————————————————————————————————————————————————————————————————
+			# [Step Category/Purpose]
+			# ————————————————————————————————————————————————————————————————
+			- name: [Step Name]
+			  uses: [action@full-commit-sha]
+			  with:
+				  [parameters]
 
-      # ————————————————————————————————————————————————————————————————
-      # [Next Step Category/Purpose]
-      # ————————————————————————————————————————————————————————————————
-      - name: [Next Step Name]
-        run: |
-          [commands]
-        env:
-          [environment-variables]
+			# ————————————————————————————————————————————————————————————————
+			# [Next Step Category/Purpose]
+			# ————————————————————————————————————————————————————————————————
+			- name: [Next Step Name]
+			  run: |
+				  [commands]
+			  env:
+				  [environment-variables]
 ```
 
 <br/><br/>

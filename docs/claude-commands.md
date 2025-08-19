@@ -15,28 +15,27 @@ This document provides a comprehensive guide to the custom Claude Code commands 
 
 ## Quick Reference
 
-| Command | Purpose | Model | Agents Used |
-|---------|---------|-------|-------------|
-| `/fix` | Fix test failures and linter issues | opus | go-test-runner, go-linter, debugger |
-| `/test [path]` | Create comprehensive tests | opus | go-test-runner |
-| `/coverage` | Analyze and improve coverage | opus | coverage-analyzer, go-test-runner |
-| `/dedupe` | Remove duplicate code | opus | code-reviewer, performance-optimizer |
-| `/doc-update [feature]` | Update documentation | opus | documentation-manager |
-| `/doc-review` | Review documentation accuracy | sonnet | documentation-manager, code-reviewer |
-| `/explain [feature]` | Explain how something works | opus | documentation-manager, code-reviewer |
-| `/prd [feature]` | Design PRD for feature | opus | documentation-manager |
-| `/review` | Comprehensive code review | opus | code-reviewer, security-scanner, performance-optimizer, go-linter |
-| `/optimize [area]` | Performance optimization | opus | performance-optimizer |
-| `/refactor [target]` | Suggest refactoring | opus | code-reviewer, go-linter |
-| `/deps` | Update and audit dependencies | sonnet | dependency-manager, security-scanner |
-| `/secure` | Security vulnerability scan | opus | security-scanner |
-| `/health` | Project health check | opus | Multiple agents |
-| `/clean` | Clean up code formatting | haiku | go-linter |
-| `/pr-ready` | Make code PR-ready | opus | Multiple agents in sequence |
-| `/debug-ci` | Diagnose CI issues | opus | ci-workflow, debugger |
-| `/release-prep` | Prepare for release | opus | release-manager, go-test-runner, coverage-analyzer |
-| `/benchmark` | Run performance benchmarks | sonnet | performance-optimizer |
-| `/commit [message]` | Smart git commit | haiku | Direct git operations |
+| Command                 | Purpose                             | Model  | Agents Used                                                       |
+|-------------------------|-------------------------------------|--------|-------------------------------------------------------------------|
+| `/fix`                  | Fix test failures and linter issues | opus   | go-test-runner, go-linter, debugger                               |
+| `/test [path]`          | Create comprehensive tests          | opus   | go-test-runner                                                    |
+| `/coverage`             | Analyze and improve coverage        | opus   | coverage-analyzer, go-test-runner                                 |
+| `/dedupe`               | Remove duplicate code               | opus   | code-reviewer, performance-optimizer                              |
+| `/doc-update [feature]` | Update documentation                | opus   | documentation-manager                                             |
+| `/doc-review`           | Review documentation accuracy       | sonnet | documentation-manager, code-reviewer                              |
+| `/explain [feature]`    | Explain how something works         | opus   | documentation-manager, code-reviewer                              |
+| `/prd [feature]`        | Design PRD for feature              | opus   | documentation-manager                                             |
+| `/review`               | Comprehensive code review           | opus   | code-reviewer, security-scanner, performance-optimizer, go-linter |
+| `/optimize [area]`      | Performance optimization            | opus   | performance-optimizer                                             |
+| `/refactor [target]`    | Suggest refactoring                 | opus   | code-reviewer, go-linter                                          |
+| `/deps`                 | Update and audit dependencies       | sonnet | dependency-manager, security-scanner                              |
+| `/secure`               | Security vulnerability scan         | opus   | security-scanner                                                  |
+| `/health`               | Project health check                | opus   | Multiple agents                                                   |
+| `/clean`                | Clean up code formatting            | haiku  | go-linter                                                         |
+| `/pr-ready`             | Make code PR-ready                  | opus   | Multiple agents in sequence                                       |
+| `/debug-ci`             | Diagnose CI issues                  | opus   | ci-workflow, debugger                                             |
+| `/benchmark`            | Run performance benchmarks          | sonnet | performance-optimizer                                             |
+| `/commit [message]`     | Smart git commit                    | haiku  | Direct git operations                                             |
 
 ## Quality & Testing Commands
 

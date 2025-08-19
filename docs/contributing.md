@@ -37,15 +37,15 @@ Thanks for your interest in contributing to **go-coverage**! This guide will hel
 
 3. **Verify Setup**
    ```bash
-   make test
+   magex test
    go run ./cmd/go-coverage --version
    ```
 
 4. **Run the Complete Test Suite**
    ```bash
-   make test-ci        # Full test suite with race detection
-   make lint           # Code quality checks
-   make coverage       # Generate coverage report
+   magex test:coverrace     # Full test suite with race detection
+   magex lint               # Code quality checks
+   magex test:cover         # Generate coverage report
    ```
 
 ## 🛠️ Development Setup
@@ -54,7 +54,7 @@ Thanks for your interest in contributing to **go-coverage**! This guide will hel
 
 ```bash
 # Build locally
-make build-go
+magex build
 
 # Install globally
 go install ./cmd/go-coverage
@@ -70,8 +70,8 @@ go run ./cmd/go-coverage [command]
 git checkout -b feat/your-feature-name
 
 # 2. Make your changes and test
-make test
-make lint
+magex test
+magex lint
 
 # 3. Generate coverage for the coverage system itself
 go test -coverprofile=coverage.txt ./...
@@ -97,7 +97,7 @@ export GO_COVERAGE_DRY_RUN=true  # Preview changes without applying
 
 ## 📋 Code Standards
 
-We follow the standards defined in [`.github/AGENTS.md`](.github/AGENTS.md). Key points:
+We follow the standards defined in [`.github/AGENTS.md`](../.github/AGENTS.md). Key points:
 
 ### Go Code Conventions
 
@@ -118,16 +118,16 @@ We follow the standards defined in [`.github/AGENTS.md`](.github/AGENTS.md). Key
 
 ```bash
 # Format code
-make fumpt              # Enhanced Go formatting
+magex format:fix         # Enhanced Go formatting
 
 # Lint code
-make lint               # Run golangci-lint
+magex lint               # Run golangci-lint
 
 # Vet code
-make vet                # Run go vet
+magex vet                # Run go vet
 
 # All quality checks
-make test               # Includes formatting, linting, and testing
+magex test               # Includes formatting, linting, and testing
 ```
 
 ## 🧪 Testing Guidelines
@@ -195,13 +195,13 @@ func TestParseStatementCoverage(t *testing.T) {
 
 ```bash
 # Run all tests
-make test
+magex test
 
 # Run tests with race detection
-make test-race
+magex test:race
 
 # Run tests with coverage
-make test-cover
+magex test:cover
 
 # Run specific package tests
 go test ./internal/parser/...
@@ -210,15 +210,15 @@ go test ./internal/parser/...
 go test -run TestParseStatement ./internal/parser/
 
 # Run benchmarks
-make bench
+magex bench
 ```
 
 ## 🔄 Pull Request Process
 
 ### Before Submitting
 
-1. **Read the standards**: Review [`.github/AGENTS.md`](.github/AGENTS.md)
-2. **Run all checks**: `make test` must pass
+1. **Read the standards**: Review [`.github/AGENTS.md`](../.github/AGENTS.md)
+2. **Run all checks**: `magex test` must pass
 3. **Update documentation**: Add/update docs for new features
 4. **Test locally**: Verify your changes work end-to-end
 
@@ -283,7 +283,7 @@ go-coverage/
 │   └── urlutil/             # URL utilities
 ├── docs/                    # Documentation
 ├── .github/                 # GitHub workflows and templates
-├── Makefile                 # Build and development tasks
+├── .mage.yml                 # Build and development tasks
 └── go.mod                   # Go module definition
 ```
 
@@ -312,13 +312,12 @@ We follow [Semantic Versioning](https://semver.org/):
 1. **Prepare Release**
    ```bash
    # Update version and run tests
-   make test-ci
-   make release-test    # Dry-run release
+   magex test:coverrace
    ```
 
 2. **Create Tag**
    ```bash
-   make tag version=X.Y.Z
+   magex version:bump push=true bump=patch
    ```
 
 3. **Publish Release**
@@ -363,7 +362,7 @@ go run ./cmd/go-coverage complete -i coverage.txt --dry-run
 
 ```bash
 # Run benchmarks
-make bench
+magex bench
 
 # Profile specific operations
 go test -bench=BenchmarkParseStatement -cpuprofile=cpu.prof ./internal/parser/
@@ -372,10 +371,10 @@ go tool pprof cpu.prof
 
 ## 🆘 Getting Help
 
-- **Documentation**: Check the [docs/](docs/) directory first
+- **Documentation**: Check the [docs/](../docs) directory first
 - **Issues**: Search existing [GitHub Issues](https://github.com/mrz1836/go-coverage/issues)
 - **Discussions**: Use [GitHub Discussions](https://github.com/mrz1836/go-coverage/discussions) for questions
-- **Code Standards**: Review [`.github/AGENTS.md`](.github/AGENTS.md) for detailed guidelines
+- **Code Standards**: Review [`.github/AGENTS.md`](../.github/AGENTS.md) for detailed guidelines
 
 ## 🙏 Recognition
 
@@ -389,6 +388,6 @@ Thank you for contributing to go-coverage! 🚀
 ---
 
 For more information:
-- [Code Standards](.github/AGENTS.md) - Detailed coding guidelines
-- [Security Policy](.github/SECURITY.md) - Security reporting process
-- [Support](.github/SUPPORT.md) - Getting help and support
+- [Code Standards](../.github/AGENTS.md) - Detailed coding guidelines
+- [Security Policy](../.github/SECURITY.md) - Security reporting process
+- [Support](../.github/SUPPORT.md) - Getting help and support

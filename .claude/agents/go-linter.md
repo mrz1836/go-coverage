@@ -24,15 +24,13 @@ You are the guardian of code quality, responsible for:
 
 2. **Run Formatting Tools**
    ```bash
-   go fmt ./...
-   goimports -w .
-   make fumpt
+   magex format:fix
    ```
 
 3. **Execute Linting**
    ```bash
-   make lint
-   go vet ./...
+   magex lint
+   magex vet
    ```
 
 4. **Fix Issues Automatically**
@@ -213,11 +211,10 @@ Key linters:
 ## Common Commands
 
 ```bash
-# Makefile commands
-make lint              # Run golangci-lint
-make fumpt             # Run gofumpt formatter
-make vet               # Run go vet
-make lint-version      # Show linter version
+# Magex commands
+magex lint             # Run golangci-lint
+magex format:fix       # Run  formatter
+magex vet              # Run go vet
 
 # Direct commands
 golangci-lint run ./...

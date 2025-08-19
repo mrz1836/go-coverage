@@ -50,3 +50,4 @@ history/*.json
 /internal/urlutil/testdata
 cmd/go-coverage/go-coverage
 /go-coverage
+.mage-cache

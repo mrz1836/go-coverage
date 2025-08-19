@@ -255,7 +255,6 @@ gh api repos/{owner}/{repo}/branches/master/protection \
 ### Dependencies
 - **coverage-analyzer**: Provides reports and badges
 - **ci-workflow**: Triggers in GitHub Actions
-- **release-manager**: For release deployments
 
 ### Coordination
 - Post comments after coverage analysis

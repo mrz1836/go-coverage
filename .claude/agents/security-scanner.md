@@ -20,7 +20,7 @@ You protect the project from security threats:
 
 1. **Run Vulnerability Scan**
    ```bash
-   make govulncheck
+   magex deps:audit
    ```
 
 2. **Check for Secrets**
@@ -53,16 +53,7 @@ You protect the project from security threats:
 ### Govulncheck Analysis
 ```bash
 # Install latest version
-make govulncheck-install
-
-# Run comprehensive scan
-govulncheck ./...
-
-# JSON output for parsing
-govulncheck -json ./... > vulns.json
-
-# Check specific package
-govulncheck ./internal/github/...
+magex deps:audit
 ```
 
 ### Interpreting Results
@@ -358,8 +349,7 @@ hadolint Dockerfile
 
 ```bash
 # Vulnerability scanning
-make govulncheck
-govulncheck -json ./...
+magex deps:audit
 nancy go.sum
 
 # Secret detection
