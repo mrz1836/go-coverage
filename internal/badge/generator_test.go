@@ -543,42 +543,42 @@ func TestProcessLogoColor(t *testing.T) {
 	generator := New()
 
 	tests := []struct {
-		name        string
-		logoURL     string
-		color       string
-		expectedSVG string
+		name         string
+		logoURL      string
+		color        string
+		expectedSVG  string
 		shouldModify bool
 	}{
 		{
-			name:        "no color specified",
-			logoURL:     "data:image/svg+xml;base64,PHN2ZyBmaWxsPSJjdXJyZW50Q29sb3IiPjwvc3ZnPg==", // <svg fill="currentColor"></svg>
-			color:       "",
+			name:         "no color specified",
+			logoURL:      "data:image/svg+xml;base64,PHN2ZyBmaWxsPSJjdXJyZW50Q29sb3IiPjwvc3ZnPg==", // <svg fill="currentColor"></svg>
+			color:        "",
 			shouldModify: false,
 		},
 		{
-			name:        "white color replaces currentColor",
-			logoURL:     "data:image/svg+xml;base64,PHN2ZyBmaWxsPSJjdXJyZW50Q29sb3IiPjwvc3ZnPg==",
-			color:       "white",
-			expectedSVG: `<svg fill="white"></svg>`,
+			name:         "white color replaces currentColor",
+			logoURL:      "data:image/svg+xml;base64,PHN2ZyBmaWxsPSJjdXJyZW50Q29sb3IiPjwvc3ZnPg==",
+			color:        "white",
+			expectedSVG:  `<svg fill="white"></svg>`,
 			shouldModify: true,
 		},
 		{
-			name:        "red color replaces currentColor",
-			logoURL:     "data:image/svg+xml;base64,PHN2ZyBmaWxsPSJjdXJyZW50Q29sb3IiPjwvc3ZnPg==", // <svg fill="currentColor"></svg>
-			color:       "red",
-			expectedSVG: `<svg fill="red"></svg>`,
+			name:         "red color replaces currentColor",
+			logoURL:      "data:image/svg+xml;base64,PHN2ZyBmaWxsPSJjdXJyZW50Q29sb3IiPjwvc3ZnPg==", // <svg fill="currentColor"></svg>
+			color:        "red",
+			expectedSVG:  `<svg fill="red"></svg>`,
 			shouldModify: true,
 		},
 		{
-			name:        "non-data URI logo",
-			logoURL:     "https://example.com/logo.svg",
-			color:       "blue",
+			name:         "non-data URI logo",
+			logoURL:      "https://example.com/logo.svg",
+			color:        "blue",
 			shouldModify: false,
 		},
 		{
-			name:        "simple icons CDN URL",
-			logoURL:     "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/nodejs.svg",
-			color:       "green",
+			name:         "simple icons CDN URL",
+			logoURL:      "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/nodejs.svg",
+			color:        "green",
 			shouldModify: false, // Not implemented yet
 		},
 	}
@@ -586,18 +586,18 @@ func TestProcessLogoColor(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := generator.processLogoColor(tt.logoURL, tt.color)
-			
+
 			if !tt.shouldModify {
 				assert.Equal(t, tt.logoURL, result, "Logo should not be modified")
 			} else {
 				assert.NotEqual(t, tt.logoURL, result, "Logo should be modified")
-				
+
 				// Decode and check the SVG content
 				if strings.HasPrefix(result, "data:image/svg+xml;base64,") {
 					base64Content := strings.TrimPrefix(result, "data:image/svg+xml;base64,")
 					svgBytes, err := base64.StdEncoding.DecodeString(base64Content)
 					require.NoError(t, err)
-					
+
 					svgContent := string(svgBytes)
 					assert.Equal(t, tt.expectedSVG, svgContent)
 					assert.NotContains(t, svgContent, "currentColor", "currentColor should be replaced")

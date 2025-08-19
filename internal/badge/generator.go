@@ -270,10 +270,10 @@ func (g *Generator) processLogoColor(logoURL, color string) string {
 	}
 
 	svgContent := string(svgBytes)
-	
+
 	// Replace currentColor with the specified color
 	modifiedSVG := strings.ReplaceAll(svgContent, "currentColor", color)
-	
+
 	// Re-encode to base64
 	newBase64 := base64.StdEncoding.EncodeToString([]byte(modifiedSVG))
 	return "data:image/svg+xml;base64," + newBase64
