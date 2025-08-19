@@ -1,8 +1,8 @@
 project:
-  name: go-coverage
-  binary: go-coverage
+  name: go-broadcast
+  binary: go-broadcast
   module: github.com/mrz1836/go-coverage
-  main: ./cmd/go-coverage
+  main: ./cmd/go-broadcast/main.go
 
 build:
   # Custom ldflags with version injection
@@ -13,4 +13,4 @@ build:
     - "-X main.buildDate={{.Date}}"
   flags:
     - "-trimpath"
-  output: "./cmd/go-coverage/go-coverage"
+  output: "./cmd/go-broadcast"
