@@ -281,7 +281,7 @@ update history, and create GitHub PR comment if in PR context.`,
 			}
 
 			// Discover all eligible Go files to get accurate total count
-			// Get repository root path - we're in .github/coverage/cmd/go-coverage
+			// Get repository root path - we're in coverage/cmd/go-coverage
 			workingDir, wdErr := os.Getwd()
 			if wdErr != nil {
 				cmd.Printf("   ⚠️  Failed to get working directory: %v\n", wdErr)

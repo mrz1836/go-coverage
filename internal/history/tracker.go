@@ -163,7 +163,7 @@ type Range struct {
 func New() *Tracker {
 	return &Tracker{
 		config: &Config{
-			StoragePath:      ".github/coverage/history",
+			StoragePath:      "coverage/history",
 			RetentionDays:    90,
 			MaxEntries:       1000,
 			CompressionLevel: 6,

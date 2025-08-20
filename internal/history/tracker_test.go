@@ -18,7 +18,7 @@ func TestNew(t *testing.T) {
 	tracker := New()
 	assert.NotNil(t, tracker)
 	assert.NotNil(t, tracker.config)
-	assert.Equal(t, ".github/coverage/history", tracker.config.StoragePath)
+	assert.Equal(t, "coverage/history", tracker.config.StoragePath)
 	assert.Equal(t, 90, tracker.config.RetentionDays)
 	assert.Equal(t, 1000, tracker.config.MaxEntries)
 	assert.Equal(t, 6, tracker.config.CompressionLevel)

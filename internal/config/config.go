@@ -184,7 +184,7 @@ func Load() *Config {
 	config := &Config{
 		Coverage: CoverageConfig{
 			InputFile:          getEnvString("GO_COVERAGE_INPUT_FILE", "coverage.txt"),
-			OutputDir:          getEnvString("GO_COVERAGE_OUTPUT_DIR", ".github/coverage"),
+			OutputDir:          getEnvString("GO_COVERAGE_OUTPUT_DIR", "coverage"),
 			Threshold:          getEnvFloat("GO_COVERAGE_THRESHOLD", 80.0),
 			AllowLabelOverride: getEnvBool("GO_COVERAGE_ALLOW_LABEL_OVERRIDE", false),
 			ExcludePaths:       getEnvStringSlice("GO_COVERAGE_EXCLUDE_PATHS", []string{"vendor/", "test/", "testdata/"}),
@@ -220,14 +220,14 @@ func Load() *Config {
 		},
 		History: HistoryConfig{
 			Enabled:        getEnvBool("GO_COVERAGE_HISTORY_ENABLED", true),
-			StoragePath:    getEnvString("GO_COVERAGE_HISTORY_PATH", ".github/coverage/history"),
+			StoragePath:    getEnvString("GO_COVERAGE_HISTORY_PATH", "coverage/history"),
 			RetentionDays:  getEnvInt("GO_COVERAGE_HISTORY_RETENTION", 90),
 			MaxEntries:     getEnvInt("GO_COVERAGE_HISTORY_MAX_ENTRIES", 1000),
 			AutoCleanup:    getEnvBool("GO_COVERAGE_HISTORY_CLEANUP", true),
 			MetricsEnabled: getEnvBool("GO_COVERAGE_HISTORY_METRICS", true),
 		},
 		Storage: StorageConfig{
-			BaseDir:    getEnvString("GO_COVERAGE_BASE_DIR", ".github/coverage"),
+			BaseDir:    getEnvString("GO_COVERAGE_BASE_DIR", "coverage"),
 			AutoCreate: getEnvBool("GO_COVERAGE_AUTO_CREATE_DIRS", true),
 			FileMode:   os.FileMode(getEnvIntBounded("GO_COVERAGE_FILE_MODE", 0o644, 0, 0o777)),
 			DirMode:    os.FileMode(getEnvIntBounded("GO_COVERAGE_DIR_MODE", 0o755, 0, 0o777)),
@@ -406,10 +406,19 @@ func (c *Config) GetRepositoryRoot() (string, error) {
 		return repoRoot, nil
 	}
 
-	// Fallback: if we're in .github/coverage/cmd/go-coverage, go up 4 levels
-	if strings.Contains(workingDir, ".github/coverage/cmd/go-coverage") ||
+	// Fallback: handle different coverage directory structures
+	var repoRoot string
+	if strings.Contains(workingDir, "coverage/cmd/go-coverage") ||
+		strings.Contains(workingDir, "coverage"+string(filepath.Separator)+"cmd"+string(filepath.Separator)+"go-coverage") {
+		// New structure: coverage/cmd/go-coverage - go up 3 levels
+		repoRoot = filepath.Join(workingDir, "../../../")
+	} else if strings.Contains(workingDir, ".github/coverage/cmd/go-coverage") ||
 		strings.Contains(workingDir, ".github"+string(filepath.Separator)+"coverage"+string(filepath.Separator)+"cmd"+string(filepath.Separator)+"go-coverage") {
-		repoRoot := filepath.Join(workingDir, "../../../../")
+		// Old structure: .github/coverage/cmd/go-coverage - go up 4 levels
+		repoRoot = filepath.Join(workingDir, "../../../../")
+	}
+
+	if repoRoot != "" {
 		if absPath, err := filepath.Abs(repoRoot); err == nil {
 			// Verify this looks like a repo root
 			if _, err := os.Stat(filepath.Join(absPath, ".git")); err == nil {

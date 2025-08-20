@@ -23,7 +23,7 @@ func TestLoad(t *testing.T) {
 
 	// Test default values
 	assert.Equal(t, "coverage.txt", config.Coverage.InputFile)
-	assert.Equal(t, ".github/coverage", config.Coverage.OutputDir)
+	assert.Equal(t, "coverage", config.Coverage.OutputDir)
 	assert.InDelta(t, 80.0, config.Coverage.Threshold, 0.001)
 	assert.Equal(t, []string{"vendor/", "test/", "testdata/"}, config.Coverage.ExcludePaths)
 	assert.Equal(t, []string{"*_test.go", "*.pb.go"}, config.Coverage.ExcludeFiles)
@@ -58,14 +58,14 @@ func TestLoad(t *testing.T) {
 
 	// Test history defaults
 	assert.True(t, config.History.Enabled)
-	assert.Equal(t, ".github/coverage/history", config.History.StoragePath)
+	assert.Equal(t, "coverage/history", config.History.StoragePath)
 	assert.Equal(t, 90, config.History.RetentionDays)
 	assert.Equal(t, 1000, config.History.MaxEntries)
 	assert.True(t, config.History.AutoCleanup)
 	assert.True(t, config.History.MetricsEnabled)
 
 	// Test storage defaults
-	assert.Equal(t, ".github/coverage", config.Storage.BaseDir)
+	assert.Equal(t, "coverage", config.Storage.BaseDir)
 	assert.True(t, config.Storage.AutoCreate)
 	assert.Equal(t, os.FileMode(0o644), config.Storage.FileMode)
 	assert.Equal(t, os.FileMode(0o755), config.Storage.DirMode)
@@ -505,7 +505,7 @@ func TestGetBadgeURL(t *testing.T) {
 					Repository: "test-repo",
 				},
 				Storage: StorageConfig{
-					BaseDir: ".github/coverage",
+					BaseDir: "coverage",
 				},
 				Badge: BadgeConfig{
 					OutputFile: "coverage.svg",
@@ -583,7 +583,7 @@ func TestGetReportURL(t *testing.T) {
 					Repository: "test-repo",
 				},
 				Storage: StorageConfig{
-					BaseDir: ".github/coverage",
+					BaseDir: "coverage",
 				},
 				Report: ReportConfig{
 					OutputFile: "coverage.html",
@@ -1055,7 +1055,7 @@ func TestGetRepositoryRoot(t *testing.T) {
 			},
 		},
 		{
-			name: "when in special .github/coverage/cmd/go-coverage path",
+			name: "when in special coverage/cmd/go-coverage path",
 			setup: func() string {
 				// Create the special directory structure
 				tempDir := t.TempDir()
@@ -1168,7 +1168,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 		},
 		{
 			name:        "relative path should be resolved relative to repo root",
-			historyPath: ".github/coverage/history",
+			historyPath: "coverage/history",
 			setup: func() string {
 				// Create temporary directory structure
 				tempDir := t.TempDir()
@@ -1189,7 +1189,7 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 			cleanup:     func() {},
 			expectError: false,
 			validatePath: func(t *testing.T, result, expectedRoot string) {
-				expectedPath := filepath.Join(expectedRoot, ".github/coverage/history")
+				expectedPath := filepath.Join(expectedRoot, "coverage/history")
 				expectedAbs, err := filepath.Abs(expectedPath)
 				require.NoError(t, err)
 
