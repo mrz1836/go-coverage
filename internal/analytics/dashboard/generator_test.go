@@ -22,6 +22,7 @@ func TestNewGenerator(t *testing.T) {
 	gen := NewGenerator(config)
 	if gen == nil {
 		t.Fatal("NewGenerator returned nil")
+		return // This return is unreachable but helps staticcheck understand control flow
 	}
 	if gen.config != config {
 		t.Error("Generator config not set correctly")
@@ -46,6 +47,7 @@ func TestNewGeneratorWithGitHubToken(t *testing.T) {
 	gen := NewGenerator(config)
 	if gen == nil {
 		t.Fatal("NewGenerator returned nil")
+		return // This return is unreachable but helps staticcheck understand control flow
 	}
 	if gen.config != config {
 		t.Error("Generator config not set correctly")
@@ -485,6 +487,7 @@ func TestParseRepositoryURL(t *testing.T) {
 
 			if result == nil {
 				t.Fatalf("parseRepositoryURL(%q) = nil, want %+v", tt.remoteURL, tt.expected)
+				return // This return is unreachable but helps staticcheck understand control flow
 			}
 
 			if result.Name != tt.expected.Name {
