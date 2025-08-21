@@ -457,6 +457,21 @@ This command ensures all dependencies are brought up to date in a single step, i
 
 </details>
 
+<details>
+<summary><strong>🔧 Pre-commit Hooks</strong></summary>
+<br/>
+
+Set up the Go-Pre-commit System to run the same formatting, linting, and tests defined in [AGENTS.md](.github/AGENTS.md) before every commit:
+
+```bash
+go install github.com/mrz1836/go-pre-commit/cmd/go-pre-commit@latest
+go-pre-commit install
+```
+
+The system is configured via [.env.base](.github/.env.base) and can be customized using also using [.env.custom](.github/.env.custom) and provides 17x faster execution than traditional Python-based pre-commit hooks. See the [complete documentation](http://github.com/mrz1836/go-pre-commit) for details.
+
+</details>
+
 <br/>
 
 ## 🧪 Examples & Tests
@@ -684,15 +699,15 @@ Sub-agent configurations are stored in `.claude/agents/` and can be customized:
 
 ### Benefits
 
-- **🎯 Specialized Expertise**: Each agent excels in its domain
-- **⚡ Parallel Processing**: Multiple agents can work simultaneously
-- **🔒 Isolated Contexts**: Agents maintain separate contexts to prevent pollution
-- **🔄 Consistent Workflows**: Standardized approaches across the team
-- **📈 Improved Efficiency**: Faster task completion with focused agents
+- **Specialized Expertise**: Each agent excels in its domain
+- **Parallel Processing**: Multiple agents can work simultaneously
+- **Isolated Contexts**: Agents maintain separate contexts to prevent pollution
+- **Consistent Workflows**: Standardized approaches across the team
+- **Improved Efficiency**: Faster task completion with focused agents
 
 For detailed information about each sub-agent's capabilities and configuration, see the individual agent files in `.claude/agents/`.
 
-### 🚀 Claude Code Commands
+### Claude Code Commands
 
 The project includes **20 powerful slash commands** that orchestrate our sub-agents for common development tasks. These commands provide quick access to complex workflows:
 
