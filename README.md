@@ -200,7 +200,7 @@ go-coverage setup-pages --custom-domain mysite.com
 
 This configures:
 - ✅ **GitHub Pages Environment** with proper branch policies
-- ✅ **Deployment Permissions** for `master`, `gh-pages`, and any `*/*/*/*` branches
+- ✅ **Deployment Permissions** for `master`, `gh-pages`, and any `*/*/*/*/*/*` branches
 - ✅ **Environment Protection** rules for secure deployments
 
 ### What Gets Deployed
@@ -225,7 +225,7 @@ If the setup command fails, manually configure:
 3. Add these deployment branch rules:
    - `master` (main deployments)
    - `gh-pages` (GitHub Pages default)
-   - `*`, `*/*`, `*/*/*`, `*/*/*/*` (all branches for PR-specific reports)
+   - `*`, `*/*`, `*/*/*`, `*/*/*/*`, `*/*/*/*/*`, `*/*/*/*/*/*` (all branches for PR-specific reports)
 4. Save changes and verify in workflow runs
 
 </details>
