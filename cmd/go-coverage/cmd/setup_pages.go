@@ -563,6 +563,8 @@ func setupDeploymentBranches(ctx context.Context, cmd *cobra.Command, repo strin
 		"*/*",         // Two-level patterns (e.g., feature/branch)
 		"*/*/*",       // Three-level patterns
 		"*/*/*/*",     // Four-level patterns
+		"*/*/*/*/*",   // Five-level patterns
+		"*/*/*/*/*/*", // Six-level patterns
 		"development", // Development branch
 	}
 
@@ -809,8 +811,8 @@ func showNextSteps(cmd *cobra.Command, repo string, dryRun bool) {
 	cmd.Printf("   • Deployment permissions for multiple branch patterns:\n")
 	cmd.Printf("     - master branch (main deployments)\n")
 	cmd.Printf("     - gh-pages branch (GitHub Pages default)\n")
-	cmd.Printf("     - Feature branches (*, */*, */*/*)\n")
-	cmd.Printf("     - Dependabot branches (*/*/*/*)\n")
+	cmd.Printf("     - Feature branches (*, */*, */*/*, */*/*/*/*, */*/*/*/*/*, */*/*/*/*/*)\n")
+	cmd.Printf("     - Complex nested branches (*/*/*/*/*/*)\n")
 	cmd.Printf("     - Development branch\n\n")
 
 	cmd.Printf("🚀 Next Steps:\n")
