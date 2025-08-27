@@ -56,6 +56,9 @@ func NewCommands(version VersionInfo) *Commands {
 	// Set version on root command
 	cmds.Root.Version = version.Version
 
+	// Set custom version template to ensure consistent output
+	cmds.Root.SetVersionTemplate("{{with .DisplayName}}{{printf \"%s \" .}}{{end}}{{printf \"version %s\" .Version}}\n")
+
 	return cmds
 }
 

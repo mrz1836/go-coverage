@@ -107,3 +107,80 @@ func TestIsModified(t *testing.T) {
 	// We just check it doesn't panic and returns a valid boolean
 	require.True(t, modified == true || modified == false)
 }
+
+// TestIsTemplateString tests the isTemplateString function
+func TestIsTemplateString(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{
+			name:     "Template with Version",
+			input:    "{{.Version}}",
+			expected: true,
+		},
+		{
+			name:     "Template with Commit",
+			input:    "{{.Commit}}",
+			expected: true,
+		},
+		{
+			name:     "Template with Date",
+			input:    "{{.Date}}",
+			expected: true,
+		},
+		{
+			name:     "Template in middle of string",
+			input:    "version {{.Version}} build",
+			expected: true,
+		},
+		{
+			name:     "Multiple templates",
+			input:    "{{.Version}}-{{.Commit}}",
+			expected: true,
+		},
+		{
+			name:     "Regular string",
+			input:    "1.2.3",
+			expected: false,
+		},
+		{
+			name:     "String with braces but not template",
+			input:    "{version: 1.2.3}",
+			expected: false,
+		},
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: false,
+		},
+		{
+			name:     "String with only opening braces",
+			input:    "{{version",
+			expected: false,
+		},
+		{
+			name:     "String with only closing braces",
+			input:    "version}}",
+			expected: false,
+		},
+		{
+			name:     "Dev version",
+			input:    "dev",
+			expected: false,
+		},
+		{
+			name:     "Complex version",
+			input:    "1.2.3-rc1+build.123",
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := isTemplateString(tc.input)
+			require.Equal(t, tc.expected, result, "isTemplateString(%q) should return %v", tc.input, tc.expected)
+		})
+	}
+}
