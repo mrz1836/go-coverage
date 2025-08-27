@@ -174,6 +174,30 @@ func TestCompareVersions(t *testing.T) {
 			expected: 0,
 		},
 		{
+			name:     "DevDirtyVsRelease",
+			v1:       "dev-dirty",
+			v2:       "1.2.3",
+			expected: -1,
+		},
+		{
+			name:     "ReleaseVsDevDirty",
+			v1:       "1.2.3",
+			v2:       "dev-dirty",
+			expected: 1,
+		},
+		{
+			name:     "DevVsDevDirty",
+			v1:       "dev",
+			v2:       "dev-dirty",
+			expected: 0,
+		},
+		{
+			name:     "DevDirtyVsDev",
+			v1:       "dev-dirty",
+			v2:       "dev",
+			expected: 0,
+		},
+		{
 			name:     "EmptyVersionVsRelease",
 			v1:       "",
 			v2:       "1.2.3",
@@ -335,6 +359,12 @@ func TestIsNewerVersion(t *testing.T) {
 		{
 			name:           "DevVersionCurrent",
 			currentVersion: "dev",
+			latestVersion:  "1.2.3",
+			expected:       true,
+		},
+		{
+			name:           "DevDirtyVersionCurrent",
+			currentVersion: "dev-dirty",
 			latestVersion:  "1.2.3",
 			expected:       true,
 		},
@@ -589,4 +619,99 @@ func TestVersionComparisonWorkflow(t *testing.T) {
 	isDevNewer := IsNewerVersion(normalizedDev, normalizedLatest)
 
 	assert.True(t, isDevNewer)
+}
+
+func TestIsDevelopmentVersion(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		version  string
+		expected bool
+	}{
+		{
+			name:     "ExactDevVersion",
+			version:  "dev",
+			expected: true,
+		},
+		{
+			name:     "DevWithDirtySuffix",
+			version:  "dev-dirty",
+			expected: true,
+		},
+		{
+			name:     "DevWithOtherSuffix",
+			version:  "dev-alpha",
+			expected: true,
+		},
+		{
+			name:     "DevWithMultipleSuffixes",
+			version:  "dev-dirty-modified",
+			expected: true,
+		},
+		{
+			name:     "StandardVersion",
+			version:  "1.2.3",
+			expected: false,
+		},
+		{
+			name:     "VersionWithV",
+			version:  "v1.2.3",
+			expected: false,
+		},
+		{
+			name:     "ReleaseCandidate",
+			version:  "1.2.3-rc1",
+			expected: false,
+		},
+		{
+			name:     "CommitHash",
+			version:  "abc123def456",
+			expected: false,
+		},
+		{
+			name:     "EmptyVersion",
+			version:  "",
+			expected: false,
+		},
+		{
+			name:     "DevInMiddle",
+			version:  "1.2.3-dev-4",
+			expected: false,
+		},
+		{
+			name:     "DevAtEnd",
+			version:  "1.2.3-dev",
+			expected: false,
+		},
+		{
+			name:     "CaseSensitive",
+			version:  "Dev",
+			expected: false,
+		},
+		{
+			name:     "DevLikeButNot",
+			version:  "development",
+			expected: false,
+		},
+		{
+			name:     "DevWithDashOnly",
+			version:  "dev-",
+			expected: true,
+		},
+		{
+			name:     "DevWithNumbers",
+			version:  "dev-123",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			result := isDevelopmentVersion(tt.version)
+			assert.Equal(t, tt.expected, result, "isDevelopmentVersion(%q) should return %v", tt.version, tt.expected)
+		})
+	}
 }

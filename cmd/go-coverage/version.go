@@ -47,8 +47,8 @@ func getVersionInfo() *VersionInfo {
 func GetVersion() string {
 	info := getVersionInfo()
 
-	// If version was set via ldflags, use it
-	if info.version != "dev" && info.version != "" {
+	// If version was set via ldflags and it's not a template placeholder, use it
+	if info.version != "" && !isTemplateString(info.version) {
 		return info.version
 	}
 
@@ -83,8 +83,8 @@ func GetVersion() string {
 func GetCommit() string {
 	info := getVersionInfo()
 
-	// If commit was set via ldflags, use it
-	if info.commit != "none" && info.commit != "" {
+	// If commit was set via ldflags and it's not a template placeholder, use it
+	if info.commit != "none" && info.commit != "" && !isTemplateString(info.commit) {
 		return info.commit
 	}
 
@@ -104,8 +104,8 @@ func GetCommit() string {
 func GetBuildDate() string {
 	info := getVersionInfo()
 
-	// If build date was set via ldflags, use it
-	if info.buildDate != "unknown" && info.buildDate != "" {
+	// If build date was set via ldflags and it's not a template placeholder, use it
+	if info.buildDate != "unknown" && info.buildDate != "" && !isTemplateString(info.buildDate) {
 		return info.buildDate
 	}
 
@@ -131,4 +131,9 @@ func IsModified() bool {
 		}
 	}
 	return false
+}
+
+// isTemplateString checks if a string contains unsubstituted template syntax
+func isTemplateString(s string) bool {
+	return strings.Contains(s, "{{") && strings.Contains(s, "}}")
 }

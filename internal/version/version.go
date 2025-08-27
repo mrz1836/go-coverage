@@ -81,9 +81,9 @@ func CompareVersions(v1, v2 string) int {
 
 	// Handle development versions and commit hashes
 	// Check if v1 is a development version or commit hash
-	isV1Dev := v1 == "dev" || v1 == "" || isCommitHash(v1)
+	isV1Dev := isDevelopmentVersion(v1) || v1 == "" || isCommitHash(v1)
 	// Check if v2 is a development version or commit hash
-	isV2Dev := v2 == "dev" || v2 == "" || isCommitHash(v2)
+	isV2Dev := isDevelopmentVersion(v2) || v2 == "" || isCommitHash(v2)
 
 	if isV1Dev && isV2Dev {
 		// Both are dev/commit versions, consider them equal
@@ -178,4 +178,16 @@ func isCommitHash(s string) bool {
 	}
 
 	return true
+}
+
+// isDevelopmentVersion checks if a version string represents a development version
+func isDevelopmentVersion(version string) bool {
+	if version == "dev" {
+		return true
+	}
+	// Check if version starts with "dev" (e.g., "dev-dirty")
+	if strings.HasPrefix(version, "dev-") {
+		return true
+	}
+	return false
 }
