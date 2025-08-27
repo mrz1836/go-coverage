@@ -131,8 +131,32 @@ func BuildGitHubFileURL(owner, repo, branch, filePath string) string {
 	owner = sanitizeUTF8(owner)
 	repo = sanitizeUTF8(repo)
 	branch = sanitizeUTF8(branch)
-	cleanPath := CleanModulePath(filePath)
+	cleanPath := CleanModulePathWithRepo(filePath, repo)
 	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", owner, repo, branch, cleanPath)
+}
+
+// CleanModulePathWithRepo removes the Go module prefix from a file path with repository-specific awareness
+// This handles cases where paths have been pre-normalized to start with just the repo name
+// e.g., "go-coverage/internal/badge/generator.go" -> "internal/badge/generator.go"
+func CleanModulePathWithRepo(fullPath, repoName string) string {
+	if fullPath == "" {
+		return ""
+	}
+
+	// First try the standard CleanModulePath for full module paths
+	cleaned := CleanModulePath(fullPath)
+
+	// If the path wasn't changed by CleanModulePath, try repo-specific cleaning
+	if cleaned == fullPath && repoName != "" {
+		// Check if path starts with repo name
+		repoPrefix := repoName + "/"
+		if strings.HasPrefix(fullPath, repoPrefix) {
+			// Strip the repo name prefix
+			cleaned = strings.TrimPrefix(fullPath, repoPrefix)
+		}
+	}
+
+	return cleaned
 }
 
 // cleanupExtraPathPrefixes removes common erroneous path prefixes

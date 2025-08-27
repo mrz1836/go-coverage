@@ -381,6 +381,22 @@ func TestBuildGitHubFileURL(t *testing.T) {
 			expected: "https://github.com/mrz1836/go-broadcast/blob/master/internal/cli/cancel.go",
 		},
 		{
+			name:     "go-coverage same repo file path",
+			owner:    "mrz1836",
+			repo:     "go-coverage",
+			branch:   "master",
+			filePath: "github.com/mrz1836/go-coverage/internal/badge/generator.go",
+			expected: "https://github.com/mrz1836/go-coverage/blob/master/internal/badge/generator.go",
+		},
+		{
+			name:     "pre-normalized path with repo prefix",
+			owner:    "mrz1836",
+			repo:     "go-coverage",
+			branch:   "master",
+			filePath: "go-coverage/internal/badge/generator.go",
+			expected: "https://github.com/mrz1836/go-coverage/blob/master/internal/badge/generator.go",
+		},
+		{
 			name:     "empty owner returns empty string",
 			owner:    "",
 			repo:     "go-broadcast",
