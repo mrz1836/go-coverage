@@ -168,6 +168,50 @@ func TestRunUpgradeWithConfig(t *testing.T) {
 			skipCommandChecks: true,
 		},
 		{
+			name:           "DevDirtyVersionWithoutForce",
+			currentVersion: "dev-dirty",
+			config: UpgradeConfig{
+				Force:     false,
+				CheckOnly: false,
+			},
+			mockRelease: &version.GitHubRelease{
+				TagName: "v1.2.3",
+				Name:    "Release v1.2.3",
+			},
+			expectError:    true,
+			errorContains:  []string{"cannot upgrade development build without --force"},
+			expectedOutput: []string{"development build", "Use --force to upgrade"},
+		},
+		{
+			name:           "DevDirtyVersionWithForce",
+			currentVersion: "dev-dirty",
+			config: UpgradeConfig{
+				Force:     true,
+				CheckOnly: false,
+			},
+			mockRelease: &version.GitHubRelease{
+				TagName: "v1.0.12",
+				Name:    "Release v1.0.12",
+			},
+			expectError:       false,
+			expectedOutput:    []string{"Current version: vdev-dirty", "Checking for updates"},
+			skipCommandChecks: true,
+		},
+		{
+			name:           "DevDirtyVersionWithCheckOnly",
+			currentVersion: "dev-dirty",
+			config: UpgradeConfig{
+				Force:     false,
+				CheckOnly: true,
+			},
+			mockRelease: &version.GitHubRelease{
+				TagName: "v1.2.3",
+				Name:    "Release v1.2.3",
+			},
+			expectError:    false,
+			expectedOutput: []string{"Current version: vdev-dirty", "Checking for updates"},
+		},
+		{
 			name:           "CommitHashVersion",
 			currentVersion: "abc123def456",
 			config: UpgradeConfig{
@@ -611,6 +655,12 @@ func TestVersionComparisonIntegration(t *testing.T) {
 			expectUpgrade:  true,
 		},
 		{
+			name:           "DevDirtyVersionNeedsUpgrade",
+			currentVersion: "dev-dirty",
+			latestVersion:  "1.2.3",
+			expectUpgrade:  true,
+		},
+		{
 			name:           "NewerThanLatest",
 			currentVersion: "1.2.4",
 			latestVersion:  "1.2.3",
@@ -709,4 +759,89 @@ func TestNewUpgradeCmdFlagParsing(t *testing.T) {
 	verbose, err := cmd.Flags().GetBool("verbose")
 	require.NoError(t, err)
 	require.True(t, verbose)
+}
+
+func TestIsDevelopmentVersion(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		version  string
+		expected bool
+	}{
+		{
+			name:     "ExactDevVersion",
+			version:  "dev",
+			expected: true,
+		},
+		{
+			name:     "DevWithDirtySuffix",
+			version:  "dev-dirty",
+			expected: true,
+		},
+		{
+			name:     "DevWithOtherSuffix",
+			version:  "dev-alpha",
+			expected: true,
+		},
+		{
+			name:     "DevWithMultipleSuffixes",
+			version:  "dev-dirty-modified",
+			expected: true,
+		},
+		{
+			name:     "StandardVersion",
+			version:  "1.2.3",
+			expected: false,
+		},
+		{
+			name:     "VersionWithV",
+			version:  "v1.2.3",
+			expected: false,
+		},
+		{
+			name:     "ReleaseCandidate",
+			version:  "1.2.3-rc1",
+			expected: false,
+		},
+		{
+			name:     "CommitHash",
+			version:  "abc123def456",
+			expected: false,
+		},
+		{
+			name:     "EmptyVersion",
+			version:  "",
+			expected: false,
+		},
+		{
+			name:     "DevInMiddle",
+			version:  "1.2.3-dev-4",
+			expected: false,
+		},
+		{
+			name:     "DevAtEnd",
+			version:  "1.2.3-dev",
+			expected: false,
+		},
+		{
+			name:     "CaseSensitive",
+			version:  "Dev",
+			expected: false,
+		},
+		{
+			name:     "DevLikeButNot",
+			version:  "development",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			result := isDevelopmentVersion(tt.version)
+			assert.Equal(t, tt.expected, result, "isDevelopmentVersion(%q) should return %v", tt.version, tt.expected)
+		})
+	}
 }

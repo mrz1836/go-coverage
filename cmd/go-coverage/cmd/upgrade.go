@@ -76,7 +76,7 @@ func (c *Commands) runUpgradeWithConfig(cmd *cobra.Command, config UpgradeConfig
 	currentVersion := c.Version.Version
 
 	// Handle development version or commit hash
-	if currentVersion == "dev" || currentVersion == "" || isLikelyCommitHash(currentVersion) {
+	if isDevelopmentVersion(currentVersion) || currentVersion == "" || isLikelyCommitHash(currentVersion) {
 		if !config.Force && !config.CheckOnly {
 			cmd.Printf("⚠️  Current version appears to be a development build (%s)\n", currentVersion)
 			cmd.Printf("   Use --force to upgrade anyway\n")
@@ -249,4 +249,16 @@ func isLikelyCommitHash(version string) bool {
 	}
 
 	return true
+}
+
+// isDevelopmentVersion checks if a version string represents a development version
+func isDevelopmentVersion(version string) bool {
+	if version == "dev" {
+		return true
+	}
+	// Check if version starts with "dev" (e.g., "dev-dirty")
+	if strings.HasPrefix(version, "dev-") {
+		return true
+	}
+	return false
 }
