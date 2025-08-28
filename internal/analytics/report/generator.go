@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/mrz1836/go-coverage/internal/analytics/assets"
+	globalconfig "github.com/mrz1836/go-coverage/internal/config"
 	"github.com/mrz1836/go-coverage/internal/parser"
 	"github.com/mrz1836/go-coverage/internal/urlutil"
 )
@@ -51,6 +52,7 @@ type Data struct {
 	Packages          []PackageReport
 	LatestTag         string
 	GoogleAnalyticsID string
+	Config            map[string]interface{}
 }
 
 // Summary provides high-level coverage statistics
@@ -220,12 +222,6 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 		}
 	}
 
-	// Get analytics config
-	var googleAnalyticsID string
-	if g.config != nil {
-		googleAnalyticsID = g.config.GoogleAnalyticsID
-	}
-
 	// Build commit URL if we have GitHub info
 	commitURL := ""
 	if g.config != nil && g.config.RepositoryOwner != "" && g.config.RepositoryName != "" && g.config.CommitSHA != "" {
@@ -279,6 +275,17 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 		badgeURL = fmt.Sprintf("https://%s.github.io/%s/coverage.svg", repositoryOwner, repositoryName)
 	}
 
+	// Load global config for template settings
+	globalConfig := globalconfig.Load()
+
+	// Determine Google Analytics ID - use generator config first, then fall back to global config
+	var googleAnalyticsID string
+	if g.config != nil && g.config.GoogleAnalyticsID != "" {
+		googleAnalyticsID = g.config.GoogleAnalyticsID
+	} else {
+		googleAnalyticsID = globalConfig.Analytics.GoogleAnalyticsID
+	}
+
 	return &Data{
 		Coverage:          coverage,
 		GeneratedAt:       time.Now(),
@@ -296,6 +303,9 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 		Packages:          packages,
 		LatestTag:         getLatestGitTag(ctx),
 		GoogleAnalyticsID: googleAnalyticsID,
+		Config: map[string]interface{}{
+			"BrandingEnabled": globalConfig.Analytics.BrandingEnabled,
+		},
 	}
 }
 

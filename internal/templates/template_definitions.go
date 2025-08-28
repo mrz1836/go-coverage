@@ -193,10 +193,17 @@ func GetSharedFooter(cssClass, timestampField string) string {
                 {{- end}}
                 <div class="footer-powered">
                     <span class="powered-text">Powered by</span>
-                    <a href="https://github.com/{{.RepositoryOwner}}/{{.RepositoryName}}" target="_blank" class="go-coverage-link">
+                    {{- if .Config.BrandingEnabled}}
+                    <a href="https://github.com/mrz1836/go-coverage" target="_blank" class="go-coverage-link">
                         <span class="coverage-icon">📊</span>
-                        <span class="coverage-text">Go Coverage</span>
+                        <span class="coverage-text">go-coverage</span>
                     </a>
+                    {{- else}}
+                    <span class="go-coverage-text">
+                        <span class="coverage-icon">📊</span>
+                        <span class="coverage-text">go-coverage</span>
+                    </span>
+                    {{- end}}
                 </div>
                 <span class="footer-separator">•</span>
                 <div class="footer-timestamp">

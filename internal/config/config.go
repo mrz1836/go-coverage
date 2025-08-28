@@ -177,6 +177,8 @@ type LogConfig struct {
 type AnalyticsConfig struct {
 	// Google Analytics tracking ID
 	GoogleAnalyticsID string `json:"google_analytics_id"`
+	// Whether to include branding in reports
+	BrandingEnabled bool `json:"branding_enabled"`
 }
 
 // Load loads configuration from environment variables with defaults
@@ -239,6 +241,7 @@ func Load() *Config {
 		},
 		Analytics: AnalyticsConfig{
 			GoogleAnalyticsID: getEnvString("GOOGLE_ANALYTICS_ID", ""),
+			BrandingEnabled:   getEnvBool("GO_COVERAGE_BRANDING_ENABLED", true),
 		},
 	}
 

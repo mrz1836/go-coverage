@@ -347,8 +347,12 @@ func (g *Generator) prepareTemplateData(ctx context.Context, data *CoverageData)
 		"BadgeURL":    data.BadgeURL,
 		"BranchName":  data.Branch, // Alias for compatibility between both templates
 		"GeneratedAt": data.Timestamp,
-		"PRURL":       prURL,
-		"Title":       title,
+		// Config for template conditionals
+		"Config": map[string]interface{}{
+			"BrandingEnabled": globalConfig.Analytics.BrandingEnabled,
+		},
+		"PRURL": prURL,
+		"Title": title,
 	}
 }
 
