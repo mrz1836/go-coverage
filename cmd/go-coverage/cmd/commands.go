@@ -7,13 +7,14 @@ import (
 
 // Commands holds all CLI commands and their configuration
 type Commands struct {
-	Root       *cobra.Command
-	Complete   *cobra.Command
-	History    *cobra.Command
-	Comment    *cobra.Command
-	Parse      *cobra.Command
-	SetupPages *cobra.Command
-	Upgrade    *cobra.Command
+	Root          *cobra.Command
+	Complete      *cobra.Command
+	GitHubActions *cobra.Command
+	History       *cobra.Command
+	Comment       *cobra.Command
+	Parse         *cobra.Command
+	SetupPages    *cobra.Command
+	Upgrade       *cobra.Command
 
 	// Version information
 	Version VersionInfo
@@ -37,6 +38,7 @@ func NewCommands(version VersionInfo) *Commands {
 
 	// Initialize subcommands
 	cmds.Complete = cmds.newCompleteCmd()
+	cmds.GitHubActions = cmds.newGitHubActionsCmd()
 	cmds.History = cmds.newHistoryCmd()
 	cmds.Comment = cmds.newCommentCmd()
 	cmds.Parse = cmds.newParseCmd()
@@ -46,6 +48,7 @@ func NewCommands(version VersionInfo) *Commands {
 	// Add subcommands to root
 	cmds.Root.AddCommand(
 		cmds.Complete,
+		cmds.GitHubActions,
 		cmds.History,
 		cmds.Comment,
 		cmds.Parse,
