@@ -73,11 +73,6 @@ func (g *GitClient) CloneOrCreateBranch(ctx context.Context, workDir string) err
 		return fmt.Errorf("failed to create work directory: %w", err)
 	}
 
-	// Configure git user
-	if err := g.configureGit(ctx, workDir); err != nil {
-		return fmt.Errorf("failed to configure git: %w", err)
-	}
-
 	// Try to clone existing gh-pages branch
 	cloneURL := fmt.Sprintf("https://x-access-token:%s@github.com/%s.git", g.token, g.repository)
 	// #nosec G204 - cloneURL is constructed from validated inputs (token and repository)
@@ -89,6 +84,11 @@ func (g *GitClient) CloneOrCreateBranch(ctx context.Context, workDir string) err
 		return g.createNewBranch(ctx, workDir, cloneURL)
 	}
 
+	// Configure git user after successful clone
+	if err := g.configureGit(ctx, workDir); err != nil {
+		return fmt.Errorf("failed to configure git: %w", err)
+	}
+
 	return nil
 }
 
@@ -97,6 +97,11 @@ func (g *GitClient) createNewBranch(ctx context.Context, workDir, cloneURL strin
 	// Initialize new git repository
 	if err := g.runGitCommand(ctx, workDir, "init"); err != nil {
 		return fmt.Errorf("failed to initialize git repository: %w", err)
+	}
+
+	// Configure git user after repository initialization
+	if err := g.configureGit(ctx, workDir); err != nil {
+		return fmt.Errorf("failed to configure git: %w", err)
 	}
 
 	// Add remote origin
