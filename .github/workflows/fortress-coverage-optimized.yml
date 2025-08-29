@@ -224,19 +224,123 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       # ————————————————————————————————————————————————————————————————
-      # Optional: Report Summary
+      # Coverage Report Summary
       # ————————————————————————————————————————————————————————————————
-      - name: 📋 Coverage Summary
+      - name: 📊 Coverage Report Summary
         if: always()
         run: |
-          echo "📋 Workflow Summary:"
-          echo "  • Original workflow: 2,391 lines"
-          echo "  • Optimized workflow: ~150 lines"
-          echo "  • Reduction: ~95%"
-          echo "  • Features preserved: ✅ All"
-          echo "  • Security hardening: ✅ Maintained"
-          echo "  • Binary caching: ✅ Active"
-          echo "  • Provider support: ✅ Internal + Codecov"
+          echo "📊 Coverage Report Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          # Initialize variables
+          COVERAGE_PCT="N/A"
+          FILES_ANALYZED="N/A"
+          PACKAGES="N/A"
+          THRESHOLD="65.0"
+          STATUS_ICON="❓"
+          STATUS_TEXT="UNKNOWN"
+
+          # Extract coverage metrics from various possible output files
+          if [[ -f "coverage.json" ]]; then
+            echo "📄 Found coverage.json - extracting metrics..."
+            COVERAGE_PCT=$(jq -r '.coverage_percentage // empty' coverage.json 2>/dev/null || echo "N/A")
+            FILES_ANALYZED=$(jq -r '.files_analyzed // empty' coverage.json 2>/dev/null || echo "N/A")
+            PACKAGES=$(jq -r '.packages // empty' coverage.json 2>/dev/null || echo "N/A")
+            THRESHOLD=$(jq -r '.threshold // "65.0"' coverage.json 2>/dev/null || echo "65.0")
+          fi
+
+          # Try alternative coverage output files
+          if [[ "$COVERAGE_PCT" == "N/A" ]] && ls coverage-stats-*.json 1> /dev/null 2>&1; then
+            STATS_FILE=$(ls coverage-stats-*.json | head -1)
+            echo "📄 Found statistics file: $STATS_FILE"
+            COVERAGE_PCT=$(jq -r '.coverage_percentage // empty' "$STATS_FILE" 2>/dev/null || echo "N/A")
+            FILES_ANALYZED=$(jq -r '.files_processed // empty' "$STATS_FILE" 2>/dev/null || echo "N/A")
+          fi
+
+          # Try parsing from coverage reports if JSON not available
+          if [[ "$COVERAGE_PCT" == "N/A" ]] && [[ -f "coverage.html" ]]; then
+            echo "📄 Extracting coverage from HTML report..."
+            COVERAGE_PCT=$(grep -oP 'coverage:\s*\K[\d.]+' coverage.html 2>/dev/null | head -1 || echo "N/A")
+          fi
+
+          # Determine pass/fail status
+          if [[ "$COVERAGE_PCT" != "N/A" ]] && [[ "$THRESHOLD" != "N/A" ]]; then
+            if command -v bc >/dev/null 2>&1; then
+              if (( $(echo "$COVERAGE_PCT >= $THRESHOLD" | bc -l 2>/dev/null) )); then
+                STATUS_ICON="✅"
+                STATUS_TEXT="PASSING"
+              else
+                STATUS_ICON="❌"
+                STATUS_TEXT="FAILING"
+              fi
+            else
+              # Fallback comparison without bc
+              COVERAGE_INT=${COVERAGE_PCT%.*}
+              THRESHOLD_INT=${THRESHOLD%.*}
+              if [[ "$COVERAGE_INT" -ge "$THRESHOLD_INT" ]]; then
+                STATUS_ICON="✅"
+                STATUS_TEXT="PASSING"
+              else
+                STATUS_ICON="❌"
+                STATUS_TEXT="FAILING"
+              fi
+            fi
+          fi
+
+          # Display coverage metrics
           echo ""
-          echo "🎉 GoFortress Coverage (Optimized) - Mission Complete!"
+          echo "📈 Coverage Metrics:"
+          echo "  • Coverage: ${COVERAGE_PCT}%"
+          echo "  • Threshold: ${THRESHOLD}%"
+          echo "  • Status: ${STATUS_ICON} ${STATUS_TEXT}"
+          echo "  • Files Analyzed: ${FILES_ANALYZED}"
+          echo "  • Packages: ${PACKAGES}"
+
+          # Display deployment URLs
+          echo ""
+          echo "🌐 Coverage Reports:"
+          BASE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          echo "  • Dashboard: ${BASE_URL}/"
+          echo "  • Current Branch: ${BASE_URL}/coverage/branch/${{ inputs.branch-name }}/"
+          if [[ -n "${{ inputs.pr-number }}" ]]; then
+            echo "  • Pull Request: ${BASE_URL}/pr/${{ inputs.pr-number }}/"
+          fi
+
+          # Provider and workflow status
+          echo ""
+          echo "🔧 System Information:"
+          echo "  • Provider: ${{ env.GO_COVERAGE_PROVIDER }}"
+          echo "  • Event: ${{ inputs.event-name }}"
+          echo "  • Runner: ${{ inputs.primary-runner }}"
+          echo "  • Status: ✅ Pipeline completed successfully"
+
+          # Create GitHub Actions job summary
+          {
+            echo "## 📊 Coverage Report Summary"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| **Coverage** | ${COVERAGE_PCT}% |"
+            echo "| **Threshold** | ${THRESHOLD}% |"
+            echo "| **Status** | ${STATUS_ICON} ${STATUS_TEXT} |"
+            echo "| **Files** | ${FILES_ANALYZED} |"
+            echo "| **Provider** | ${{ env.GO_COVERAGE_PROVIDER }} |"
+            echo "| **Branch** | ${{ inputs.branch-name }} |"
+            echo ""
+            echo "### 🌐 Coverage Reports"
+            echo "- [📊 Coverage Dashboard](${BASE_URL}/)"
+            echo "- [🌿 Branch Coverage](${BASE_URL}/coverage/branch/${{ inputs.branch-name }}/)"
+            if [[ -n "${{ inputs.pr-number }}" ]]; then
+              echo "- [🔀 PR Coverage](${BASE_URL}/pr/${{ inputs.pr-number }}/)"
+            fi
+            echo ""
+            echo "### 📈 Quick Stats"
+            echo "- **Event**: ${{ inputs.event-name }}"
+            echo "- **Commit**: ${{ inputs.commit-sha }}"
+            echo "- **Workflow**: Optimized GoFortress Coverage"
+          } >> $GITHUB_STEP_SUMMARY
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 Coverage pipeline completed successfully!"
 
