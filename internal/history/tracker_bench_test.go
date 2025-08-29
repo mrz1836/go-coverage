@@ -12,8 +12,6 @@ import (
 	"github.com/mrz1836/go-coverage/internal/parser"
 )
 
-var benchCounter int64
-
 // BenchmarkRecord benchmarks recording coverage entries
 func BenchmarkRecord(b *testing.B) {
 	tempDir, err := os.MkdirTemp("", "history_bench_*")
@@ -402,6 +400,7 @@ func BenchmarkConcurrentRecord(b *testing.B) {
 	config := &Config{StoragePath: tempDir}
 	tracker := NewWithConfig(config)
 	ctx := context.Background()
+	var benchCounter int64
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			coverage := createBenchmarkCoverage()
