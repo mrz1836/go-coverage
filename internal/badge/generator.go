@@ -382,8 +382,59 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 		return "data:image/svg+xml;base64," + base64Content, nil
 	}
 
+	// CDN failed, attempt to fetch directly from GitHub repository
+	fallbackURL := fmt.Sprintf("https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/%s.svg", iconName)
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
+
+		client := &http.Client{Timeout: 15 * time.Second}
+		req, err := http.NewRequestWithContext(ctx, "GET", fallbackURL, nil)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to create request for %s: %w", fallbackURL, err)
+			continue
+		}
+
+		req.Header.Set("User-Agent", "go-coverage/1.0 (+https://github.com/mrz1836/go-coverage)")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
+			if attempt < maxRetries-1 {
+				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				time.Sleep(delay)
+			}
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			_ = resp.Body.Close()
+			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, fallbackURL, attempt+1, maxRetries)
+			if attempt < maxRetries-1 {
+				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				time.Sleep(delay)
+			}
+			continue
+		}
+
+		svgContent, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		if err != nil {
+			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
+			if attempt < maxRetries-1 {
+				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				time.Sleep(delay)
+			}
+			continue
+		}
+
+		base64Content := base64.StdEncoding.EncodeToString(svgContent)
+		return "data:image/svg+xml;base64," + base64Content, nil
+	}
+
 	// All retries failed
-	return "", fmt.Errorf("failed to fetch icon after %d attempts: %w", maxRetries, lastErr)
+	return "", fmt.Errorf("failed to fetch icon after %d attempts: %w", maxRetries*2, lastErr)
 }
 
 // renderSVG generates the actual SVG content
