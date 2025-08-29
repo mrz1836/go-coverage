@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -15,16 +14,17 @@ import (
 	"github.com/mrz1836/go-coverage/internal/analysis"
 	"github.com/mrz1836/go-coverage/internal/artifacts"
 	"github.com/mrz1836/go-coverage/internal/config"
-	"github.com/mrz1836/go-coverage/internal/deployment"
 	"github.com/mrz1836/go-coverage/internal/github"
 	"github.com/mrz1836/go-coverage/internal/history"
 	"github.com/mrz1836/go-coverage/internal/parser"
+	"github.com/mrz1836/go-coverage/internal/providers"
 )
 
 // Static error definitions
 var (
 	ErrNotInGitHubActions    = errors.New("not running in GitHub Actions environment (use --force to override)")
 	ErrCoverageInputNotFound = errors.New("coverage input file not found")
+	ErrCoverageUploadFailed  = errors.New("coverage upload failed")
 )
 
 // GitHubActionsConfig holds configuration for the github-actions command
@@ -274,7 +274,7 @@ func isSpace(c byte) bool {
 	return c == ' ' || c == '\t' || c == '\r'
 }
 
-// executeWorkflow orchestrates the complete GitHub Actions coverage workflow
+// executeWorkflow orchestrates the complete GitHub Actions coverage workflow using provider abstraction
 func executeWorkflow(githubCtx *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig) error {
 	ctx := context.Background()
 
@@ -286,137 +286,102 @@ func executeWorkflow(githubCtx *github.GitHubContext, mainCfg *config.Config, cf
 		return fmt.Errorf("%w: %s", ErrCoverageInputNotFound, mainCfg.Coverage.InputFile)
 	}
 
-	// Step 2: Generate coverage artifacts
-	_, _ = fmt.Fprintln(os.Stdout, "🎨 Generating coverage artifacts...")
-
-	// For now, just validate that the input file exists
-	// In a full implementation, this would execute the complete coverage pipeline
-	// using the existing commands (parse, badge, report, history)
-
-	// Create output directory
-	if err := os.MkdirAll(mainCfg.Coverage.OutputDir, 0o750); err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
+	// Parse coverage data using the existing parser
+	coverageParser := parser.New()
+	coverageResult, err := coverageParser.ParseFile(ctx, mainCfg.Coverage.InputFile)
+	if err != nil {
+		return fmt.Errorf("failed to parse coverage data: %w", err)
 	}
 
-	_, _ = fmt.Fprintln(os.Stdout, "✅ Coverage artifacts ready")
+	// Step 2: Create provider configuration
+	_, _ = fmt.Fprintln(os.Stdout, "⚙️  Configuring coverage provider...")
 
-	// Step 3: Deploy to GitHub Pages (if internal provider)
-	if cfg.Provider == "auto" || cfg.Provider == "internal" {
-		_, _ = fmt.Fprintln(os.Stdout, "🚀 Deploying to GitHub Pages...")
-
-		if err := deployToGitHubPages(ctx, githubCtx, mainCfg, cfg); err != nil {
-			return fmt.Errorf("failed to deploy to GitHub Pages: %w", err)
-		}
+	providerType := convertProviderType(cfg.Provider)
+	providerConfig, err := providers.CreateConfigFromEnvironment(mainCfg, providerType, cfg.DryRun, cfg.Debug, false)
+	if err != nil {
+		return fmt.Errorf("failed to create provider configuration: %w", err)
 	}
 
-	// Step 4: Post PR comment (if this is a PR)
+	// Update GitHub context from the existing context
+	providerConfig.GitHubContext = &providers.GitHubContext{
+		IsGitHubActions: githubCtx.IsGitHubActions,
+		Repository:      githubCtx.Repository,
+		Owner:           extractOwner(githubCtx.Repository),
+		Repo:            extractRepo(githubCtx.Repository),
+		Branch:          githubCtx.Branch,
+		CommitSHA:       githubCtx.CommitSHA,
+		PRNumber:        githubCtx.PRNumber,
+		EventName:       githubCtx.EventName,
+		RunID:           githubCtx.RunID,
+		Token:           githubCtx.Token,
+	}
+
+	// Step 3: Create and initialize provider
+	logger := providers.NewDefaultLogger(cfg.Debug, cfg.Debug)
+	factory := providers.NewFactory(logger)
+
+	provider, err := factory.CreateProvider(ctx, providerConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create provider: %w", err)
+	}
+
+	_, _ = fmt.Fprintf(os.Stdout, "✅ Using %s provider\n", provider.Name())
+
+	// Step 4: Convert coverage data to provider format
+	providerCoverageData := convertCoverageData(coverageResult, githubCtx)
+
+	// Step 5: Process coverage data through provider
+	_, _ = fmt.Fprintln(os.Stdout, "🎨 Processing coverage data...")
+
+	err = provider.Process(ctx, providerCoverageData)
+	if err != nil {
+		return fmt.Errorf("failed to process coverage data: %w", err)
+	}
+
+	// Step 6: Upload/deploy coverage data
+	_, _ = fmt.Fprintf(os.Stdout, "🚀 Uploading coverage via %s provider...\n", provider.Name())
+
+	uploadResult, err := provider.Upload(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to upload coverage: %w", err)
+	}
+
+	if !uploadResult.Success {
+		return fmt.Errorf("%w: %s", ErrCoverageUploadFailed, uploadResult.Message)
+	}
+
+	// Step 7: Generate additional reports
+	if err := provider.GenerateReports(ctx); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to generate additional reports: %v\n", err)
+	}
+
+	// Step 8: Post PR comment (if this is a PR)
 	if githubCtx.PRNumber != "" {
 		_, _ = fmt.Fprintln(os.Stdout, "💬 Posting PR comment...")
 
 		postPRComment(githubCtx, mainCfg, cfg)
 	}
 
-	_, _ = fmt.Fprintln(os.Stdout, "✅ GitHub Actions coverage workflow completed successfully!")
-	return nil
-}
-
-// deployToGitHubPages handles deployment to GitHub Pages
-func deployToGitHubPages(ctx context.Context, githubCtx *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig) error {
-	// Create deployment manager
-	manager, err := deployment.NewManager(githubCtx.Repository, githubCtx.Token, cfg.DryRun, cfg.Debug)
-	if err != nil {
-		return fmt.Errorf("failed to create deployment manager: %w", err)
-	}
-
-	// Load coverage artifacts
-	coverageFiles, err := loadCoverageFiles(mainCfg.Coverage.OutputDir)
-	if err != nil {
-		return fmt.Errorf("failed to load coverage files: %w", err)
-	}
-
-	// Build deployment path based on context
-	deploymentPath := deployment.BuildDeploymentPath(githubCtx.EventName, githubCtx.Branch, githubCtx.PRNumber)
-
-	// Create deployment options
-	deploymentOpts := &deployment.DeploymentOptions{
-		CoverageFiles:       coverageFiles,
-		Repository:          githubCtx.Repository,
-		Branch:              githubCtx.Branch,
-		CommitSHA:           githubCtx.CommitSHA,
-		PRNumber:            githubCtx.PRNumber,
-		EventName:           githubCtx.EventName,
-		TargetPath:          deploymentPath,
-		CleanupPatterns:     deployment.DefaultCleanupPatterns(),
-		DryRun:              cfg.DryRun,
-		Force:               false, // Don't force push by default
-		VerificationTimeout: 30 * time.Second,
-	}
-
-	// Perform deployment
-	result, err := manager.Deploy(ctx, deploymentOpts)
-	if err != nil {
-		return fmt.Errorf("deployment failed: %w", err)
-	}
-
-	// Verify deployment
-	if !cfg.DryRun {
-		if err := manager.Verify(ctx, result); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Warning: Deployment verification failed: %v\n", err)
-		}
-	}
-
-	// Output deployment information
+	// Step 9: Output results
 	if cfg.Debug {
-		_, _ = fmt.Fprintf(os.Stdout, "📍 Deployment URL: %s\n", result.DeploymentURL)
-		_, _ = fmt.Fprintf(os.Stdout, "📁 Files deployed: %d\n", result.FilesDeployed)
-		_, _ = fmt.Fprintf(os.Stdout, "🗑️  Files removed: %d\n", result.FilesRemoved)
-
-		if len(result.AdditionalURLs) > 0 {
+		_, _ = fmt.Fprintf(os.Stdout, "📍 Report URL: %s\n", uploadResult.ReportURL)
+		if len(uploadResult.AdditionalURLs) > 0 {
 			_, _ = fmt.Fprintln(os.Stdout, "🔗 Additional URLs:")
-			for _, url := range result.AdditionalURLs {
+			for _, url := range uploadResult.AdditionalURLs {
 				_, _ = fmt.Fprintf(os.Stdout, "   - %s\n", url)
 			}
 		}
 	} else {
-		_, _ = fmt.Fprintf(os.Stdout, "🌐 Deployed to: %s\n", result.DeploymentURL)
+		_, _ = fmt.Fprintf(os.Stdout, "🌐 Coverage report: %s\n", uploadResult.ReportURL)
 	}
 
+	// Step 10: Cleanup
+	if err := provider.Cleanup(ctx); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Provider cleanup failed: %v\n", err)
+	}
+
+	_, _ = fmt.Fprintln(os.Stdout, "✅ GitHub Actions coverage workflow completed successfully!")
 	return nil
-}
-
-// loadCoverageFiles loads coverage artifacts from the output directory
-func loadCoverageFiles(outputDir string) (map[string][]byte, error) {
-	files := make(map[string][]byte)
-
-	// Define the files we want to deploy with placeholder content
-	filesToLoad := map[string]string{
-		"coverage.html": "<html><body><h1>Coverage Report</h1><p>Coverage data will be displayed here.</p></body></html>",
-		"coverage.svg":  `<svg xmlns="http://www.w3.org/2000/svg" width="104" height="20"><linearGradient id="a" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><rect rx="3" width="104" height="20" fill="#555"/><rect rx="3" x="63" width="41" height="20" fill="#4c1"/><path fill="#4c1" d="m63 0h4v20h-4z"/><rect rx="3" width="104" height="20" fill="url(#a)"/><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11"><text x="32.5" y="15" fill="#010101" fill-opacity=".3">coverage</text><text x="32.5" y="14">coverage</text><text x="82.5" y="15" fill="#010101" fill-opacity=".3">85%</text><text x="82.5" y="14">85%</text></g></svg>`,
-		"coverage.json": `{"coverage": 85.0, "lines": 1000, "covered": 850}`,
-	}
-
-	for filename, placeholder := range filesToLoad {
-		filePath := filepath.Join(outputDir, filename)
-
-		// Check if file exists, if not create placeholder
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			// Create placeholder file for deployment testing
-			if writeErr := os.WriteFile(filePath, []byte(placeholder), 0o600); writeErr != nil {
-				return nil, fmt.Errorf("failed to create placeholder %s: %w", filename, writeErr)
-			}
-			files[filename] = []byte(placeholder)
-		} else {
-			// Read existing file content
-			// #nosec G304 - filePath is constructed from controlled outputDir and predefined filename
-			content, err := os.ReadFile(filePath)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read %s: %w", filename, err)
-			}
-			files[filename] = content
-		}
-	}
-
-	return files, nil
 }
 
 // convertPRDiff converts github.PRDiff to analysis.PRDiff
@@ -661,5 +626,97 @@ func postPRComment(githubCtx *github.GitHubContext, mainCfg *config.Config, cfg 
 		}
 	} else {
 		_, _ = fmt.Fprintf(os.Stdout, "💬 PR comment %s successfully\n", response.Action)
+	}
+}
+
+// convertProviderType converts the string provider type to the providers.ProviderType
+func convertProviderType(providerStr string) providers.ProviderType {
+	switch providerStr {
+	case "auto":
+		return providers.ProviderTypeAuto
+	case "internal":
+		return providers.ProviderTypeInternal
+	case "codecov":
+		return providers.ProviderTypeCodecov
+	default:
+		return providers.ProviderTypeAuto
+	}
+}
+
+// extractOwner extracts the owner from a repository string "owner/repo"
+func extractOwner(repository string) string {
+	parts := strings.Split(repository, "/")
+	if len(parts) >= 2 {
+		return parts[0]
+	}
+	return ""
+}
+
+// extractRepo extracts the repo name from a repository string "owner/repo"
+func extractRepo(repository string) string {
+	parts := strings.Split(repository, "/")
+	if len(parts) >= 2 {
+		return parts[1]
+	}
+	return ""
+}
+
+// convertCoverageData converts parser result to provider coverage data format
+func convertCoverageData(parserResult *parser.CoverageData, githubCtx *github.GitHubContext) *providers.CoverageData {
+	if parserResult == nil {
+		return nil
+	}
+
+	// Convert packages
+	packages := make([]providers.PackageCoverage, 0, len(parserResult.Packages))
+	var files []providers.FileCoverage
+
+	for _, pkg := range parserResult.Packages {
+		// Get list of file names for this package
+		var fileNames []string
+		for fileName := range pkg.Files {
+			fileNames = append(fileNames, fileName)
+		}
+
+		packages = append(packages, providers.PackageCoverage{
+			Name:         pkg.Name,
+			Coverage:     pkg.Percentage,
+			TotalLines:   int64(pkg.TotalLines),
+			CoveredLines: int64(pkg.CoveredLines),
+			Files:        fileNames,
+		})
+
+		// Convert files from this package
+		for _, file := range pkg.Files {
+			// Calculate missed lines from statements
+			var missedLines []int
+			for _, stmt := range file.Statements {
+				if stmt.Count == 0 {
+					// Add all lines in the uncovered statement range
+					for line := stmt.StartLine; line <= stmt.EndLine; line++ {
+						missedLines = append(missedLines, line)
+					}
+				}
+			}
+
+			files = append(files, providers.FileCoverage{
+				Filename:     file.Path,
+				Coverage:     file.Percentage,
+				TotalLines:   int64(file.TotalLines),
+				CoveredLines: int64(file.CoveredLines),
+				MissedLines:  missedLines,
+			})
+		}
+	}
+
+	return &providers.CoverageData{
+		Percentage:   parserResult.Percentage,
+		TotalLines:   int64(parserResult.TotalLines),
+		CoveredLines: int64(parserResult.CoveredLines),
+		Packages:     packages,
+		Files:        files,
+		Timestamp:    time.Now(),
+		CommitSHA:    githubCtx.CommitSHA,
+		Branch:       githubCtx.Branch,
 	}
 }
