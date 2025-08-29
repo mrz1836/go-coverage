@@ -172,8 +172,8 @@ func (v *CoverageFileValidator) validateCoverageFormat(_ context.Context) error 
 		return v.validateXMLCoverageFormat(content)
 	}
 
-	// If no recognized format, it might still be valid but warn
-	return nil
+	// If no recognized format, the file is invalid
+	return fmt.Errorf("unrecognized coverage file format") //nolint:err113 // specific context error
 }
 
 // validateGoCoverageFormat validates Go coverage format
@@ -222,7 +222,19 @@ func (v *CoverageFileValidator) validateGoCoverageFormat(lines []string) error {
 		validLines++
 	}
 
-	if validLines == 0 {
+	// Allow files with just a mode line (will trigger a warning due to small size)
+	// but require at least one non-empty line after the mode line for files that
+	// have additional content beyond just the mode
+	nonEmptyLinesAfterMode := 0
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(line) != "" {
+			nonEmptyLinesAfterMode++
+		}
+	}
+
+	// If there are non-empty lines after mode but no valid coverage lines,
+	// then the format is invalid
+	if nonEmptyLinesAfterMode > 0 && validLines == 0 {
 		return ErrNoValidCoverageLines
 	}
 

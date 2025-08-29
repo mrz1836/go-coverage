@@ -127,6 +127,11 @@ func (fm *FallbackManager) ExecuteWithFallback(ctx context.Context, operation Op
 		return nil // Success
 	}
 
+	// Check if context was canceled - don't attempt fallbacks
+	if ctx.Err() != nil {
+		return err
+	}
+
 	fm.logger.Printf("Primary operation failed: %v, attempting fallback strategies", err)
 
 	// Track fallback attempt
@@ -563,6 +568,7 @@ func GetDefaultFallbackManager() *FallbackManager {
 // Recovery utilities
 
 // RecoverFromPanic recovers from panics and converts them to errors
+// This function must be called directly in a defer statement
 func RecoverFromPanic() error {
 	if r := recover(); r != nil {
 		return fmt.Errorf("%w: %v", ErrPanicRecovered, r)

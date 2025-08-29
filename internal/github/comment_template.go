@@ -362,6 +362,7 @@ func (ctg *CommentTemplateGenerator) GenerateCompactComment(comparison *Coverage
 	compactConfig.ShowPackageDetails = false
 	compactConfig.ShowFileDetails = false
 	compactConfig.ShowTrendChart = false
+	compactConfig.ShowBranding = false
 
 	compactGenerator := &CommentTemplateGenerator{
 		config:     &compactConfig,

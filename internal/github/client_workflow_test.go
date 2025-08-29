@@ -283,7 +283,7 @@ func TestGetWorkflowRunsByWorkflow_ErrorHandling(t *testing.T) {
 			}`,
 			runsStatus:       500,
 			workflowRunsResp: `{"message": "Internal Server Error"}`,
-			expectedError:    "GitHub API error",
+			expectedError:    "failed to get workflow runs",
 		},
 		{
 			name:          "network error",

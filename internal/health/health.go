@@ -96,9 +96,8 @@ func (m *Manager) CheckAll(ctx context.Context) *HealthReport {
 
 	// Run all health checks
 	for _, checker := range m.checkers {
-		select {
-		case <-checkCtx.Done():
-			// Context canceled or timeout
+		// Check if main context is already done
+		if checkCtx.Err() != nil {
 			result := &CheckResult{
 				Name:     checker.Name(),
 				Status:   StatusUnhealthy,
@@ -107,21 +106,22 @@ func (m *Manager) CheckAll(ctx context.Context) *HealthReport {
 			}
 			report.Checks = append(report.Checks, *result)
 			report.Summary.Unhealthy++
-		default:
-			result := m.runSingleCheck(checkCtx, checker)
-			report.Checks = append(report.Checks, *result)
+			continue
+		}
 
-			// Update summary
-			switch result.Status {
-			case StatusHealthy:
-				report.Summary.Healthy++
-			case StatusWarning:
-				report.Summary.Warnings++
-			case StatusUnhealthy:
-				report.Summary.Unhealthy++
-			case StatusSkipped:
-				report.Summary.Skipped++
-			}
+		result := m.runSingleCheck(checkCtx, checker)
+		report.Checks = append(report.Checks, *result)
+
+		// Update summary
+		switch result.Status {
+		case StatusHealthy:
+			report.Summary.Healthy++
+		case StatusWarning:
+			report.Summary.Warnings++
+		case StatusUnhealthy:
+			report.Summary.Unhealthy++
+		case StatusSkipped:
+			report.Summary.Skipped++
 		}
 	}
 
@@ -133,37 +133,52 @@ func (m *Manager) CheckAll(ctx context.Context) *HealthReport {
 	return report
 }
 
-// runSingleCheck runs a single health check with timing
+// runSingleCheck runs a single health check with timing and timeout handling
 func (m *Manager) runSingleCheck(ctx context.Context, checker HealthChecker) *CheckResult {
 	start := time.Now()
 
-	// Run the check with a defer to catch panics
-	var result *CheckResult
+	// Create a channel to receive the result
+	resultChan := make(chan *CheckResult, 1)
 
-	defer func() {
-		if r := recover(); r != nil {
+	// Run the check in a goroutine
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				resultChan <- &CheckResult{
+					Name:     checker.Name(),
+					Status:   StatusUnhealthy,
+					Message:  fmt.Sprintf("Health check panicked: %v", r),
+					Duration: time.Since(start),
+				}
+			}
+		}()
+
+		result := checker.Check(ctx)
+		if result == nil {
 			result = &CheckResult{
 				Name:     checker.Name(),
 				Status:   StatusUnhealthy,
-				Message:  fmt.Sprintf("Health check panicked: %v", r),
+				Message:  "Health check returned nil result",
 				Duration: time.Since(start),
 			}
+		} else {
+			result.Duration = time.Since(start)
 		}
+		resultChan <- result
 	}()
 
-	result = checker.Check(ctx)
-	if result == nil {
-		result = &CheckResult{
+	// Wait for result or timeout
+	select {
+	case result := <-resultChan:
+		return result
+	case <-ctx.Done():
+		return &CheckResult{
 			Name:     checker.Name(),
 			Status:   StatusUnhealthy,
-			Message:  "Health check returned nil result",
+			Message:  "Health check timed out",
 			Duration: time.Since(start),
 		}
-	} else {
-		result.Duration = time.Since(start)
 	}
-
-	return result
 }
 
 // calculateOverallStatus determines the overall health status

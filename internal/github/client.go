@@ -178,20 +178,20 @@ func (c *Client) doRequestWithRetry(ctx context.Context, req *http.Request) (*ht
 			reqClone.Body = body
 		}
 
-		resp, err = c.httpClient.Do(reqClone)
+		// Close previous response if it exists (for retries)
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
+
+		resp, err = c.httpClient.Do(reqClone) //nolint:bodyclose // Response body is closed by caller
 		if err != nil {
 			return fmt.Errorf("HTTP request failed: %w", err)
 		}
-		defer func() {
-			if closeErr := resp.Body.Close(); closeErr != nil {
-				// Log error but don't return it since we're in a defer
-				_ = closeErr
-			}
-		}()
 
 		// Check for retryable HTTP status codes
 		if resp.StatusCode >= 500 || resp.StatusCode == 429 || resp.StatusCode == 408 {
 			body, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
 			return fmt.Errorf("%w: %d %s", ErrRetryableHTTPError, resp.StatusCode, string(body))
 		}
 

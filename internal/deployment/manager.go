@@ -248,6 +248,10 @@ func sanitizeBranchName(branch string) string {
 
 // replaceAll is a simple string replacement function
 func replaceAll(s, old, newStr string) string {
+	// Handle edge case where old is empty
+	if old == "" {
+		return s
+	}
 	result := ""
 	for i := 0; i < len(s); i++ {
 		if i <= len(s)-len(old) && s[i:i+len(old)] == old {

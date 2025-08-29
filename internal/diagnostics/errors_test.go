@@ -92,16 +92,18 @@ func TestDiagnosticErrorBuilder_WithSuggestion(t *testing.T) {
 		WithSuggestion("Try again later").
 		Build()
 
-	if len(diagErr.Suggestions) != 2 {
-		t.Errorf("Expected 2 suggestions, got %d", len(diagErr.Suggestions))
+	// Build() adds 3 automatic suggestions for network errors plus 2 manual = 5 total
+	if len(diagErr.Suggestions) != 5 {
+		t.Errorf("Expected 5 suggestions, got %d", len(diagErr.Suggestions))
 	}
 
-	expectedSuggestions := []string{
+	// Check the first two are our manual suggestions
+	expectedManualSuggestions := []string{
 		"Check your internet connection",
 		"Try again later",
 	}
 
-	for i, expected := range expectedSuggestions {
+	for i, expected := range expectedManualSuggestions {
 		if diagErr.Suggestions[i] != expected {
 			t.Errorf("Expected suggestion '%s', got '%s'", expected, diagErr.Suggestions[i])
 		}
@@ -113,10 +115,12 @@ func TestDiagnosticErrorBuilder_WithDocumentation(t *testing.T) {
 		WithDocumentation("Configuration Guide", "https://example.com/config", "How to configure").
 		Build()
 
-	if len(diagErr.Documentation) != 1 {
-		t.Errorf("Expected 1 documentation link, got %d", len(diagErr.Documentation))
+	// Build() adds 1 configuration-specific + 1 general troubleshooting doc + 1 manual = 3 total
+	if len(diagErr.Documentation) != 3 {
+		t.Errorf("Expected 3 documentation links, got %d", len(diagErr.Documentation))
 	}
 
+	// Check the first one is our manual documentation
 	doc := diagErr.Documentation[0]
 	if doc.Title != "Configuration Guide" {
 		t.Errorf("Expected doc title 'Configuration Guide', got '%s'", doc.Title)

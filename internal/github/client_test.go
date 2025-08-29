@@ -164,7 +164,7 @@ func TestCreateCommentError(t *testing.T) {
 			name:          "rate limited",
 			statusCode:    429,
 			responseBody:  `{"message": "API rate limit exceeded"}`,
-			expectedError: "GitHub API error: 429",
+			expectedError: "retryable HTTP error: 429",
 		},
 	}
 

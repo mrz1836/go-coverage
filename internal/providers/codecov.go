@@ -42,10 +42,15 @@ type CodecovUploadResponse struct {
 
 // NewCodecovProvider creates a new Codecov provider instance
 func NewCodecovProvider(config *CodecovProviderConfig) *CodecovProvider {
+	timeout := 60 * time.Second // default timeout
+	if config != nil {
+		timeout = config.Timeout
+	}
+
 	return &CodecovProvider{
 		config: config,
 		httpClient: &http.Client{
-			Timeout: config.Timeout,
+			Timeout: timeout,
 		},
 	}
 }

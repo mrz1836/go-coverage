@@ -54,6 +54,8 @@ func (op *mockOperation) Execute(ctx context.Context) error {
 			op.failureCount--
 			return errMockOperationFailure
 		}
+		// If shouldFail is true but failureCount is 0, always fail
+		return errMockOperationFailure
 	}
 	return nil
 }
@@ -384,6 +386,7 @@ func TestExecuteWithFallback_ContextCancellation(t *testing.T) {
 
 	if err == nil {
 		t.Error("Expected error due to context cancellation")
+		return
 	}
 
 	if !strings.Contains(err.Error(), "mock operation failure") {
@@ -678,14 +681,9 @@ func TestRecoverFromPanic(t *testing.T) {
 	}
 
 	// Test panic recovery
-	err = func() (err error) {
-		defer func() {
-			if r := RecoverFromPanic(); r != nil {
-				err = r
-			}
-		}()
+	err = ExecuteWithRecovery(func() error {
 		panic("test panic")
-	}()
+	})
 
 	if err == nil {
 		t.Error("Expected error from panic recovery")

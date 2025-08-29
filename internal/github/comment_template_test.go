@@ -223,7 +223,7 @@ func TestCommentTemplateGenerator_GeneratePackageDetails(t *testing.T) {
 			{
 				Filename:      "pkg/utils",
 				PRCoverage:    90.0,
-				Difference:    -1.0,
+				Difference:    -0.05, // Small change to trigger ~ symbol
 				IsSignificant: false,
 			},
 		},
@@ -286,7 +286,7 @@ func TestCommentTemplateGenerator_GenerateFileDetails(t *testing.T) {
 	comparison := &CoverageComparison{
 		FileChanges: []FileChange{
 			{
-				Filename:      "very/long/path/to/some/file/main.go",
+				Filename:      "very/long/path/to/some/very/deep/directory/structure/main.go",
 				BaseCoverage:  70.0,
 				PRCoverage:    85.0,
 				Difference:    15.0,
@@ -310,7 +310,7 @@ func TestCommentTemplateGenerator_GenerateFileDetails(t *testing.T) {
 		"<details>",
 		"📁 File Coverage Changes",
 		"| File | Base | Current | Change | Lines |",
-		"...main.go", // Truncated filename
+		"...very/deep/directory/structure/main.go", // Truncated filename
 		"utils.go",
 		"85.0%",
 		"88.0%",

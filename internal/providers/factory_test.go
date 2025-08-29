@@ -37,8 +37,12 @@ func TestFactory_CreateProvider(t *testing.T) {
 		{
 			name: "Create codecov provider with token",
 			config: &Config{
-				Provider:      ProviderTypeCodecov,
-				CodecovConfig: &CodecovProviderConfig{Token: "fake-codecov-token"},
+				Provider: ProviderTypeCodecov,
+				CodecovConfig: func() *CodecovProviderConfig {
+					cfg := DefaultCodecovProviderConfig()
+					cfg.Token = "fake-codecov-token"
+					return cfg
+				}(),
 			},
 			envVars:      map[string]string{"CODECOV_TOKEN": "fake-codecov-token"},
 			expectedType: "codecov",
@@ -66,7 +70,7 @@ func TestFactory_CreateProvider(t *testing.T) {
 				Provider:      ProviderTypeAuto,
 				CodecovConfig: DefaultCodecovProviderConfig(),
 			},
-			envVars:      map[string]string{"CODECOV_TOKEN": "fake-codecov-token"},
+			envVars:      map[string]string{"CODECOV_TOKEN": "fake-codecov-token", "GO_COVERAGE_PROVIDER": ""},
 			expectedType: "codecov",
 			expectError:  false,
 		},

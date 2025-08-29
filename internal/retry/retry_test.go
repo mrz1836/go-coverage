@@ -607,10 +607,10 @@ func TestExampleUsage(t *testing.T) {
 		switch result {
 		case "":
 			result = "attempt1"
-			return errNetworkTimeout
+			return &net.OpError{Op: "dial", Err: errNetworkTimeout}
 		case "attempt1":
 			result = "attempt2"
-			return errConnectionRefused
+			return &net.OpError{Op: "dial", Err: errConnectionRefused}
 		}
 		result = "success"
 		return nil

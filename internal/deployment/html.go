@@ -225,12 +225,12 @@ func (rg *ReportGenerator) createReportInfo(relPath string, info os.FileInfo) *R
 		default:
 			// Root level report
 			report.Type = PathTypeRoot
-			report.Name = strings.TrimSuffix(info.Name(), ".html")
+			report.Name = strings.TrimSuffix(filepath.Base(relPath), ".html")
 		}
 	} else {
 		// Root level report
 		report.Type = PathTypeRoot
-		report.Name = strings.TrimSuffix(info.Name(), ".html")
+		report.Name = strings.TrimSuffix(filepath.Base(relPath), ".html")
 	}
 
 	return report

@@ -243,13 +243,7 @@ func IsNetworkError(err error) bool {
 		return false
 	}
 
-	// Check for net.Error interface (includes timeout failures)
-	var netErr net.Error
-	if errors.As(err, &netErr) {
-		return netErr.Timeout()
-	}
-
-	// Check for specific network error types
+	// Check for specific network error types first
 	var netOpErr *net.OpError
 	if errors.As(err, &netOpErr) {
 		return true
@@ -257,7 +251,13 @@ func IsNetworkError(err error) bool {
 
 	var dnsErr *net.DNSError
 	if errors.As(err, &dnsErr) {
-		return dnsErr.Temporary()
+		return dnsErr.Temporary() || dnsErr.Timeout()
+	}
+
+	// Check for net.Error interface (includes timeout failures)
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		return netErr.Timeout()
 	}
 
 	return false
