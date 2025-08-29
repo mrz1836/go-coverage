@@ -2,11 +2,18 @@ package providers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/mrz1836/go-coverage/internal/analytics/report"
+	"github.com/mrz1836/go-coverage/internal/badge"
 	"github.com/mrz1836/go-coverage/internal/deployment"
+	"github.com/mrz1836/go-coverage/internal/parser"
 )
 
 var (
@@ -76,7 +83,7 @@ func (p *InternalProvider) Process(ctx context.Context, coverage *CoverageData) 
 	p.coverageData = coverage
 
 	// Generate coverage artifacts
-	if err := p.generateCoverageArtifacts(); err != nil {
+	if err := p.generateCoverageArtifacts(ctx); err != nil {
 		return fmt.Errorf("failed to generate coverage artifacts: %w", err)
 	}
 
@@ -250,148 +257,163 @@ func (p *InternalProvider) Capabilities() ProviderCapabilities {
 }
 
 // generateCoverageArtifacts creates the coverage files for deployment
-func (p *InternalProvider) generateCoverageArtifacts() error {
+func (p *InternalProvider) generateCoverageArtifacts(ctx context.Context) error {
 	if p.coverageData == nil {
 		return ErrInternalCoverageDataRequired
 	}
 
-	// Generate HTML report
-	htmlContent := p.generateHTMLReport()
+	// Generate HTML report using the proper report generator
+	htmlContent, err := p.generateHTMLReport(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to generate HTML report: %w", err)
+	}
 	p.deploymentFiles["coverage.html"] = htmlContent
 
-	// Generate SVG badge
-	svgContent := p.generateSVGBadge()
+	// Generate SVG badge using proper badge generator
+	svgContent, err := p.generateSVGBadge(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to generate SVG badge: %w", err)
+	}
 	p.deploymentFiles["coverage.svg"] = svgContent
 
-	// Generate JSON data
-	jsonContent := p.generateJSONData()
+	// Generate JSON data using proper marshaling
+	jsonContent, err := p.generateJSONData()
+	if err != nil {
+		return fmt.Errorf("failed to generate JSON data: %w", err)
+	}
 	p.deploymentFiles["coverage.json"] = jsonContent
 
 	return nil
 }
 
-// generateHTMLReport creates an HTML coverage report
-func (p *InternalProvider) generateHTMLReport() []byte {
-	// For now, generate a basic HTML report
-	// In a full implementation, this would use the existing report generator
-	html := fmt.Sprintf(`<!DOCTYPE html>
-<html>
-<head>
-    <title>Coverage Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .coverage { font-size: 24px; font-weight: bold; color: %s; }
-        .summary { margin: 20px 0; }
-        .package { margin: 10px 0; padding: 10px; background: #f5f5f5; }
-    </style>
-</head>
-<body>
-    <h1>Coverage Report</h1>
-    <div class="summary">
-        <div class="coverage">Coverage: %.1f%%</div>
-        <div>Total Lines: %d</div>
-        <div>Covered Lines: %d</div>
-        <div>Branch: %s</div>
-        <div>Commit: %s</div>
-        <div>Generated: %s</div>
-    </div>
-    <h2>Package Coverage</h2>
-    %s
-</body>
-</html>`,
-		p.getCoverageColor(p.coverageData.Percentage),
-		p.coverageData.Percentage,
-		p.coverageData.TotalLines,
-		p.coverageData.CoveredLines,
-		p.coverageData.Branch,
-		p.coverageData.CommitSHA[:8],
-		p.coverageData.Timestamp.Format("2006-01-02 15:04:05 UTC"),
-		p.generatePackageHTML(),
-	)
+// generateHTMLReport creates an HTML coverage report using the proper report generator
+func (p *InternalProvider) generateHTMLReport(ctx context.Context) ([]byte, error) {
+	// Convert provider data to parser format
+	parserData := p.convertToParserData()
 
-	return []byte(html)
+	// Create temporary directory for report generation
+	tempDir, err := os.MkdirTemp("", "coverage-report-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp dir: %w", err)
+	}
+	defer func() {
+		if removeErr := os.RemoveAll(tempDir); removeErr != nil {
+			// Log the error but don't fail the function
+			_ = removeErr
+		}
+	}()
+
+	// Configure report generator
+	reportConfig := &report.Config{
+		OutputDir:       tempDir,
+		RepositoryOwner: p.providerConfig.GitHubContext.Owner,
+		RepositoryName:  p.providerConfig.GitHubContext.Repo,
+		BranchName:      p.coverageData.Branch,
+		CommitSHA:       p.coverageData.CommitSHA,
+		PRNumber:        p.providerConfig.GitHubContext.PRNumber,
+	}
+
+	// Create and run generator
+	generator := report.NewGenerator(reportConfig)
+	if genErr := generator.Generate(ctx, parserData); genErr != nil {
+		return nil, fmt.Errorf("failed to generate report: %w", genErr)
+	}
+
+	// Read generated HTML file
+	htmlPath := filepath.Join(tempDir, "coverage.html")
+	// #nosec G304 -- htmlPath is safely constructed from our own tempDir
+	htmlContent, err := os.ReadFile(htmlPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read generated HTML: %w", err)
+	}
+
+	return htmlContent, nil
 }
 
-// generateSVGBadge creates an SVG coverage badge
-func (p *InternalProvider) generateSVGBadge() []byte {
-	percentage := p.coverageData.Percentage
-	color := p.getCoverageColorHex(percentage)
+// generateSVGBadge creates an SVG coverage badge using the proper badge generator
+func (p *InternalProvider) generateSVGBadge(ctx context.Context) ([]byte, error) {
+	// Create badge generator
+	badgeGen := badge.New()
 
-	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="104" height="20">
-    <linearGradient id="a" x2="0" y2="100%%">
-        <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
-        <stop offset="1" stop-opacity=".1"/>
-    </linearGradient>
-    <rect rx="3" width="104" height="20" fill="#555"/>
-    <rect rx="3" x="63" width="41" height="20" fill="%s"/>
-    <path fill="%s" d="m63 0h4v20h-4z"/>
-    <rect rx="3" width="104" height="20" fill="url(#a)"/>
-    <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
-        <text x="32.5" y="15" fill="#010101" fill-opacity=".3">coverage</text>
-        <text x="32.5" y="14">coverage</text>
-        <text x="82.5" y="15" fill="#010101" fill-opacity=".3">%.0f%%</text>
-        <text x="82.5" y="14">%.0f%%</text>
-    </g>
-</svg>`, color, color, percentage, percentage)
+	// Generate badge with default options
+	svgContent, err := badgeGen.Generate(ctx, p.coverageData.Percentage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate badge: %w", err)
+	}
 
-	return []byte(svg)
+	return svgContent, nil
 }
 
-// generateJSONData creates JSON coverage data
-func (p *InternalProvider) generateJSONData() []byte {
-	json := fmt.Sprintf(`{
-    "coverage": %.2f,
-    "total_lines": %d,
-    "covered_lines": %d,
-    "branch": "%s",
-    "commit_sha": "%s",
-    "timestamp": "%s",
-    "packages": %d,
-    "files": %d
-}`,
-		p.coverageData.Percentage,
-		p.coverageData.TotalLines,
-		p.coverageData.CoveredLines,
-		p.coverageData.Branch,
-		p.coverageData.CommitSHA,
-		p.coverageData.Timestamp.Format(time.RFC3339),
-		len(p.coverageData.Packages),
-		len(p.coverageData.Files),
-	)
+// generateJSONData creates JSON coverage data using proper marshaling
+func (p *InternalProvider) generateJSONData() ([]byte, error) {
+	// Create structured data for JSON output
+	data := struct {
+		Coverage     float64   `json:"coverage"`
+		TotalLines   int64     `json:"total_lines"`
+		CoveredLines int64     `json:"covered_lines"`
+		Branch       string    `json:"branch"`
+		CommitSHA    string    `json:"commit_sha"`
+		Timestamp    time.Time `json:"timestamp"`
+		Packages     int       `json:"packages"`
+		Files        int       `json:"files"`
+	}{
+		Coverage:     p.coverageData.Percentage,
+		TotalLines:   p.coverageData.TotalLines,
+		CoveredLines: p.coverageData.CoveredLines,
+		Branch:       p.coverageData.Branch,
+		CommitSHA:    p.coverageData.CommitSHA,
+		Timestamp:    p.coverageData.Timestamp,
+		Packages:     len(p.coverageData.Packages),
+		Files:        len(p.coverageData.Files),
+	}
 
-	return []byte(json)
+	// Marshal to JSON with proper formatting
+	jsonContent, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	return jsonContent, nil
 }
 
-// generatePackageHTML creates HTML for package coverage
-func (p *InternalProvider) generatePackageHTML() string {
-	html := ""
+// convertToParserData converts provider data to parser.CoverageData format
+func (p *InternalProvider) convertToParserData() *parser.CoverageData {
+	// Convert packages to map format expected by parser
+	packages := make(map[string]*parser.PackageCoverage)
+
 	for _, pkg := range p.coverageData.Packages {
-		html += fmt.Sprintf(`
-    <div class="package">
-        <strong>%s</strong>: %.1f%% (%d/%d lines)
-    </div>`, pkg.Name, pkg.Coverage, pkg.CoveredLines, pkg.TotalLines)
-	}
-	return html
-}
+		// Convert files to map format
+		files := make(map[string]*parser.FileCoverage)
+		for _, filename := range pkg.Files {
+			// Find the corresponding file coverage data
+			for _, fileCov := range p.coverageData.Files {
+				if strings.Contains(fileCov.Filename, filename) {
+					files[fileCov.Filename] = &parser.FileCoverage{
+						Path:         fileCov.Filename,
+						TotalLines:   int(fileCov.TotalLines),
+						CoveredLines: int(fileCov.CoveredLines),
+						Percentage:   fileCov.Coverage,
+						Statements:   []parser.Statement{}, // Empty for now
+					}
+				}
+			}
+		}
 
-// getCoverageColor returns a color name based on coverage percentage
-func (p *InternalProvider) getCoverageColor(percentage float64) string {
-	if percentage >= 80 {
-		return "green"
-	} else if percentage >= 60 {
-		return "yellow"
-	} else {
-		return "red"
+		packages[pkg.Name] = &parser.PackageCoverage{
+			Name:         pkg.Name,
+			Files:        files,
+			TotalLines:   int(pkg.TotalLines),
+			CoveredLines: int(pkg.CoveredLines),
+			Percentage:   pkg.Coverage,
+		}
 	}
-}
 
-// getCoverageColorHex returns a hex color based on coverage percentage
-func (p *InternalProvider) getCoverageColorHex(percentage float64) string {
-	if percentage >= 80 {
-		return "#4c1"
-	} else if percentage >= 60 {
-		return "#dfb317"
-	} else {
-		return "#e05d44"
+	return &parser.CoverageData{
+		Mode:         "set", // Default mode
+		Packages:     packages,
+		TotalLines:   int(p.coverageData.TotalLines),
+		CoveredLines: int(p.coverageData.CoveredLines),
+		Percentage:   p.coverageData.Percentage,
+		Timestamp:    p.coverageData.Timestamp,
 	}
 }
