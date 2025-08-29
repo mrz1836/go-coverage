@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -63,7 +64,10 @@ func (m *Manager) Deploy(ctx context.Context, opts *DeploymentOptions) (*Deploym
 	}
 
 	// Acquire deployment lock
-	lockName := fmt.Sprintf("%s-%s", opts.Repository, opts.Branch)
+	// Sanitize repository and branch names to prevent path traversal issues
+	sanitizedRepo := strings.ReplaceAll(opts.Repository, "/", "-")
+	sanitizedBranch := strings.ReplaceAll(opts.Branch, "/", "-")
+	lockName := fmt.Sprintf("%s-%s", sanitizedRepo, sanitizedBranch)
 	if err := m.gitClient.AcquireLock(ctx, lockName, 5*time.Minute); err != nil {
 		return nil, fmt.Errorf("failed to acquire deployment lock: %w", err)
 	}

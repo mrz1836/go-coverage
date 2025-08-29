@@ -212,6 +212,12 @@ func (g *GitClient) AcquireLock(ctx context.Context, lockName string, timeout ti
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		if _, err := os.Stat(lockFile); os.IsNotExist(err) {
+			// Ensure parent directory exists
+			lockDir := filepath.Dir(lockFile)
+			if err := os.MkdirAll(lockDir, 0o700); err != nil {
+				return fmt.Errorf("failed to create lock directory: %w", err)
+			}
+
 			// Create lock file
 			// #nosec G304 - lockFile is constructed from os.TempDir() and validated lockName
 			file, err := os.Create(lockFile)
