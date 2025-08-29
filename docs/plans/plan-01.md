@@ -4,6 +4,8 @@
 - **Plan ID**: PLAN-01
 - **Created**: 2025-08-28
 - **Status**: In Progress
+- **Author**: MrZ
+- **AI Agent**: Claude Code
 - **Objective**: Reduce .github/workflows/fortress-coverage.yml from 2,156 lines to ~50 lines
 
 ## Executive Summary
