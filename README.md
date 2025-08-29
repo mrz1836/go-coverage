@@ -280,7 +280,7 @@ jobs:
         run: go test -coverprofile=coverage.txt ./...
 
       - name: Generate Coverage Reports
-        run: go-coverage complete -i coverage.txt -o coverage
+        run: go-coverage github-actions --input=coverage.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -364,7 +364,7 @@ Create a `.go-coverage.json` config file:
 * **Coverage History & Trends** – Track coverage changes over time with retention policies, trend analysis, and historical comparisons.
 * **Smart GitHub Integration** – Automated PR comments with coverage analysis, commit status checks, and diff-based coverage reporting.
 * **Multi-Branch Support** – Separate coverage tracking for different branches with automatic main branch detection and PR context handling.
-* **Comprehensive CLI Tool** – Six powerful commands (`complete`, `comment`, `parse`, `history`, `setup-pages`, `upgrade`) for all coverage operations.
+* **Comprehensive CLI Tool** – Seven powerful commands (`github-actions`, `complete`, `comment`, `parse`, `history`, `setup-pages`, `upgrade`) for all coverage operations.
 * **Highly Configurable** – JSON-based configuration for thresholds, exclusions, badge styling, report themes, and integration settings.
 * **Enterprise Ready** – Built with security, performance, and scalability in mind for production environments.
 * **Self-Contained Deployment** – Everything runs in your repository's `.github` folder with no external service dependencies or accounts required.
@@ -481,6 +481,15 @@ The **Go Coverage** system is thoroughly tested via [GitHub Actions](https://git
 ### CLI Command Examples
 
 ```bash
+# Automated GitHub Actions integration
+go-coverage github-actions --input=coverage.txt
+
+# GitHub Actions with provider detection
+go-coverage github-actions --provider=auto
+
+# Test run without making changes
+go-coverage github-actions --dry-run
+
 # Complete coverage pipeline (parse + badge + report + history + GitHub)
 go-coverage complete -i coverage.txt -o coverage-reports
 

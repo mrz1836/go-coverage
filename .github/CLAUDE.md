@@ -18,7 +18,8 @@ This repository uses **`AGENTS.md`** as the single source of truth for:
 
 This project implements a complete coverage analysis pipeline:
 
-**CLI Tool**: `go-coverage` with 6 core commands:
+**CLI Tool**: `go-coverage` with 7 core commands:
+- `github-actions` - Automated GitHub Actions integration (parse + badge + report + history + deployment)
 - `complete` - Full pipeline (parse + badge + report + history + GitHub integration)
 - `comment` - Generate PR comments with coverage analysis
 - `parse` - Parse coverage data with exclusions and thresholds
@@ -97,6 +98,12 @@ magex test:cover
 
 # Build CLI tool locally
 magex build
+
+# Run the automated GitHub Actions workflow
+go-coverage github-actions --input=coverage.txt
+
+# Test GitHub Actions integration
+go-coverage github-actions --dry-run --debug
 
 # Run the complete coverage pipeline
 go-coverage complete -i coverage.txt -o coverage-output
