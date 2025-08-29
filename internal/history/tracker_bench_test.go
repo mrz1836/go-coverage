@@ -2,7 +2,10 @@ package history
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -397,12 +400,17 @@ func BenchmarkConcurrentRecord(b *testing.B) {
 	config := &Config{StoragePath: tempDir}
 	tracker := NewWithConfig(config)
 	ctx := context.Background()
-	coverage := createBenchmarkCoverage()
-
+	var benchCounter int64
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			err := tracker.Record(ctx, coverage, WithBranch("master"))
-			if err != nil {
+			coverage := createBenchmarkCoverage()
+			commit := fmt.Sprintf("bench-%d", atomic.AddInt64(&benchCounter, 1))
+			if err := tracker.Record(ctx, coverage, WithBranch("master"), WithCommit(commit, "")); err != nil {
+				if errors.Is(err, ErrHistoryEntryExists) ||
+					errors.Is(err, ErrWrittenFileEmpty) ||
+					errors.Is(err, ErrWrittenFileSizeMismatch) {
+					continue
+				}
 				b.Fatal(err)
 			}
 		}

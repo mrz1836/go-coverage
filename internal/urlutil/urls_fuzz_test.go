@@ -405,8 +405,8 @@ func FuzzBuildGitHubFileURL(f *testing.F) {
 			assert.Contains(t, result, sanitizedBranch, "Should contain sanitized branch")
 			assert.Contains(t, result, "/blob/", "Should contain blob path")
 
-			// The file path should be processed through CleanModulePath
-			cleanedPath := CleanModulePath(filePath)
+			// The file path should be processed through CleanModulePathWithRepo
+			cleanedPath := CleanModulePathWithRepo(filePath, sanitizedRepo)
 			assert.Contains(t, result, cleanedPath, "Should contain cleaned file path")
 		}
 
