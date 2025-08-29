@@ -1887,7 +1887,7 @@ jobs:
       pages: write # Required: Coverage workflow needs to deploy to GitHub Pages
       id-token: write # Required: Coverage workflow needs GitHub Pages authentication
       statuses: write # Required: Coverage workflow needs to create commit status checks
-    uses: ./.github/workflows/fortress-coverage.yml
+    uses: ./.github/workflows/fortress-coverage-optimized.yml
     with:
       coverage-file: coverage.txt
       branch-name: ${{ github.head_ref || github.ref_name }}
