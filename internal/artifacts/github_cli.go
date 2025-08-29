@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/mrz1836/go-coverage/internal/github"
+	"github.com/mrz1836/go-coverage/internal/retry"
 )
 
 var (
@@ -26,8 +27,9 @@ var (
 
 // GitHubCLI implements GitHub CLI operations for artifact management
 type GitHubCLI struct {
-	repository string
-	token      string
+	repository  string
+	token       string
+	retryConfig *retry.Config
 }
 
 // NewGitHubCLI creates a new GitHub CLI client
@@ -42,8 +44,9 @@ func NewGitHubCLI() (*GitHubCLI, error) {
 	}
 
 	return &GitHubCLI{
-		repository: ctx.Repository,
-		token:      ctx.Token,
+		repository:  ctx.Repository,
+		token:       ctx.Token,
+		retryConfig: retry.GitHubAPIConfig(), // Use GitHub API config for GitHub CLI operations
 	}, nil
 }
 
@@ -89,16 +92,33 @@ func (cli *GitHubCLI) ListArtifacts(ctx context.Context, opts *ListOptions) ([]*
 		args = append(args, "-F", strings.Join(query, "&"))
 	}
 
-	cmd := exec.CommandContext(ctx, "gh", args...) //nolint:gosec // gh CLI command with controlled args
-	cmd.Env = append(os.Environ(), fmt.Sprintf("GITHUB_TOKEN=%s", cli.token))
-
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to list artifacts: %w (stderr: %s)", err, stderr.String())
+	err := retry.Do(ctx, cli.retryConfig, func() error {
+		// Reset buffers for each retry attempt
+		stdout.Reset()
+		stderr.Reset()
+
+		cmd := exec.CommandContext(ctx, "gh", args...) //nolint:gosec // gh CLI command with controlled args
+		cmd.Env = append(os.Environ(), fmt.Sprintf("GITHUB_TOKEN=%s", cli.token))
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			// Check if it's a retryable error
+			stderrStr := stderr.String()
+			if strings.Contains(stderrStr, "rate limit") ||
+				strings.Contains(stderrStr, "timeout") ||
+				strings.Contains(stderrStr, "server error") {
+				return fmt.Errorf("retryable GitHub CLI error: %w (stderr: %s)", err, stderrStr)
+			}
+			return fmt.Errorf("failed to list artifacts: %w (stderr: %s)", err, stderrStr)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	var response GitHubArtifactsResponse
@@ -159,14 +179,31 @@ func (cli *GitHubCLI) DownloadArtifact(ctx context.Context, artifactID int64, de
 		"--dir", destDir,
 	}
 
-	cmd := exec.CommandContext(ctx, "gh", args...) //nolint:gosec // gh CLI command with controlled args
-	cmd.Env = append(os.Environ(), fmt.Sprintf("GITHUB_TOKEN=%s", cli.token))
-
 	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to download artifact: %w (stderr: %s)", err, stderr.String())
+	err := retry.Do(ctx, cli.retryConfig, func() error {
+		// Reset buffer for each retry attempt
+		stderr.Reset()
+
+		cmd := exec.CommandContext(ctx, "gh", args...) //nolint:gosec // gh CLI command with controlled args
+		cmd.Env = append(os.Environ(), fmt.Sprintf("GITHUB_TOKEN=%s", cli.token))
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			// Check if it's a retryable error
+			stderrStr := stderr.String()
+			if strings.Contains(stderrStr, "rate limit") ||
+				strings.Contains(stderrStr, "timeout") ||
+				strings.Contains(stderrStr, "server error") ||
+				strings.Contains(stderrStr, "network") {
+				return fmt.Errorf("retryable GitHub CLI error: %w (stderr: %s)", err, stderrStr)
+			}
+			return fmt.Errorf("failed to download artifact: %w (stderr: %s)", err, stderrStr)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -197,15 +234,29 @@ func (cli *GitHubCLI) UploadArtifact(ctx context.Context, name, filePath string,
 	// Copy file to upload directory with the artifact name
 	destPath := filepath.Join(uploadDir, name+".json")
 
-	// Read source file
-	data, err := os.ReadFile(filePath) //nolint:gosec // controlled file path from artifact processing
+	// Read source file with retry logic for file operations
+	var data []byte
+	err := retry.Do(ctx, retry.FileOperationConfig(), func() error {
+		var readErr error
+		data, readErr = os.ReadFile(filePath) //nolint:gosec // controlled file path from artifact processing
+		if readErr != nil {
+			return fmt.Errorf("failed to read source file: %w", readErr)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to read source file: %w", err)
+		return err
 	}
 
-	// Write to upload directory
-	if err := os.WriteFile(destPath, data, 0o600); err != nil {
-		return fmt.Errorf("failed to write to upload directory: %w", err)
+	// Write to upload directory with retry logic
+	err = retry.Do(ctx, retry.FileOperationConfig(), func() error {
+		if writeErr := os.WriteFile(destPath, data, 0o600); writeErr != nil {
+			return fmt.Errorf("failed to write to upload directory: %w", writeErr)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -219,14 +270,30 @@ func (cli *GitHubCLI) DeleteArtifact(ctx context.Context, artifactID int64) erro
 		"--method", "DELETE",
 	}
 
-	cmd := exec.CommandContext(ctx, "gh", args...) //nolint:gosec // gh CLI command with controlled args
-	cmd.Env = append(os.Environ(), fmt.Sprintf("GITHUB_TOKEN=%s", cli.token))
-
 	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to delete artifact: %w (stderr: %s)", err, stderr.String())
+	err := retry.Do(ctx, cli.retryConfig, func() error {
+		// Reset buffer for each retry attempt
+		stderr.Reset()
+
+		cmd := exec.CommandContext(ctx, "gh", args...) //nolint:gosec // gh CLI command with controlled args
+		cmd.Env = append(os.Environ(), fmt.Sprintf("GITHUB_TOKEN=%s", cli.token))
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			// Check if it's a retryable error
+			stderrStr := stderr.String()
+			if strings.Contains(stderrStr, "rate limit") ||
+				strings.Contains(stderrStr, "timeout") ||
+				strings.Contains(stderrStr, "server error") {
+				return fmt.Errorf("retryable GitHub CLI error: %w (stderr: %s)", err, stderrStr)
+			}
+			return fmt.Errorf("failed to delete artifact: %w (stderr: %s)", err, stderrStr)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

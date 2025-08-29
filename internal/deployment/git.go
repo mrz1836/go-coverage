@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/mrz1836/go-coverage/internal/retry"
 )
 
 // Static error definitions for git operations
@@ -46,19 +48,21 @@ type GitOperations interface {
 
 // GitClient is the concrete implementation of GitOperations
 type GitClient struct {
-	repository string
-	token      string
-	userEmail  string
-	userName   string
+	repository  string
+	token       string
+	userEmail   string
+	userName    string
+	retryConfig *retry.Config
 }
 
 // NewGitClient creates a new git client for deployment operations
 func NewGitClient(repository, token string) *GitClient {
 	return &GitClient{
-		repository: repository,
-		token:      token,
-		userEmail:  "action@github.com",
-		userName:   "GitHub Action",
+		repository:  repository,
+		token:       token,
+		userEmail:   "action@github.com",
+		userName:    "GitHub Action",
+		retryConfig: retry.NetworkConfig(), // Use network config for git operations
 	}
 }
 
@@ -262,15 +266,78 @@ func (g *GitClient) configureGit(ctx context.Context, workDir string) error {
 	return nil
 }
 
-// runGitCommand runs a git command with error handling
+// runGitCommand runs a git command with error handling and retry logic
 func (g *GitClient) runGitCommand(ctx context.Context, workDir string, args ...string) error {
-	cmd := exec.CommandContext(ctx, "git", args...)
-	cmd.Dir = workDir
+	return retry.Do(ctx, g.retryConfig, func() error {
+		cmd := exec.CommandContext(ctx, "git", args...)
+		cmd.Dir = workDir
 
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%w: %w, output: %s", ErrGitCommandFailed, err, string(output))
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			outputStr := string(output)
+
+			// Check for retryable git errors
+			if isRetryableGitError(outputStr, err) {
+				return fmt.Errorf("%w: %w, output: %s", ErrGitCommandFailed, err, outputStr)
+			}
+
+			// Non-retryable error, wrap with ErrRetryStop
+			return fmt.Errorf("%w: %w, output: %s", retry.ErrRetryStop,
+				fmt.Errorf("%w: %w", ErrGitCommandFailed, err), outputStr)
+		}
+
+		return nil
+	})
+}
+
+// isRetryableGitError determines if a git error is worth retrying
+func isRetryableGitError(output string, err error) bool {
+	if err == nil {
+		return false
 	}
 
-	return nil
+	// Convert to lowercase for case-insensitive matching
+	lowerOutput := strings.ToLower(output)
+	lowerErr := strings.ToLower(err.Error())
+
+	// Network-related errors that are worth retrying
+	retryablePatterns := []string{
+		"connection timed out",
+		"connection refused",
+		"network is unreachable",
+		"temporary failure in name resolution",
+		"could not resolve host",
+		"failed to connect",
+		"the remote end hung up unexpectedly",
+		"rpc failed",
+		"fetch-pack: unexpected disconnect",
+		"early eof",
+		"index-pack failed",
+		"unable to access",
+		"operation timed out",
+		"connection reset by peer",
+		"ssl_error_syscall",
+		"gnutls_handshake() failed",
+		"server certificate verification failed",
+		"http request failed",
+		"couldn't connect to server",
+	}
+
+	// Check if error message or output contains retryable patterns
+	for _, pattern := range retryablePatterns {
+		if strings.Contains(lowerOutput, pattern) || strings.Contains(lowerErr, pattern) {
+			return true
+		}
+	}
+
+	// Check for specific git exit codes that indicate temporary failures
+	if strings.Contains(lowerErr, "exit status 128") {
+		// Exit status 128 can indicate network issues or temporary failures
+		// but only if combined with network-related messages
+		return strings.Contains(lowerOutput, "fatal: unable to access") ||
+			strings.Contains(lowerOutput, "fatal: could not read") ||
+			strings.Contains(lowerOutput, "connection")
+	}
+
+	return false
 }

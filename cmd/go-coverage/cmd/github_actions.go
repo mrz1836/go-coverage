@@ -14,26 +14,34 @@ import (
 	"github.com/mrz1836/go-coverage/internal/analysis"
 	"github.com/mrz1836/go-coverage/internal/artifacts"
 	"github.com/mrz1836/go-coverage/internal/config"
+	"github.com/mrz1836/go-coverage/internal/diagnostics"
 	"github.com/mrz1836/go-coverage/internal/github"
+	"github.com/mrz1836/go-coverage/internal/health"
 	"github.com/mrz1836/go-coverage/internal/history"
 	"github.com/mrz1836/go-coverage/internal/parser"
 	"github.com/mrz1836/go-coverage/internal/providers"
+	"github.com/mrz1836/go-coverage/internal/validation"
 )
 
 // Static error definitions
 var (
-	ErrNotInGitHubActions    = errors.New("not running in GitHub Actions environment (use --force to override)")
-	ErrCoverageInputNotFound = errors.New("coverage input file not found")
-	ErrCoverageUploadFailed  = errors.New("coverage upload failed")
+	ErrNotInGitHubActions          = errors.New("not running in GitHub Actions environment (use --force to override)")
+	ErrCoverageInputNotFound       = errors.New("coverage input file not found")
+	ErrCoverageUploadFailed        = errors.New("coverage upload failed")
+	ErrCriticalHealthCheckFailures = errors.New("critical health check failures detected")
+	ErrValidationFailed            = errors.New("validation failed")
 )
 
 // GitHubActionsConfig holds configuration for the github-actions command
 type GitHubActionsConfig struct {
-	InputFile  string
-	Provider   string
-	DryRun     bool
-	Debug      bool
-	AutoDetect bool
+	InputFile      string
+	Provider       string
+	DryRun         bool
+	Debug          bool
+	AutoDetect     bool
+	Diagnostics    bool
+	SkipHealth     bool
+	SkipValidation bool
 }
 
 // newGitHubActionsCmd creates the github-actions command
@@ -61,13 +69,21 @@ Supports both internal (GitHub Pages) and external (Codecov) providers with auto
 			autoDetect, _ := cmd.Flags().GetBool("auto-detect")
 			force, _ := cmd.Flags().GetBool("force")
 
+			// Get additional flags
+			diagnostics, _ := cmd.Flags().GetBool("diagnostics")
+			skipHealth, _ := cmd.Flags().GetBool("skip-health")
+			skipValidation, _ := cmd.Flags().GetBool("skip-validation")
+
 			// Create configuration
 			cfg := &GitHubActionsConfig{
-				InputFile:  inputFile,
-				Provider:   provider,
-				DryRun:     dryRun,
-				Debug:      debug,
-				AutoDetect: autoDetect,
+				InputFile:      inputFile,
+				Provider:       provider,
+				DryRun:         dryRun,
+				Debug:          debug,
+				AutoDetect:     autoDetect,
+				Diagnostics:    diagnostics,
+				SkipHealth:     skipHealth,
+				SkipValidation: skipValidation,
 			}
 
 			// Execute the github-actions workflow
@@ -82,6 +98,9 @@ Supports both internal (GitHub Pages) and external (Codecov) providers with auto
 	cmd.Flags().Bool("debug", false, "Enable verbose debug output")
 	cmd.Flags().Bool("auto-detect", true, "Automatically detect GitHub Actions environment")
 	cmd.Flags().Bool("force", false, "Force execution even when not in GitHub Actions")
+	cmd.Flags().Bool("diagnostics", false, "Enable diagnostic output for troubleshooting")
+	cmd.Flags().Bool("skip-health", false, "Skip health checks before execution")
+	cmd.Flags().Bool("skip-validation", false, "Skip input validation checks")
 
 	return cmd
 }
@@ -118,8 +137,8 @@ func runGitHubActions(cfg *GitHubActionsConfig, force bool) error {
 	}
 
 	// Load environment files if they exist
-	if err := loadEnvFiles(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to load .env files: %v\n", err)
+	if envErr := loadEnvFiles(); envErr != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to load .env files: %v\n", envErr)
 	}
 
 	// Load main configuration
@@ -136,8 +155,8 @@ func runGitHubActions(cfg *GitHubActionsConfig, force bool) error {
 	}
 
 	// Validate configuration
-	if err := mainCfg.Validate(); err != nil {
-		return fmt.Errorf("configuration validation failed: %w", err)
+	if validateErr := mainCfg.Validate(); validateErr != nil {
+		return fmt.Errorf("configuration validation failed: %w", validateErr)
 	}
 
 	if cfg.Debug {
@@ -145,6 +164,52 @@ func runGitHubActions(cfg *GitHubActionsConfig, force bool) error {
 		_, _ = fmt.Fprintf(os.Stderr, "Provider: %s\n", cfg.Provider)
 		_, _ = fmt.Fprintf(os.Stderr, "Output directory: %s\n", mainCfg.Coverage.OutputDir)
 		_, _ = fmt.Fprintln(os.Stderr, "::endgroup::")
+	}
+
+	// Step 2.5: Health checks and validation (Phase 6 integration)
+	ctx := context.Background()
+	diag := diagnostics.NewErrorReporter(ctx)
+
+	// Run health checks unless skipped
+	if !cfg.SkipHealth {
+		if cfg.Debug {
+			_, _ = fmt.Fprintln(os.Stderr, "::group::Health Checks")
+		}
+
+		_, _ = fmt.Fprintln(os.Stdout, "🏥 Running system health checks...")
+
+		if healthErr := runHealthChecks(ctx, githubCtx, cfg.Debug); healthErr != nil {
+			if cfg.Diagnostics {
+				diagErr := diagnostics.NewDiagnosticError(diagnostics.ErrorTypeSystem, "health_checks", healthErr.Error())
+				diag.Report(diagErr.Build())
+			}
+			_, _ = fmt.Fprintf(os.Stderr, "⚠️  Health check warnings: %v\n", healthErr)
+		}
+
+		if cfg.Debug {
+			_, _ = fmt.Fprintln(os.Stderr, "::endgroup::")
+		}
+	}
+
+	// Run input validation unless skipped
+	if !cfg.SkipValidation {
+		if cfg.Debug {
+			_, _ = fmt.Fprintln(os.Stderr, "::group::Input Validation")
+		}
+
+		_, _ = fmt.Fprintln(os.Stdout, "🔍 Validating inputs...")
+
+		if validationErr := runInputValidation(ctx, githubCtx, mainCfg, cfg); validationErr != nil {
+			if cfg.Diagnostics {
+				diagErr := diagnostics.NewDiagnosticError(diagnostics.ErrorTypeValidation, "input_validation", validationErr.Error())
+				diag.Report(diagErr.Build())
+			}
+			return fmt.Errorf("input validation failed: %w", validationErr)
+		}
+
+		if cfg.Debug {
+			_, _ = fmt.Fprintln(os.Stderr, "::endgroup::")
+		}
 	}
 
 	// Step 3: Execute workflow
@@ -167,8 +232,18 @@ func runGitHubActions(cfg *GitHubActionsConfig, force bool) error {
 
 	_, _ = fmt.Fprintln(os.Stdout, "🚀 Starting GitHub Actions coverage workflow...")
 
-	// Execute the complete workflow orchestration
-	return executeWorkflow(githubCtx, mainCfg, cfg)
+	// Execute the complete workflow orchestration with fallback mechanisms
+	err = executeWorkflowWithFallback(ctx, githubCtx, mainCfg, cfg, diag)
+
+	// Output diagnostics if enabled and there were errors
+	if cfg.Diagnostics && (err != nil || diag.HasErrors()) {
+		_, _ = fmt.Fprintln(os.Stderr, "\n🔧 Diagnostic Information:")
+		if diagnosticOutput := diag.GenerateReport(); diagnosticOutput != "" {
+			_, _ = fmt.Fprintln(os.Stderr, diagnosticOutput)
+		}
+	}
+
+	return err
 }
 
 // loadEnvFiles loads environment variables from .github/.env.* files
@@ -275,9 +350,7 @@ func isSpace(c byte) bool {
 }
 
 // executeWorkflow orchestrates the complete GitHub Actions coverage workflow using provider abstraction
-func executeWorkflow(githubCtx *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig) error {
-	ctx := context.Background()
-
+func executeWorkflow(ctx context.Context, githubCtx *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig) error {
 	// Step 1: Parse coverage data
 	_, _ = fmt.Fprintln(os.Stdout, "📊 Parsing coverage data...")
 
@@ -359,7 +432,7 @@ func executeWorkflow(githubCtx *github.GitHubContext, mainCfg *config.Config, cf
 	if githubCtx.PRNumber != "" {
 		_, _ = fmt.Fprintln(os.Stdout, "💬 Posting PR comment...")
 
-		postPRComment(githubCtx, mainCfg, cfg)
+		postPRComment(ctx, githubCtx, mainCfg, cfg)
 	}
 
 	// Step 9: Output results
@@ -480,9 +553,7 @@ func convertAnalysisPRFileAnalysis(analysisFileAnalysis *analysis.PRFileAnalysis
 }
 
 // postPRComment posts a comment on the PR with coverage information
-func postPRComment(githubCtx *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig) {
-	ctx := context.Background()
-
+func postPRComment(ctx context.Context, githubCtx *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig) {
 	if cfg.Debug {
 		_, _ = fmt.Fprintf(os.Stdout, "📝 Processing PR comment for PR #%s\n", githubCtx.PRNumber)
 	}
@@ -719,4 +790,96 @@ func convertCoverageData(parserResult *parser.CoverageData, githubCtx *github.Gi
 		CommitSHA:    githubCtx.CommitSHA,
 		Branch:       githubCtx.Branch,
 	}
+}
+
+// runHealthChecks performs system health checks before workflow execution
+func runHealthChecks(ctx context.Context, githubCtx *github.GitHubContext, debug bool) error {
+	// Create health manager
+	manager := health.NewManager()
+
+	// Add specific health checkers
+	manager.AddChecker(health.NewGitHubAPIChecker(githubCtx.Token, githubCtx.Repository))
+	manager.AddChecker(health.NewDiskSpaceChecker(".", 100*1024*1024, 5.0)) // 100MB min, 5% min
+	manager.AddChecker(health.NewNetworkConnectivityChecker([]string{"github.com", "api.github.com"}))
+
+	// Set timeout
+	manager.SetTimeout(30 * time.Second)
+
+	// Run health checks
+	report := manager.CheckAll(ctx)
+
+	// Log results
+	if debug {
+		for _, result := range report.Checks {
+			status := "✅"
+			if result.Status != health.StatusHealthy {
+				status = "⚠️"
+			}
+			_, _ = fmt.Fprintf(os.Stderr, "%s %s: %s\n", status, result.Name, result.Message)
+		}
+	}
+
+	// Return error only if there are critical failures
+	if report.OverallStatus == health.StatusUnhealthy {
+		return ErrCriticalHealthCheckFailures
+	}
+
+	return nil
+}
+
+// runInputValidation validates inputs before workflow execution
+func runInputValidation(ctx context.Context, _ *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig) error {
+	// Create validators
+	coverageValidator := validation.NewCoverageFileValidator(mainCfg.Coverage.InputFile)
+	githubValidator := validation.NewGitHubEnvironmentValidator()
+
+	// Convert config to map for validator
+	configMap := map[string]interface{}{
+		"coverage_input":     mainCfg.Coverage.InputFile,
+		"coverage_threshold": mainCfg.Coverage.Threshold,
+		"output_dir":         mainCfg.Coverage.OutputDir,
+	}
+	configValidator := validation.NewConfigValidator(configMap)
+
+	// Run all validations
+	result := validation.ValidateAll(ctx, coverageValidator, githubValidator, configValidator)
+
+	if cfg.Debug {
+		for _, warning := range result.Warnings {
+			_, _ = fmt.Fprintf(os.Stderr, "⚠️  %s: %s\n", warning.Field, warning.Message)
+		}
+		for _, err := range result.Errors {
+			_, _ = fmt.Fprintf(os.Stderr, "❌ %s: %s\n", err.Field, err.Message)
+		}
+	}
+
+	// Return error if validation failed
+	if !result.Valid {
+		return fmt.Errorf("%w: %d errors found", ErrValidationFailed, len(result.Errors))
+	}
+
+	if cfg.Debug {
+		_, _ = fmt.Fprintf(os.Stderr, "✅ All input validations passed\n")
+	}
+
+	return nil
+}
+
+// executeWorkflowWithFallback wraps executeWorkflow with fallback mechanisms
+func executeWorkflowWithFallback(ctx context.Context, githubCtx *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig, diag *diagnostics.ErrorReporter) error {
+	// For now, we'll use a simple wrapper that adds basic error recovery
+	// The fallback mechanisms are built into the individual components
+	// (like retry logic in network operations, partial upload in artifacts, etc.)
+
+	// Execute the main workflow
+	err := executeWorkflow(ctx, githubCtx, mainCfg, cfg)
+
+	// Record execution results in diagnostics
+	if cfg.Diagnostics && err != nil {
+		diagErr := diagnostics.NewDiagnosticError(diagnostics.ErrorTypeSystem, "workflow_execution", err.Error())
+		diag.Report(diagErr.Build())
+		_, _ = fmt.Fprintf(os.Stderr, "🔧 Workflow execution failed, diagnostic information available\n")
+	}
+
+	return err
 }

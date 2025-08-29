@@ -10,21 +10,25 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/mrz1836/go-coverage/internal/retry"
 )
 
 // Static error definitions
 var (
-	ErrGitHubAPIError   = errors.New("GitHub API error")
-	ErrCommentNotFound  = errors.New("coverage comment not found")
-	ErrWorkflowNotFound = errors.New("workflow not found")
+	ErrGitHubAPIError     = errors.New("GitHub API error")
+	ErrCommentNotFound    = errors.New("coverage comment not found")
+	ErrWorkflowNotFound   = errors.New("workflow not found")
+	ErrRetryableHTTPError = errors.New("retryable HTTP error")
 )
 
 // Client handles GitHub API operations for coverage reporting
 type Client struct {
-	token      string
-	baseURL    string
-	httpClient *http.Client
-	config     *Config
+	token       string
+	baseURL     string
+	httpClient  *http.Client
+	config      *Config
+	retryConfig *retry.Config
 }
 
 // Config holds GitHub client configuration
@@ -139,6 +143,7 @@ func New(token string) *Client {
 			RetryCount: 3,
 			UserAgent:  "coverage-system/1.0",
 		},
+		retryConfig: retry.GitHubAPIConfig(),
 	}
 }
 
@@ -150,8 +155,50 @@ func NewWithConfig(config *Config) *Client {
 		httpClient: &http.Client{
 			Timeout: config.Timeout,
 		},
-		config: config,
+		config:      config,
+		retryConfig: retry.GitHubAPIConfig(),
 	}
+}
+
+// doRequestWithRetry executes an HTTP request with retry logic
+func (c *Client) doRequestWithRetry(ctx context.Context, req *http.Request) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+
+	err = retry.Do(ctx, c.retryConfig, func() error {
+		// Clone the request for each retry attempt
+		reqClone := req.Clone(ctx)
+
+		// Re-read the body if it exists (for POST/PUT requests)
+		if req.Body != nil && req.GetBody != nil {
+			body, bodyErr := req.GetBody()
+			if bodyErr != nil {
+				return fmt.Errorf("failed to get request body: %w", bodyErr)
+			}
+			reqClone.Body = body
+		}
+
+		resp, err = c.httpClient.Do(reqClone)
+		if err != nil {
+			return fmt.Errorf("HTTP request failed: %w", err)
+		}
+		defer func() {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				// Log error but don't return it since we're in a defer
+				_ = closeErr
+			}
+		}()
+
+		// Check for retryable HTTP status codes
+		if resp.StatusCode >= 500 || resp.StatusCode == 429 || resp.StatusCode == 408 {
+			body, _ := io.ReadAll(resp.Body)
+			return fmt.Errorf("%w: %d %s", ErrRetryableHTTPError, resp.StatusCode, string(body))
+		}
+
+		return nil
+	})
+
+	return resp, err
 }
 
 // CreateComment creates or updates a PR comment with coverage information
@@ -185,11 +232,16 @@ func (c *Client) CreateStatus(ctx context.Context, owner, repo, sha string, stat
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
+	// Set GetBody for retry support with POST requests
+	req.GetBody = func() (io.ReadCloser, error) {
+		return io.NopCloser(bytes.NewReader(jsonData)), nil
+	}
+
 	req.Header.Set("Authorization", "token "+c.token)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return fmt.Errorf("failed to create status: %w", err)
 	}
@@ -215,7 +267,7 @@ func (c *Client) GetPullRequest(ctx context.Context, owner, repo string, pr int)
 	req.Header.Set("Authorization", "token "+c.token)
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get PR: %w", err)
 	}
@@ -247,7 +299,7 @@ func (c *Client) findCoverageComment(ctx context.Context, owner, repo string, pr
 	req.Header.Set("Authorization", "token "+c.token)
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments: %w", err)
 	}
@@ -287,11 +339,16 @@ func (c *Client) createComment(ctx context.Context, owner, repo string, pr int, 
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
+	// Set GetBody for retry support with POST requests
+	req.GetBody = func() (io.ReadCloser, error) {
+		return io.NopCloser(bytes.NewReader(jsonData)), nil
+	}
+
 	req.Header.Set("Authorization", "token "+c.token)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create comment: %w", err)
 	}
@@ -324,11 +381,16 @@ func (c *Client) updateComment(ctx context.Context, owner, repo string, commentI
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
+	// Set GetBody for retry support with PATCH requests
+	req.GetBody = func() (io.ReadCloser, error) {
+		return io.NopCloser(bytes.NewReader(jsonData)), nil
+	}
+
 	req.Header.Set("Authorization", "token "+c.token)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update comment: %w", err)
 	}
@@ -409,7 +471,7 @@ func (c *Client) GetWorkflowRuns(ctx context.Context, owner, repo string, limit 
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow runs: %w", err)
 	}
@@ -450,7 +512,7 @@ func (c *Client) GetWorkflowRunsByWorkflow(ctx context.Context, owner, repo, wor
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow runs: %w", err)
 	}
@@ -482,7 +544,7 @@ func (c *Client) GetWorkflowRun(ctx context.Context, owner, repo string, runID i
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow run: %w", err)
 	}
@@ -514,7 +576,7 @@ func (c *Client) getWorkflowIDByName(ctx context.Context, owner, repo, workflowN
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get workflows: %w", err)
 	}

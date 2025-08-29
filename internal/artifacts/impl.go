@@ -16,10 +16,12 @@ import (
 
 // Manager is the concrete implementation of ArtifactManager
 type Manager struct {
-	client  *GitHubCLI
-	tempDir string
-	maxSize int64 // Maximum history size in bytes (10MB)
-	maxAge  time.Duration
+	client             *GitHubCLI
+	tempDir            string
+	maxSize            int64 // Maximum history size in bytes (10MB)
+	maxAge             time.Duration
+	partialUploader    *PartialUploader
+	largeFileThreshold int64 // Threshold for using partial uploads (5MB)
 }
 
 // NewManager creates a new artifact manager
@@ -36,10 +38,12 @@ func NewManager() (*Manager, error) {
 	tempDir = filepath.Join(tempDir, "coverage-artifacts")
 
 	return &Manager{
-		client:  client,
-		tempDir: tempDir,
-		maxSize: 10 * 1024 * 1024,    // 10MB
-		maxAge:  30 * 24 * time.Hour, // 30 days
+		client:             client,
+		tempDir:            tempDir,
+		maxSize:            10 * 1024 * 1024,    // 10MB
+		maxAge:             30 * 24 * time.Hour, // 30 days
+		partialUploader:    NewPartialUploader(tempDir, DefaultChunkSize),
+		largeFileThreshold: 5 * 1024 * 1024, // 5MB threshold for partial uploads
 	}, nil
 }
 
@@ -215,8 +219,21 @@ func (m *Manager) UploadHistory(ctx context.Context, hist *History, opts *Upload
 	// Generate artifact name
 	artifactName := GenerateArtifactName(opts)
 
-	// Upload artifact
-	err = m.client.UploadArtifact(ctx, artifactName, tempFile, opts.RetentionDays)
+	// Check file size and decide upload strategy
+	fileInfo, err := os.Stat(tempFile)
+	if err != nil {
+		_ = os.Remove(tempFile)
+		return fmt.Errorf("failed to stat temp file: %w", err)
+	}
+
+	// Use partial upload for large files
+	if fileInfo.Size() > m.largeFileThreshold {
+		err = m.uploadLargeArtifact(ctx, artifactName, tempFile, opts.RetentionDays)
+	} else {
+		// Use standard upload for smaller files
+		err = m.client.UploadArtifact(ctx, artifactName, tempFile, opts.RetentionDays)
+	}
+
 	if err != nil {
 		// Clean up temp file
 		_ = os.Remove(tempFile)
@@ -394,4 +411,129 @@ func (m *Manager) enforceSizeLimits(hist *History) *History {
 	hist.Metadata.UpdatedAt = time.Now()
 
 	return hist
+}
+
+// uploadLargeArtifact handles uploading large artifacts using partial upload capability
+func (m *Manager) uploadLargeArtifact(ctx context.Context, artifactName, filePath string, retentionDays int) error {
+	// Start partial upload
+	uploadOpts := DefaultPartialUploadOptions()
+	uploadOpts.ProgressCallback = func(uploaded, total int64, chunksCompleted, totalChunks int) {
+		// Progress reporting (could be enhanced with logging)
+		percent := float64(uploaded) / float64(total) * 100
+		fmt.Fprintf(os.Stderr, "Upload progress: %.1f%% (%d/%d chunks)\n", percent, chunksCompleted, totalChunks)
+	}
+
+	state, err := m.partialUploader.StartPartialUpload(ctx, filePath, uploadOpts)
+	if err != nil {
+		return fmt.Errorf("failed to start partial upload: %w", err)
+	}
+
+	// Define upload function that will be called for each chunk
+	uploadChunkFunc := func(ctx context.Context, chunkData []byte, chunkIndex int, state *UploadState) error {
+		// For this implementation, we'll use a simulated chunked upload
+		// In a real implementation, this would upload individual chunks to GitHub
+		// For now, we'll combine chunks and do standard upload at the end
+		// This is a placeholder - real implementation would need GitHub's chunked upload API
+
+		// Store chunk in temporary location (simulation)
+		chunkFile := filepath.Join(m.tempDir, fmt.Sprintf("%s-chunk-%d.part", state.SessionID, chunkIndex))
+		if err := os.WriteFile(chunkFile, chunkData, 0o600); err != nil {
+			return fmt.Errorf("failed to write chunk file: %w", err)
+		}
+
+		return nil
+	}
+
+	// Upload all chunks
+	if err := m.partialUploader.UploadChunks(ctx, filePath, state, uploadOpts, uploadChunkFunc); err != nil {
+		return fmt.Errorf("failed to upload chunks: %w", err)
+	}
+
+	// Verify upload completion
+	if err := m.partialUploader.VerifyUpload(state); err != nil {
+		return fmt.Errorf("upload verification failed: %w", err)
+	}
+
+	// Reassemble chunks and do final upload
+	// In a production implementation, this would be handled by the GitHub API
+	reassembledFile := filepath.Join(m.tempDir, fmt.Sprintf("%s-reassembled.json", state.SessionID))
+	if err := m.reassembleChunks(state, reassembledFile); err != nil {
+		return fmt.Errorf("failed to reassemble chunks: %w", err)
+	}
+
+	// Do final upload using standard method
+	if err := m.client.UploadArtifact(ctx, artifactName, reassembledFile, retentionDays); err != nil {
+		// Clean up partial files
+		m.cleanupPartialFiles(state)
+		_ = os.Remove(reassembledFile)
+		return fmt.Errorf("failed to upload reassembled artifact: %w", err)
+	}
+
+	// Clean up partial files and state
+	m.cleanupPartialFiles(state)
+	_ = os.Remove(reassembledFile)
+	_ = m.partialUploader.CleanupUploadState(state.SessionID)
+
+	return nil
+}
+
+// reassembleChunks combines uploaded chunks into a single file
+func (m *Manager) reassembleChunks(state *UploadState, outputFile string) error {
+	// Clean and validate the output file path to prevent directory traversal
+	cleanPath := filepath.Clean(outputFile)
+	if !filepath.IsAbs(cleanPath) {
+		cleanPath = filepath.Join(m.tempDir, cleanPath)
+	}
+
+	output, err := os.Create(cleanPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer func() { _ = output.Close() }()
+
+	// Process chunks in order
+	for i := 0; i < state.TotalChunks; i++ {
+		chunkFile := filepath.Join(m.tempDir, fmt.Sprintf("%s-chunk-%d.part", state.SessionID, i))
+
+		chunkData, err := os.ReadFile(chunkFile) //nolint:gosec // internal temp file
+		if err != nil {
+			return fmt.Errorf("failed to read chunk %d: %w", i, err)
+		}
+
+		if _, err := output.Write(chunkData); err != nil {
+			return fmt.Errorf("failed to write chunk %d to output: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+// cleanupPartialFiles removes temporary chunk files
+func (m *Manager) cleanupPartialFiles(state *UploadState) {
+	for i := 0; i < state.TotalChunks; i++ {
+		chunkFile := filepath.Join(m.tempDir, fmt.Sprintf("%s-chunk-%d.part", state.SessionID, i))
+		_ = os.Remove(chunkFile)
+	}
+}
+
+// GetPartialUploadProgress returns progress information for partial uploads
+func (m *Manager) GetPartialUploadProgress(sessionID string) (*UploadProgress, error) {
+	return m.partialUploader.GetUploadProgress(sessionID)
+}
+
+// ListIncompleteUploads returns incomplete upload sessions
+func (m *Manager) ListIncompleteUploads() ([]*UploadState, error) {
+	return m.partialUploader.ListIncompleteUploads()
+}
+
+// ResumePartialUpload resumes a previously interrupted upload
+func (m *Manager) ResumePartialUpload(ctx context.Context, sessionID, filePath string) error {
+	uploadOpts := DefaultPartialUploadOptions()
+
+	uploadChunkFunc := func(ctx context.Context, chunkData []byte, chunkIndex int, state *UploadState) error {
+		chunkFile := filepath.Join(m.tempDir, fmt.Sprintf("%s-chunk-%d.part", state.SessionID, chunkIndex))
+		return os.WriteFile(chunkFile, chunkData, 0o600)
+	}
+
+	return m.partialUploader.ResumeUpload(ctx, sessionID, filePath, uploadOpts, uploadChunkFunc)
 }

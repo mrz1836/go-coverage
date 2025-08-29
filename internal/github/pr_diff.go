@@ -84,7 +84,7 @@ func (c *Client) GetPRDiff(ctx context.Context, owner, repo string, pr int) (*PR
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get PR diff: %w", err)
 	}
