@@ -1,0 +1,10 @@
+{
+    "coverage": 66.19,
+    "total_lines": 7738,
+    "covered_lines": 5122,
+    "branch": "23/merge",
+    "commit_sha": "4c03b240a14a229990bd571ad0848cd80c910564",
+    "timestamp": "2025-08-29T22:36:40Z",
+    "packages": 23,
+    "files": 59
+}
