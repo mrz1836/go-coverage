@@ -1,4 +1,4 @@
-//go:build unix && !linux && !darwin
+//go:build linux
 
 package health
 
@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// getDiskUsage returns disk usage information for the given path on Unix systems
+// getDiskUsage returns disk usage information for the given path on Linux systems
 func (c *DiskSpaceChecker) getDiskUsage(path string) (*DiskUsage, error) {
 	var stat unix.Statfs_t
 	err := unix.Statfs(path, &stat)
@@ -17,7 +17,8 @@ func (c *DiskSpaceChecker) getDiskUsage(path string) (*DiskUsage, error) {
 	}
 
 	// Calculate total and free space
-	blockSize := int64(stat.Bsize)
+	// On Linux, stat.Bsize is already int64, no conversion needed
+	blockSize := stat.Bsize
 	// Use safe calculation with overflow protection
 	var total, free int64
 	const maxInt64 = int64(^uint64(0) >> 1)

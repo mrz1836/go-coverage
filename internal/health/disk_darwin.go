@@ -1,4 +1,4 @@
-//go:build unix && !linux && !darwin
+//go:build darwin
 
 package health
 
@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// getDiskUsage returns disk usage information for the given path on Unix systems
+// getDiskUsage returns disk usage information for the given path on Darwin systems
 func (c *DiskSpaceChecker) getDiskUsage(path string) (*DiskUsage, error) {
 	var stat unix.Statfs_t
 	err := unix.Statfs(path, &stat)
@@ -17,6 +17,7 @@ func (c *DiskSpaceChecker) getDiskUsage(path string) (*DiskUsage, error) {
 	}
 
 	// Calculate total and free space
+	// On Darwin, stat.Bsize is uint32, convert to int64
 	blockSize := int64(stat.Bsize)
 	// Use safe calculation with overflow protection
 	var total, free int64
