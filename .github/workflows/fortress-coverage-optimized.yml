@@ -2,7 +2,6 @@
 #  GoFortress Coverage System (Optimized)
 #
 #  Purpose: Optimized coverage workflow using the github-actions command
-#  Reduces complexity from 2,391 lines to ~150 lines while preserving all features
 #
 #  Key Features:
 #  - Binary caching for fast execution (80% faster setup)
@@ -72,11 +71,11 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     permissions:
-      contents: write          # Required for checkout and Pages deployment
-      pages: write            # Required for GitHub Pages deployment
-      id-token: write         # Required for GitHub Pages deployment
-      pull-requests: write    # Required for creating PR comments
-      statuses: write         # Required for commit status updates
+      contents: write # Required for checkout and Pages deployment
+      pages: write # Required for GitHub Pages deployment
+      id-token: write # Required for GitHub Pages deployment
+      pull-requests: write # Required for creating PR comments
+      statuses: write # Required for commit status updates
 
     steps:
       # ————————————————————————————————————————————————————————————————
@@ -343,4 +342,3 @@ jobs:
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎉 Coverage pipeline completed successfully!"
-
