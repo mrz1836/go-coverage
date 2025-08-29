@@ -6,13 +6,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/mrz1836/go-coverage/internal/analysis"
+	"github.com/mrz1836/go-coverage/internal/artifacts"
 	"github.com/mrz1836/go-coverage/internal/config"
 	"github.com/mrz1836/go-coverage/internal/deployment"
 	"github.com/mrz1836/go-coverage/internal/github"
+	"github.com/mrz1836/go-coverage/internal/history"
+	"github.com/mrz1836/go-coverage/internal/parser"
 )
 
 // Static error definitions
@@ -413,16 +419,247 @@ func loadCoverageFiles(outputDir string) (map[string][]byte, error) {
 	return files, nil
 }
 
-// postPRComment posts a comment on the PR with coverage information
-func postPRComment(githubCtx *github.GitHubContext, _ *config.Config, cfg *GitHubActionsConfig) {
-	// This is a placeholder for PR comment functionality
-	// In a full implementation, this would use the existing PR comment functionality
-	// from internal/github/pr_comment.go
-
-	if cfg.Debug {
-		_, _ = fmt.Fprintf(os.Stdout, "📝 Would post PR comment for PR #%s\n", githubCtx.PRNumber)
+// convertPRDiff converts github.PRDiff to analysis.PRDiff
+func convertPRDiff(githubPRDiff *github.PRDiff) *analysis.PRDiff {
+	analysisPRDiff := &analysis.PRDiff{
+		Files: make([]analysis.PRFile, len(githubPRDiff.Files)),
 	}
 
-	// For now, just return as PR comment functionality is complex
-	// and would be implemented in a future phase
+	for i, file := range githubPRDiff.Files {
+		analysisPRDiff.Files[i] = analysis.PRFile{
+			Filename:         file.Filename,
+			Status:           file.Status,
+			Additions:        file.Additions,
+			Deletions:        file.Deletions,
+			Changes:          file.Changes,
+			Patch:            file.Patch,
+			BlobURL:          file.BlobURL,
+			RawURL:           file.RawURL,
+			PreviousFilename: file.PreviousFilename,
+		}
+	}
+
+	return analysisPRDiff
+}
+
+// convertAnalysisToGitHub converts analysis.CoverageComparison to github.CoverageComparison
+func convertAnalysisToGitHub(analysisComparison *analysis.CoverageComparison) *github.CoverageComparison {
+	return &github.CoverageComparison{
+		BaseCoverage: github.CoverageData{
+			Percentage:        analysisComparison.BaseCoverage.Percentage,
+			TotalStatements:   analysisComparison.BaseCoverage.TotalStatements,
+			CoveredStatements: analysisComparison.BaseCoverage.CoveredStatements,
+			CommitSHA:         analysisComparison.BaseCoverage.CommitSHA,
+			Branch:            analysisComparison.BaseCoverage.Branch,
+			Timestamp:         analysisComparison.BaseCoverage.Timestamp,
+		},
+		PRCoverage: github.CoverageData{
+			Percentage:        analysisComparison.PRCoverage.Percentage,
+			TotalStatements:   analysisComparison.PRCoverage.TotalStatements,
+			CoveredStatements: analysisComparison.PRCoverage.CoveredStatements,
+			CommitSHA:         analysisComparison.PRCoverage.CommitSHA,
+			Branch:            analysisComparison.PRCoverage.Branch,
+			Timestamp:         analysisComparison.PRCoverage.Timestamp,
+		},
+		Difference: analysisComparison.Difference,
+		TrendAnalysis: github.TrendData{
+			Direction:        analysisComparison.TrendAnalysis.Direction,
+			Magnitude:        analysisComparison.TrendAnalysis.Magnitude,
+			PercentageChange: analysisComparison.TrendAnalysis.PercentageChange,
+			Momentum:         analysisComparison.TrendAnalysis.Momentum,
+		},
+		FileChanges:      convertAnalysisFileChanges(analysisComparison.FileChanges),
+		SignificantFiles: analysisComparison.SignificantFiles,
+		PRFileAnalysis:   convertAnalysisPRFileAnalysis(analysisComparison.PRFileAnalysis),
+	}
+}
+
+func convertAnalysisFileChanges(analysisChanges []analysis.FileChange) []github.FileChange {
+	githubChanges := make([]github.FileChange, len(analysisChanges))
+	for i, change := range analysisChanges {
+		githubChanges[i] = github.FileChange{
+			Filename:      change.Filename,
+			BaseCoverage:  change.BaseCoverage,
+			PRCoverage:    change.PRCoverage,
+			Difference:    change.Difference,
+			LinesAdded:    change.LinesAdded,
+			LinesRemoved:  change.LinesRemoved,
+			IsSignificant: change.IsSignificant,
+		}
+	}
+	return githubChanges
+}
+
+func convertAnalysisPRFileAnalysis(analysisFileAnalysis *analysis.PRFileAnalysis) *github.PRFileAnalysis {
+	if analysisFileAnalysis == nil {
+		return nil
+	}
+	return &github.PRFileAnalysis{
+		Summary: github.PRFileSummary{
+			TotalFiles:          analysisFileAnalysis.Summary.TotalFiles,
+			GoFilesCount:        analysisFileAnalysis.Summary.GoFilesCount,
+			TestFilesCount:      analysisFileAnalysis.Summary.TestFilesCount,
+			ConfigFilesCount:    analysisFileAnalysis.Summary.ConfigFilesCount,
+			DocumentationCount:  analysisFileAnalysis.Summary.DocumentationCount,
+			GeneratedFilesCount: analysisFileAnalysis.Summary.GeneratedFilesCount,
+			OtherFilesCount:     analysisFileAnalysis.Summary.OtherFilesCount,
+			HasGoChanges:        analysisFileAnalysis.Summary.HasGoChanges,
+			HasTestChanges:      analysisFileAnalysis.Summary.HasTestChanges,
+			HasConfigChanges:    analysisFileAnalysis.Summary.HasConfigChanges,
+			TotalAdditions:      analysisFileAnalysis.Summary.TotalAdditions,
+			TotalDeletions:      analysisFileAnalysis.Summary.TotalDeletions,
+			GoAdditions:         analysisFileAnalysis.Summary.GoAdditions,
+			GoDeletions:         analysisFileAnalysis.Summary.GoDeletions,
+		},
+	}
+}
+
+// postPRComment posts a comment on the PR with coverage information
+func postPRComment(githubCtx *github.GitHubContext, mainCfg *config.Config, cfg *GitHubActionsConfig) {
+	ctx := context.Background()
+
+	if cfg.Debug {
+		_, _ = fmt.Fprintf(os.Stdout, "📝 Processing PR comment for PR #%s\n", githubCtx.PRNumber)
+	}
+
+	// Step 1: Parse current coverage data
+	parser := parser.New()
+	coverageData, err := parser.ParseFile(ctx, mainCfg.Coverage.InputFile)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to parse coverage data: %v\n", err)
+		return
+	}
+
+	// Step 2: Set up GitHub client
+	client := github.NewWithConfig(&github.Config{
+		Token:      githubCtx.Token,
+		UserAgent:  "go-coverage/1.0",
+		Timeout:    30 * time.Second,
+		BaseURL:    "https://api.github.com",
+		RetryCount: 3,
+	})
+
+	// Step 3: Set up artifacts manager for coverage diff
+	artifactManager, err := artifacts.NewManager()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to create artifact manager: %v\n", err)
+		return
+	}
+
+	// Step 4: Calculate coverage diff
+	differ := analysis.NewCoverageDiffer(artifactManager)
+
+	// Extract base branch from PR (default to main if not available)
+	baseBranch := "main"
+	// In a full implementation, we'd extract base branch from PR event data
+	// For now, always use main as default for all events
+
+	comparison, err := differ.CalculateDiff(ctx, coverageData, baseBranch, githubCtx.Branch, githubCtx.PRNumber)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to calculate coverage diff: %v\n", err)
+		// Continue with basic comparison
+		comparison = &analysis.CoverageComparison{
+			PRCoverage: analysis.CoverageData{
+				Percentage:        coverageData.Percentage,
+				TotalStatements:   coverageData.TotalLines,
+				CoveredStatements: coverageData.CoveredLines,
+				CommitSHA:         githubCtx.CommitSHA,
+				Branch:            githubCtx.Branch,
+				Timestamp:         time.Now(),
+			},
+			BaseCoverage: analysis.CoverageData{
+				Percentage: 0.0,
+			},
+			Difference: coverageData.Percentage,
+			TrendAnalysis: analysis.TrendData{
+				Direction: "up",
+				Magnitude: "minor",
+			},
+		}
+	}
+
+	// Step 5: Get trend history for visualization
+	trendHistory, err := differ.GetTrendHistory(ctx, githubCtx.Branch, 30)
+	if err != nil {
+		if cfg.Debug {
+			_, _ = fmt.Fprintf(os.Stderr, "Debug: Failed to get trend history: %v\n", err)
+		}
+		trendHistory = []history.CoverageRecord{}
+	}
+
+	// Step 6: Enhance with PR diff information
+	prNumber, parseErr := strconv.Atoi(githubCtx.PRNumber)
+	if parseErr == nil {
+		// Extract repository owner and name
+		repoParts := strings.Split(githubCtx.Repository, "/")
+		if len(repoParts) == 2 {
+			owner, repo := repoParts[0], repoParts[1]
+			prDiff, diffErr := client.GetPRDiff(ctx, owner, repo, prNumber)
+			if diffErr == nil {
+				// Convert github.PRDiff to analysis.PRDiff
+				analysisPRDiff := convertPRDiff(prDiff)
+				differ.EnhanceWithPRDiff(comparison, analysisPRDiff)
+			}
+		}
+	}
+
+	// Step 7: Generate comment body
+	templateConfig := github.DefaultCommentTemplateConfig()
+	templateConfig.Repository = githubCtx.Repository
+	templateConfig.CoverageTarget = mainCfg.Coverage.Threshold
+
+	// Set deployment URL if using internal provider
+	deploymentURL := ""
+	if cfg.Provider == "auto" || cfg.Provider == "internal" {
+		repoParts := strings.Split(githubCtx.Repository, "/")
+		if len(repoParts) == 2 {
+			owner := repoParts[0]
+			deploymentURL = fmt.Sprintf("https://%s.github.io/%s/coverage/", owner, repoParts[1])
+		}
+	}
+
+	templateGenerator := github.NewCommentTemplateGenerator(templateConfig)
+	// Convert analysis types to github types for the template generator
+	githubComparison := convertAnalysisToGitHub(comparison)
+	commentBody := templateGenerator.GenerateComment(githubComparison, trendHistory, deploymentURL)
+
+	// Step 8: Post or update PR comment
+	commentConfig := &github.PRCommentConfig{
+		MinUpdateIntervalMinutes: 5,
+		MaxCommentsPerPR:         1,
+		CommentSignature:         "go-coverage-v1",
+		IncludeTrend:             true,
+		IncludeCoverageDetails:   true,
+		IncludeFileAnalysis:      false,
+		ShowCoverageHistory:      true,
+		BadgeStyle:               "flat",
+		EnableStatusChecks:       true,
+		FailBelowThreshold:       true,
+		BlockMergeOnFailure:      false,
+	}
+	commentManager := github.NewPRCommentManager(client, commentConfig)
+
+	repoParts := strings.Split(githubCtx.Repository, "/")
+	if len(repoParts) != 2 {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Invalid repository format: %s\n", githubCtx.Repository)
+		return
+	}
+
+	owner, repo := repoParts[0], repoParts[1]
+	response, err := commentManager.CreateOrUpdatePRComment(ctx, owner, repo, prNumber, commentBody, githubComparison)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to post PR comment: %v\n", err)
+		return
+	}
+
+	// Step 9: Output result
+	if cfg.Debug {
+		_, _ = fmt.Fprintf(os.Stdout, "✅ PR comment %s (ID: %d)\n", response.Action, response.CommentID)
+		_, _ = fmt.Fprintf(os.Stdout, "   Reason: %s\n", response.Reason)
+		if response.StatusCheckURL != "" {
+			_, _ = fmt.Fprintf(os.Stdout, "   Status check: %s\n", response.StatusCheckURL)
+		}
+	} else {
+		_, _ = fmt.Fprintf(os.Stdout, "💬 PR comment %s successfully\n", response.Action)
+	}
 }
