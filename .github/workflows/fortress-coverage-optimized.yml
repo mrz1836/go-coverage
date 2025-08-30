@@ -219,9 +219,10 @@ jobs:
           echo ""
 
           # Execute the single github-actions command that replaces the entire workflow
-          go-coverage github-actions \
+          # For GitHub Pages deployment, we need to save files locally first
+          go-coverage complete \
             --input="${{ inputs.coverage-file }}" \
-            --provider="auto" \
+            --output="./coverage-output" \
             --debug
 
           echo ""
@@ -348,3 +349,17 @@ jobs:
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎉 Coverage pipeline completed successfully!"
+
+      # ————————————————————————————————————————————————————————————————
+      # GitHub Pages Deployment
+      # ————————————————————————————————————————————————————————————————
+      - name: 📦 Upload Pages artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./coverage-output
+
+      - name: 🚀 Deploy to GitHub Pages
+        if: always()
+        id: deployment
+        uses: actions/deploy-pages@v4
