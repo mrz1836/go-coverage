@@ -147,7 +147,7 @@ func TestGenerateArtifactNameEdgeCases(t *testing.T) {
 			opts: &UploadOptions{
 				Branch: "feature/issue-123",
 			},
-			contains: "coverage-history-feature/issue-123-",
+			contains: "coverage-history-feature-issue-123-",
 		},
 		{
 			name: "Main branch with short SHA",
