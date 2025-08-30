@@ -189,7 +189,7 @@ func DefaultDeploymentOptions() *DeploymentOptions {
 // BuildDeploymentPath creates a deployment path based on the deployment context
 func BuildDeploymentPath(eventName, branch, prNumber string) DeploymentPath {
 	// Handle pull request deployments
-	if eventName == "pull_request" && prNumber != "" {
+	if (eventName == "pull_request" || eventName == "pull_request_target") && prNumber != "" {
 		return DeploymentPath{
 			Type:       PathTypePR,
 			Root:       "pr",
@@ -197,12 +197,29 @@ func BuildDeploymentPath(eventName, branch, prNumber string) DeploymentPath {
 		}
 	}
 
+	// Additional defensive check: if branch looks like a merge ref but we have PR number,
+	// still use PR deployment path
+	if isMergeRef(branch) && prNumber != "" {
+		return DeploymentPath{
+			Type:       PathTypePR,
+			Root:       "pr",
+			Identifier: prNumber,
+		}
+	}
+
+	// Sanitize branch name to remove merge refs
+	cleanBranch := cleanMergeRef(branch)
+	if cleanBranch == "" {
+		// Fallback to a safe default if branch is empty after cleaning
+		cleanBranch = "unknown"
+	}
+
 	// Handle main branch deployments
-	if branch == "main" || branch == "master" {
+	if cleanBranch == "main" || cleanBranch == "master" {
 		return DeploymentPath{
 			Type:       PathTypeMain,
 			Root:       "main",
-			Identifier: branch,
+			Identifier: cleanBranch,
 		}
 	}
 
@@ -210,7 +227,7 @@ func BuildDeploymentPath(eventName, branch, prNumber string) DeploymentPath {
 	return DeploymentPath{
 		Type:       PathTypeBranch,
 		Root:       "branch",
-		Identifier: sanitizeBranchName(branch),
+		Identifier: sanitizeBranchName(cleanBranch),
 	}
 }
 
@@ -262,4 +279,42 @@ func replaceAll(s, old, newStr string) string {
 		}
 	}
 	return result
+}
+
+// isMergeRef checks if a ref is a GitHub merge ref (contains "/merge")
+func isMergeRef(ref string) bool {
+	if len(ref) < 6 {
+		return false
+	}
+	return ref[len(ref)-6:] == "/merge" || containsString(ref, "/merge")
+}
+
+// cleanMergeRef removes merge ref suffix from branch names
+func cleanMergeRef(branch string) string {
+	if branch == "" {
+		return ""
+	}
+
+	// Remove "/merge" suffix if present
+	if len(branch) > 6 && branch[len(branch)-6:] == "/merge" {
+		return branch[:len(branch)-6]
+	}
+
+	return branch
+}
+
+// containsString checks if a string contains a substring (simple implementation)
+func containsString(s, substr string) bool {
+	if substr == "" {
+		return true
+	}
+	if len(s) < len(substr) {
+		return false
+	}
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

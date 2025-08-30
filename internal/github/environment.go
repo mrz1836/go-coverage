@@ -67,23 +67,23 @@ func DetectEnvironment() (*GitHubContext, error) {
 // getBranch gets the current branch name from environment variables
 func getBranch() string {
 	// For PR events, try to get the head branch from event payload
-	if eventName := os.Getenv("GITHUB_EVENT_NAME"); eventName == "pull_request" {
+	if eventName := os.Getenv("GITHUB_EVENT_NAME"); eventName == "pull_request" || eventName == "pull_request_target" {
 		// Try GITHUB_HEAD_REF first (available in PR contexts)
-		if headRef := os.Getenv("GITHUB_HEAD_REF"); headRef != "" {
+		if headRef := os.Getenv("GITHUB_HEAD_REF"); headRef != "" && !isMergeRef(headRef) {
 			return headRef
 		}
 	}
 
 	// GITHUB_REF_NAME contains the branch name directly for push events
 	if branch := os.Getenv("GITHUB_REF_NAME"); branch != "" {
-		// Skip PR merge refs (e.g., "23/merge")
-		if eventName := os.Getenv("GITHUB_EVENT_NAME"); eventName == "pull_request" {
-			// For PR events, prefer GITHUB_HEAD_REF if GITHUB_REF_NAME looks like a merge ref
-			if strings.Contains(branch, "/merge") {
-				if headRef := os.Getenv("GITHUB_HEAD_REF"); headRef != "" {
-					return headRef
-				}
+		// Skip PR merge refs (e.g., "23/merge") completely
+		if isMergeRef(branch) {
+			// Try to get the actual branch name from GITHUB_HEAD_REF
+			if headRef := os.Getenv("GITHUB_HEAD_REF"); headRef != "" && !isMergeRef(headRef) {
+				return headRef
 			}
+			// If no valid head ref, return empty (will be handled downstream)
+			return ""
 		}
 		return branch
 	}
@@ -91,7 +91,10 @@ func getBranch() string {
 	// Fallback: extract branch from GITHUB_REF (refs/heads/branch-name)
 	if ref := os.Getenv("GITHUB_REF"); ref != "" {
 		if len(ref) > 11 && ref[:11] == "refs/heads/" {
-			return ref[11:]
+			extracted := ref[11:]
+			if !isMergeRef(extracted) {
+				return extracted
+			}
 		}
 		if len(ref) > 10 && ref[:10] == "refs/tags/" {
 			return ref[10:]
@@ -99,6 +102,11 @@ func getBranch() string {
 	}
 
 	return ""
+}
+
+// isMergeRef checks if a ref is a GitHub merge ref (contains "/merge")
+func isMergeRef(ref string) bool {
+	return strings.Contains(ref, "/merge")
 }
 
 // extractPRNumber extracts the pull request number from the GitHub event payload

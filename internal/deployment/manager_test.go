@@ -105,6 +105,61 @@ func TestBuildDeploymentPath(t *testing.T) {
 				Identifier: "feature-new-functionality",
 			},
 		},
+		{
+			name:      "PR with merge ref - should use PR path",
+			eventName: "pull_request",
+			branch:    "23/merge",
+			prNumber:  "23",
+			expected: DeploymentPath{
+				Type:       PathTypePR,
+				Root:       "pr",
+				Identifier: "23",
+			},
+		},
+		{
+			name:      "PR target with merge ref - should use PR path",
+			eventName: "pull_request_target",
+			branch:    "42/merge",
+			prNumber:  "42",
+			expected: DeploymentPath{
+				Type:       PathTypePR,
+				Root:       "pr",
+				Identifier: "42",
+			},
+		},
+		{
+			name:      "Branch with merge in name but no PR number",
+			eventName: "push",
+			branch:    "feature/merge-conflicts",
+			prNumber:  "",
+			expected: DeploymentPath{
+				Type:       PathTypeBranch,
+				Root:       "branch",
+				Identifier: "feature-merge-conflicts",
+			},
+		},
+		{
+			name:      "Merge ref with PR number but wrong event - should use PR path",
+			eventName: "push",
+			branch:    "123/merge",
+			prNumber:  "123",
+			expected: DeploymentPath{
+				Type:       PathTypePR,
+				Root:       "pr",
+				Identifier: "123",
+			},
+		},
+		{
+			name:      "Empty branch with PR number - should use PR path",
+			eventName: "pull_request",
+			branch:    "",
+			prNumber:  "99",
+			expected: DeploymentPath{
+				Type:       PathTypePR,
+				Root:       "pr",
+				Identifier: "99",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -298,5 +353,161 @@ func TestPathType(t *testing.T) {
 		if string(pathType) != expectedStrings[i] {
 			t.Errorf("Expected path type %s, got %s", expectedStrings[i], string(pathType))
 		}
+	}
+}
+
+func TestIsMergeRef(t *testing.T) {
+	tests := []struct {
+		name     string
+		ref      string
+		expected bool
+	}{
+		{
+			name:     "Standard merge ref",
+			ref:      "23/merge",
+			expected: true,
+		},
+		{
+			name:     "Another merge ref",
+			ref:      "456/merge",
+			expected: true,
+		},
+		{
+			name:     "Merge ref with prefix",
+			ref:      "feature/123/merge",
+			expected: true,
+		},
+		{
+			name:     "Regular branch name",
+			ref:      "feature-branch",
+			expected: false,
+		},
+		{
+			name:     "Empty string",
+			ref:      "",
+			expected: false,
+		},
+		{
+			name:     "Main branch",
+			ref:      "main",
+			expected: false,
+		},
+		{
+			name:     "Branch with merge in name",
+			ref:      "fix/merge-conflicts",
+			expected: true, // Contains "/merge"
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isMergeRef(tt.ref)
+			if result != tt.expected {
+				t.Errorf("isMergeRef(%q) = %v, want %v", tt.ref, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestCleanMergeRef(t *testing.T) {
+	tests := []struct {
+		name     string
+		branch   string
+		expected string
+	}{
+		{
+			name:     "Standard merge ref",
+			branch:   "23/merge",
+			expected: "23",
+		},
+		{
+			name:     "Another merge ref",
+			branch:   "456/merge",
+			expected: "456",
+		},
+		{
+			name:     "Regular branch name",
+			branch:   "feature-branch",
+			expected: "feature-branch",
+		},
+		{
+			name:     "Empty string",
+			branch:   "",
+			expected: "",
+		},
+		{
+			name:     "Branch with merge in middle",
+			branch:   "fix/merge/conflicts",
+			expected: "fix/merge/conflicts", // Only removes /merge suffix
+		},
+		{
+			name:     "Main branch",
+			branch:   "main",
+			expected: "main",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := cleanMergeRef(tt.branch)
+			if result != tt.expected {
+				t.Errorf("cleanMergeRef(%q) = %q, want %q", tt.branch, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestContainsString(t *testing.T) {
+	tests := []struct {
+		name     string
+		s        string
+		substr   string
+		expected bool
+	}{
+		{
+			name:     "String contains substring",
+			s:        "hello world",
+			substr:   "world",
+			expected: true,
+		},
+		{
+			name:     "String does not contain substring",
+			s:        "hello world",
+			substr:   "foo",
+			expected: false,
+		},
+		{
+			name:     "Empty substring",
+			s:        "hello world",
+			substr:   "",
+			expected: true,
+		},
+		{
+			name:     "Empty string",
+			s:        "",
+			substr:   "foo",
+			expected: false,
+		},
+		{
+			name:     "Both empty",
+			s:        "",
+			substr:   "",
+			expected: true,
+		},
+		{
+			name:     "Substring longer than string",
+			s:        "hi",
+			substr:   "hello",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := containsString(tt.s, tt.substr)
+			if result != tt.expected {
+				t.Errorf("containsString(%q, %q) = %v, want %v", tt.s, tt.substr, result, tt.expected)
+			}
+		})
 	}
 }

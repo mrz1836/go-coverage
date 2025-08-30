@@ -152,6 +152,47 @@ func TestGetBranch(t *testing.T) {
 			envVars:  map[string]string{},
 			expected: "",
 		},
+		{
+			name: "PR with merge ref - should use GITHUB_HEAD_REF",
+			envVars: map[string]string{
+				"GITHUB_EVENT_NAME": "pull_request",
+				"GITHUB_REF_NAME":   "23/merge",
+				"GITHUB_HEAD_REF":   "feat/github-actions-integration",
+			},
+			expected: "feat/github-actions-integration",
+		},
+		{
+			name: "PR with merge ref but no GITHUB_HEAD_REF - should return empty",
+			envVars: map[string]string{
+				"GITHUB_EVENT_NAME": "pull_request",
+				"GITHUB_REF_NAME":   "23/merge",
+			},
+			expected: "",
+		},
+		{
+			name: "PR target with merge ref - should use GITHUB_HEAD_REF",
+			envVars: map[string]string{
+				"GITHUB_EVENT_NAME": "pull_request_target",
+				"GITHUB_REF_NAME":   "42/merge",
+				"GITHUB_HEAD_REF":   "bugfix/coverage-urls",
+			},
+			expected: "bugfix/coverage-urls",
+		},
+		{
+			name: "Non-PR event with merge ref - should return empty",
+			envVars: map[string]string{
+				"GITHUB_EVENT_NAME": "push",
+				"GITHUB_REF_NAME":   "23/merge",
+			},
+			expected: "",
+		},
+		{
+			name: "GITHUB_REF with merge ref - should skip",
+			envVars: map[string]string{
+				"GITHUB_REF": "refs/heads/23/merge",
+			},
+			expected: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -457,4 +498,57 @@ func splitEnvVar(kv string) (string, string) {
 		}
 	}
 	return kv, ""
+}
+
+func TestIsMergeRef(t *testing.T) {
+	tests := []struct {
+		name     string
+		ref      string
+		expected bool
+	}{
+		{
+			name:     "Standard merge ref",
+			ref:      "23/merge",
+			expected: true,
+		},
+		{
+			name:     "Another merge ref",
+			ref:      "456/merge",
+			expected: true,
+		},
+		{
+			name:     "Merge ref with prefix",
+			ref:      "feature/123/merge",
+			expected: true,
+		},
+		{
+			name:     "Regular branch name",
+			ref:      "feature-branch",
+			expected: false,
+		},
+		{
+			name:     "Empty string",
+			ref:      "",
+			expected: false,
+		},
+		{
+			name:     "Main branch",
+			ref:      "main",
+			expected: false,
+		},
+		{
+			name:     "Branch with merge in name but no slash",
+			ref:      "merge-feature",
+			expected: false, // Doesn't contain "/merge"
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isMergeRef(tt.ref)
+			if result != tt.expected {
+				t.Errorf("isMergeRef(%q) = %v, want %v", tt.ref, result, tt.expected)
+			}
+		})
+	}
 }
