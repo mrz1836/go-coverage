@@ -17,6 +17,7 @@ import (
 
 	"github.com/mrz1836/go-coverage/internal/analytics/dashboard"
 	"github.com/mrz1836/go-coverage/internal/analytics/report"
+	"github.com/mrz1836/go-coverage/internal/artifacts"
 	"github.com/mrz1836/go-coverage/internal/badge"
 	"github.com/mrz1836/go-coverage/internal/config"
 	"github.com/mrz1836/go-coverage/internal/github"
@@ -669,6 +670,81 @@ update history, and create GitHub PR comment if in PR context.`,
 					}
 
 					cmd.Printf("   ✅ History entry recorded successfully\n")
+
+					// Upload history as GitHub artifact for PR comments and trend analysis
+					if githubCtx, githubErr := github.DetectEnvironment(); githubErr == nil && githubCtx.IsGitHubActions {
+						cmd.Printf("   📤 Uploading history to GitHub artifacts...\n")
+						
+						// Create artifact manager
+						artifactMgr, managerErr := artifacts.NewManager()
+						if managerErr != nil {
+							cmd.Printf("   ⚠️  Failed to create artifact manager: %v\n", managerErr)
+						} else {
+							// Create history object from the current coverage record
+							histData := &artifacts.History{
+								Records: []history.CoverageRecord{
+									{
+										Timestamp:    time.Now(),
+										CommitSHA:    cfg.GitHub.CommitSHA,
+										Branch:       branch,
+										Percentage:   coverage.Percentage,
+										TotalLines:   coverage.TotalLines,
+										CoveredLines: coverage.CoveredLines,
+									},
+								},
+								Metadata: &artifacts.HistoryMetadata{
+									Version:     "1.0",
+									Repository:  fmt.Sprintf("%s/%s", cfg.GitHub.Owner, cfg.GitHub.Repository),
+									RecordCount: 1,
+									CreatedAt:   time.Now(),
+									UpdatedAt:   time.Now(),
+								},
+							}
+						
+							// Try to download existing history and merge
+							downloadOpts := &artifacts.DownloadOptions{
+								Branch:           branch,
+								MaxRuns:          10,
+								FallbackToBranch: getPrimaryMainBranch(),
+								MaxAge:           24 * 30 * time.Hour, // 30 days
+							}
+							
+							if existingHistory, downloadErr := artifactMgr.DownloadHistory(ctx, downloadOpts); downloadErr == nil && existingHistory != nil {
+								if mergedHistory, mergeErr := artifactMgr.MergeHistory(histData, existingHistory); mergeErr == nil {
+									histData = mergedHistory
+									cmd.Printf("   ✅ Merged with %d existing history records\n", len(existingHistory.Records))
+								} else {
+									cmd.Printf("   ⚠️  Failed to merge history: %v\n", mergeErr)
+								}
+							} else if downloadErr != nil {
+								cmd.Printf("   ℹ️  No existing history found to merge: %v\n", downloadErr)
+							}
+							
+							// Upload as artifact
+							uploadOpts := &artifacts.UploadOptions{
+								Branch:    branch,
+								CommitSHA: cfg.GitHub.CommitSHA,
+								PRNumber:  func() string {
+									if cfg.IsPullRequestContext() && cfg.GitHub.PullRequest > 0 {
+										return fmt.Sprintf("%d", cfg.GitHub.PullRequest)
+									}
+									return ""
+								}(),
+								RetentionDays: 90,
+							}
+							
+							if uploadErr := artifactMgr.UploadHistory(ctx, histData, uploadOpts); uploadErr != nil {
+								cmd.Printf("   ⚠️  Failed to upload history artifact: %v\n", uploadErr)
+							} else {
+								cmd.Printf("   ✅ History artifact uploaded successfully (%d records)\n", len(histData.Records))
+							}
+						}
+					} else {
+						if githubErr != nil {
+							cmd.Printf("   ℹ️  Not in GitHub Actions environment: %v\n", githubErr)
+						}
+						cmd.Printf("   ℹ️  Skipping artifact upload (not in GitHub Actions)\n")
+					}
 
 					// Verify the entry was actually written
 					if historyFiles, err := filepath.Glob(filepath.Join(historyStoragePath, "*.json")); err == nil {
