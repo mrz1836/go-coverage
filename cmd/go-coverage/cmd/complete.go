@@ -674,7 +674,7 @@ update history, and create GitHub PR comment if in PR context.`,
 					// Upload history as GitHub artifact for PR comments and trend analysis
 					if githubCtx, githubErr := github.DetectEnvironment(); githubErr == nil && githubCtx.IsGitHubActions {
 						cmd.Printf("   📤 Uploading history to GitHub artifacts...\n")
-						
+
 						// Create artifact manager
 						artifactMgr, managerErr := artifacts.NewManager()
 						if managerErr != nil {
@@ -700,7 +700,7 @@ update history, and create GitHub PR comment if in PR context.`,
 									UpdatedAt:   time.Now(),
 								},
 							}
-						
+
 							// Try to download existing history and merge
 							downloadOpts := &artifacts.DownloadOptions{
 								Branch:           branch,
@@ -708,7 +708,7 @@ update history, and create GitHub PR comment if in PR context.`,
 								FallbackToBranch: getPrimaryMainBranch(),
 								MaxAge:           24 * 30 * time.Hour, // 30 days
 							}
-							
+
 							if existingHistory, downloadErr := artifactMgr.DownloadHistory(ctx, downloadOpts); downloadErr == nil && existingHistory != nil {
 								if mergedHistory, mergeErr := artifactMgr.MergeHistory(histData, existingHistory); mergeErr == nil {
 									histData = mergedHistory
@@ -719,12 +719,12 @@ update history, and create GitHub PR comment if in PR context.`,
 							} else if downloadErr != nil {
 								cmd.Printf("   ℹ️  No existing history found to merge: %v\n", downloadErr)
 							}
-							
+
 							// Upload as artifact
 							uploadOpts := &artifacts.UploadOptions{
 								Branch:    branch,
 								CommitSHA: cfg.GitHub.CommitSHA,
-								PRNumber:  func() string {
+								PRNumber: func() string {
 									if cfg.IsPullRequestContext() && cfg.GitHub.PullRequest > 0 {
 										return fmt.Sprintf("%d", cfg.GitHub.PullRequest)
 									}
@@ -732,7 +732,7 @@ update history, and create GitHub PR comment if in PR context.`,
 								}(),
 								RetentionDays: 90,
 							}
-							
+
 							if uploadErr := artifactMgr.UploadHistory(ctx, histData, uploadOpts); uploadErr != nil {
 								cmd.Printf("   ⚠️  Failed to upload history artifact: %v\n", uploadErr)
 							} else {

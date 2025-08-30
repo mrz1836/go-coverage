@@ -360,6 +360,15 @@ func parseArtifactName(name string) (branch, commitSHA, prNumber string) {
 	return branch, "", ""
 }
 
+// sanitizeBranchName sanitizes branch name for use in artifact names
+func sanitizeBranchName(branch string) string {
+	// Replace path separators and other problematic characters
+	sanitized := strings.ReplaceAll(branch, "/", "-")
+	sanitized = strings.ReplaceAll(sanitized, "\\", "-")
+	sanitized = strings.ReplaceAll(sanitized, " ", "-")
+	return sanitized
+}
+
 // generateArtifactName generates a standardized artifact name
 func GenerateArtifactName(opts *UploadOptions) string {
 	if opts.Name != "" {
@@ -375,6 +384,9 @@ func GenerateArtifactName(opts *UploadOptions) string {
 
 	// Handle branch artifacts
 	if opts.Branch != "" {
+		// Sanitize branch name for artifact naming
+		safeBranch := sanitizeBranchName(opts.Branch)
+
 		if opts.Branch == "main" || opts.Branch == "master" {
 			// Special case for main branch
 			if opts.CommitSHA != "" {
@@ -382,9 +394,9 @@ func GenerateArtifactName(opts *UploadOptions) string {
 				if len(shortSHA) > 7 {
 					shortSHA = shortSHA[:7]
 				}
-				return fmt.Sprintf("coverage-history-%s-%s-%d", opts.Branch, shortSHA, timestamp)
+				return fmt.Sprintf("coverage-history-%s-%s-%d", safeBranch, shortSHA, timestamp)
 			}
-			return fmt.Sprintf("coverage-history-%s-latest", opts.Branch)
+			return fmt.Sprintf("coverage-history-%s-latest", safeBranch)
 		}
 
 		// Regular branch
@@ -393,9 +405,9 @@ func GenerateArtifactName(opts *UploadOptions) string {
 			if len(shortSHA) > 7 {
 				shortSHA = shortSHA[:7]
 			}
-			return fmt.Sprintf("coverage-history-%s-%s-%d", opts.Branch, shortSHA, timestamp)
+			return fmt.Sprintf("coverage-history-%s-%s-%d", safeBranch, shortSHA, timestamp)
 		}
-		return fmt.Sprintf("coverage-history-%s-%d", opts.Branch, timestamp)
+		return fmt.Sprintf("coverage-history-%s-%d", safeBranch, timestamp)
 	}
 
 	// Fallback

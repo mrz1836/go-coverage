@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Static error definitions
@@ -65,8 +66,25 @@ func DetectEnvironment() (*GitHubContext, error) {
 
 // getBranch gets the current branch name from environment variables
 func getBranch() string {
+	// For PR events, try to get the head branch from event payload
+	if eventName := os.Getenv("GITHUB_EVENT_NAME"); eventName == "pull_request" {
+		// Try GITHUB_HEAD_REF first (available in PR contexts)
+		if headRef := os.Getenv("GITHUB_HEAD_REF"); headRef != "" {
+			return headRef
+		}
+	}
+
 	// GITHUB_REF_NAME contains the branch name directly for push events
 	if branch := os.Getenv("GITHUB_REF_NAME"); branch != "" {
+		// Skip PR merge refs (e.g., "23/merge")
+		if eventName := os.Getenv("GITHUB_EVENT_NAME"); eventName == "pull_request" {
+			// For PR events, prefer GITHUB_HEAD_REF if GITHUB_REF_NAME looks like a merge ref
+			if strings.Contains(branch, "/merge") {
+				if headRef := os.Getenv("GITHUB_HEAD_REF"); headRef != "" {
+					return headRef
+				}
+			}
+		}
 		return branch
 	}
 
