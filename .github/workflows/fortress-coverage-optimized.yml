@@ -205,6 +205,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          # GitHub environment variables for proper branch detection
+          GITHUB_HEAD_REF: ${{ inputs.branch-name }}
+          GITHUB_REF_NAME: ${{ inputs.branch-name }}
+          GITHUB_SHA: ${{ inputs.commit-sha }}
+          GITHUB_PR_NUMBER: ${{ inputs.pr-number }}
         run: |
           echo "🚀 Executing optimized coverage pipeline..."
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -372,7 +377,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         continue-on-error: true
         with:
-          name: coverage-history-${{ inputs.branch-name }}-${{ inputs.commit-sha }}-${{ github.run_number }}
+          name: coverage-history-${{ replace(inputs.branch-name, '/', '-') }}-${{ inputs.commit-sha }}-${{ github.run_number }}
           path: coverage-artifacts-staging/
           retention-days: 90
           if-no-files-found: ignore
