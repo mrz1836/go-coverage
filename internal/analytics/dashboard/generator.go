@@ -22,7 +22,7 @@ import (
 
 // isMainBranch checks if a branch name is one of the configured main branches
 func isMainBranch(branchName string) bool {
-	mainBranches := os.Getenv("MAIN_BRANCHES")
+	mainBranches := os.Getenv("GO_COVERAGE_MAIN_BRANCHES")
 	if mainBranches == "" {
 		mainBranches = "master,main"
 	}

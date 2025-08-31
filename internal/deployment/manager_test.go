@@ -78,8 +78,8 @@ func TestBuildDeploymentPath(t *testing.T) {
 			branch:    "main",
 			prNumber:  "",
 			expected: DeploymentPath{
-				Type:       PathTypeMain,
-				Root:       "main",
+				Type:       PathTypeRoot,
+				Root:       "",
 				Identifier: "main",
 			},
 		},
@@ -89,8 +89,8 @@ func TestBuildDeploymentPath(t *testing.T) {
 			branch:    "master",
 			prNumber:  "",
 			expected: DeploymentPath{
-				Type:       PathTypeMain,
-				Root:       "main",
+				Type:       PathTypeRoot,
+				Root:       "",
 				Identifier: "master",
 			},
 		},

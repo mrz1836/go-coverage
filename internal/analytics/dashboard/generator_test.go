@@ -364,17 +364,17 @@ func TestIsMainBranch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.mainBranches != "" {
-				oldValue := os.Getenv("MAIN_BRANCHES")
+				oldValue := os.Getenv("GO_COVERAGE_MAIN_BRANCHES")
 				defer func() {
 					if oldValue == "" {
-						_ = os.Unsetenv("MAIN_BRANCHES")
+						_ = os.Unsetenv("GO_COVERAGE_MAIN_BRANCHES")
 					} else {
-						_ = os.Setenv("MAIN_BRANCHES", oldValue)
+						_ = os.Setenv("GO_COVERAGE_MAIN_BRANCHES", oldValue)
 					}
 				}()
-				err := os.Setenv("MAIN_BRANCHES", tt.mainBranches)
+				err := os.Setenv("GO_COVERAGE_MAIN_BRANCHES", tt.mainBranches)
 				if err != nil {
-					t.Fatalf("Failed to set MAIN_BRANCHES: %v", err)
+					t.Fatalf("Failed to set GO_COVERAGE_MAIN_BRANCHES: %v", err)
 				}
 			}
 

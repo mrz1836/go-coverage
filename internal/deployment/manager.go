@@ -5,6 +5,8 @@ package deployment
 
 import (
 	"context"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -186,6 +188,23 @@ func DefaultDeploymentOptions() *DeploymentOptions {
 	}
 }
 
+// isMainBranch checks if a branch name is one of the configured main branches
+func isMainBranch(branchName string) bool {
+	mainBranches := os.Getenv("GO_COVERAGE_MAIN_BRANCHES")
+	if mainBranches == "" {
+		mainBranches = "master,main"
+	}
+
+	branches := strings.Split(mainBranches, ",")
+	for _, branch := range branches {
+		if strings.TrimSpace(branch) == branchName {
+			return true
+		}
+	}
+
+	return false
+}
+
 // BuildDeploymentPath creates a deployment path based on the deployment context
 func BuildDeploymentPath(eventName, branch, prNumber string) DeploymentPath {
 	// Handle pull request deployments
@@ -215,10 +234,10 @@ func BuildDeploymentPath(eventName, branch, prNumber string) DeploymentPath {
 	}
 
 	// Handle main branch deployments
-	if cleanBranch == "main" || cleanBranch == "master" {
+	if isMainBranch(cleanBranch) {
 		return DeploymentPath{
-			Type:       PathTypeMain,
-			Root:       "main",
+			Type:       PathTypeRoot,
+			Root:       "",
 			Identifier: cleanBranch,
 		}
 	}

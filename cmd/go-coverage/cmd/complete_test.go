@@ -43,19 +43,19 @@ func TestGetMainBranches(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Save and restore environment
-			original := os.Getenv("MAIN_BRANCHES")
+			original := os.Getenv("GO_COVERAGE_MAIN_BRANCHES")
 			defer func() {
 				if original != "" {
-					require.NoError(t, os.Setenv("MAIN_BRANCHES", original))
+					require.NoError(t, os.Setenv("GO_COVERAGE_MAIN_BRANCHES", original))
 				} else {
-					require.NoError(t, os.Unsetenv("MAIN_BRANCHES"))
+					require.NoError(t, os.Unsetenv("GO_COVERAGE_MAIN_BRANCHES"))
 				}
 			}()
 
 			if tt.envValue != "" {
-				require.NoError(t, os.Setenv("MAIN_BRANCHES", tt.envValue))
+				require.NoError(t, os.Setenv("GO_COVERAGE_MAIN_BRANCHES", tt.envValue))
 			} else {
-				require.NoError(t, os.Unsetenv("MAIN_BRANCHES"))
+				require.NoError(t, os.Unsetenv("GO_COVERAGE_MAIN_BRANCHES"))
 			}
 
 			actual := getMainBranches()
@@ -95,7 +95,7 @@ func TestGetPrimaryMainBranch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Save and restore environment
 			originalDefault := os.Getenv("DEFAULT_MAIN_BRANCH")
-			originalMain := os.Getenv("MAIN_BRANCHES")
+			originalMain := os.Getenv("GO_COVERAGE_MAIN_BRANCHES")
 			defer func() {
 				if originalDefault != "" {
 					require.NoError(t, os.Setenv("DEFAULT_MAIN_BRANCH", originalDefault))
@@ -103,9 +103,9 @@ func TestGetPrimaryMainBranch(t *testing.T) {
 					require.NoError(t, os.Unsetenv("DEFAULT_MAIN_BRANCH"))
 				}
 				if originalMain != "" {
-					require.NoError(t, os.Setenv("MAIN_BRANCHES", originalMain))
+					require.NoError(t, os.Setenv("GO_COVERAGE_MAIN_BRANCHES", originalMain))
 				} else {
-					require.NoError(t, os.Unsetenv("MAIN_BRANCHES"))
+					require.NoError(t, os.Unsetenv("GO_COVERAGE_MAIN_BRANCHES"))
 				}
 			}()
 
@@ -116,9 +116,9 @@ func TestGetPrimaryMainBranch(t *testing.T) {
 			}
 
 			if tt.mainBranches != "" {
-				require.NoError(t, os.Setenv("MAIN_BRANCHES", tt.mainBranches))
+				require.NoError(t, os.Setenv("GO_COVERAGE_MAIN_BRANCHES", tt.mainBranches))
 			} else {
-				require.NoError(t, os.Unsetenv("MAIN_BRANCHES"))
+				require.NoError(t, os.Unsetenv("GO_COVERAGE_MAIN_BRANCHES"))
 			}
 
 			actual := getPrimaryMainBranch()

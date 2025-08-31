@@ -77,7 +77,7 @@ func (c *Commands) newSetupPagesCmd() *cobra.Command {
 		Use:   "setup-pages [repository]",
 		Short: "Set up GitHub Pages environment for coverage deployment",
 		Long: `Configure GitHub Pages environment with deployment branch policies to allow
-coverage reports to be deployed from various branches including master, gh-pages,
+coverage reports to be deployed from various branches including main branches, gh-pages,
 and wildcard patterns for feature branches and dependency updates.
 
 This command replaces the bash script and provides the same functionality
@@ -556,8 +556,16 @@ func createInitialGhPagesBranch(ctx context.Context, cmd *cobra.Command, repo st
 
 // setupDeploymentBranches configures deployment branch policies
 func setupDeploymentBranches(ctx context.Context, cmd *cobra.Command, repo string, dryRun, verbose bool) error { //nolint:unparam // error return for future extensibility
-	branches := []string{
-		"master",      // Main production branch
+	// Get main branches from environment or use defaults
+	mainBranches := getMainBranches()
+
+	// Build branches list starting with configured main branches
+	branches := make([]string, 0, len(mainBranches)+8)
+	// Add configured main branches
+	branches = append(branches, mainBranches...)
+
+	// Add additional patterns
+	branches = append(branches, []string{
 		"gh-pages",    // GitHub Pages default
 		"*",           // Any single branch
 		"*/*",         // Two-level patterns (e.g., feature/branch)
@@ -566,7 +574,7 @@ func setupDeploymentBranches(ctx context.Context, cmd *cobra.Command, repo strin
 		"*/*/*/*/*",   // Five-level patterns
 		"*/*/*/*/*/*", // Six-level patterns
 		"development", // Development branch
-	}
+	}...)
 
 	for _, branch := range branches {
 		if verbose {
@@ -629,7 +637,13 @@ func setupCustomDomain(ctx context.Context, cmd *cobra.Command, repo, domain str
 
 // setupBranchProtection configures branch protection rules for deployment branches
 func setupBranchProtection(ctx context.Context, cmd *cobra.Command, repo string, dryRun, verbose bool) error { //nolint:unparam // error return for future extensibility
-	protectedBranches := []string{"master", "main", "gh-pages"}
+	// Get main branches from environment or use defaults
+	mainBranches := getMainBranches()
+
+	// Build protected branches list with main branches and gh-pages
+	protectedBranches := make([]string, 0, len(mainBranches)+1)
+	protectedBranches = append(protectedBranches, mainBranches...)
+	protectedBranches = append(protectedBranches, "gh-pages")
 
 	for _, branch := range protectedBranches {
 		if verbose {
@@ -809,7 +823,12 @@ func showNextSteps(cmd *cobra.Command, repo string, dryRun bool) {
 	cmd.Printf("   • GitHub Pages environment with custom branch policies\n")
 	cmd.Printf("   • Initial gh-pages branch with placeholder content (if created)\n")
 	cmd.Printf("   • Deployment permissions for multiple branch patterns:\n")
-	cmd.Printf("     - master branch (main deployments)\n")
+
+	// Show configured main branches
+	mainBranches := getMainBranches()
+	for _, branch := range mainBranches {
+		cmd.Printf("     - %s branch (main deployments)\n", branch)
+	}
 	cmd.Printf("     - gh-pages branch (GitHub Pages default)\n")
 	cmd.Printf("     - Feature branches (*, */*, */*/*, */*/*/*/*, */*/*/*/*/*, */*/*/*/*/*)\n")
 	cmd.Printf("     - Complex nested branches (*/*/*/*/*/*)\n")
@@ -823,7 +842,13 @@ func showNextSteps(cmd *cobra.Command, repo string, dryRun bool) {
 		cmd.Printf("      https://%s.github.io/%s/\n", ownerRepo[0], ownerRepo[1])
 	}
 	cmd.Printf("   3. To test the setup:\n")
-	cmd.Printf("      - Push a commit with coverage data to master\n")
+
+	// Use first configured main branch for the example (reuse mainBranches from above)
+	if len(mainBranches) > 0 {
+		cmd.Printf("      - Push a commit with coverage data to %s\n", mainBranches[0])
+	} else {
+		cmd.Printf("      - Push a commit with coverage data to your main branch\n")
+	}
 	cmd.Printf("      - Check GitHub Actions for successful deployment\n")
 	cmd.Printf("      - Verify the pages are accessible\n\n")
 
