@@ -372,12 +372,19 @@ jobs:
       # ————————————————————————————————————————————————————————————————
       # Upload Coverage History Artifacts
       # ————————————————————————————————————————————————————————————————
+      - name: 🔧 Prepare sanitized branch name
+        run: |
+          BRANCH_NAME="${{ inputs.branch-name }}"
+          SANITIZED_BRANCH_NAME="${BRANCH_NAME//\//-}"
+          echo "SANITIZED_BRANCH_NAME=$SANITIZED_BRANCH_NAME" >> $GITHUB_ENV
+          echo "📝 Sanitized branch name: $SANITIZED_BRANCH_NAME"
+
       - name: 📤 Upload Coverage History Artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         continue-on-error: true
         with:
-          name: coverage-history-${{ replace(inputs.branch-name, '/', '-') }}-${{ inputs.commit-sha }}-${{ github.run_number }}
+          name: coverage-history-${{ env.SANITIZED_BRANCH_NAME }}-${{ inputs.commit-sha }}-${{ github.run_number }}
           path: coverage-artifacts-staging/
           retention-days: 90
           if-no-files-found: ignore
