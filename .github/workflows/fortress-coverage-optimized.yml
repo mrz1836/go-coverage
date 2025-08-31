@@ -357,16 +357,43 @@ jobs:
           echo "🎉 Coverage pipeline completed successfully!"
 
       # ————————————————————————————————————————————————————————————————
+      # Check if current branch is a main branch
+      # ————————————————————————————————————————————————————————————————
+      - name: 🔍 Check if main branch
+        id: check-main-branch
+        run: |
+          # Extract main branches from env-json
+          MAIN_BRANCHES=$(echo '${{ inputs.env-json }}' | jq -r '.GO_COVERAGE_MAIN_BRANCHES // "master,main"')
+          CURRENT_BRANCH="${{ inputs.branch-name }}"
+
+          echo "Main branches: $MAIN_BRANCHES"
+          echo "Current branch: $CURRENT_BRANCH"
+
+          # Check if current branch is in main branches list
+          IS_MAIN_BRANCH="false"
+          IFS=',' read -ra BRANCH_ARRAY <<< "$MAIN_BRANCHES"
+          for main_branch in "${BRANCH_ARRAY[@]}"; do
+            main_branch=$(echo "$main_branch" | xargs) # Trim whitespace
+            if [[ "$CURRENT_BRANCH" == "$main_branch" ]]; then
+              IS_MAIN_BRANCH="true"
+              break
+            fi
+          done
+
+          echo "is_main_branch=$IS_MAIN_BRANCH" >> $GITHUB_OUTPUT
+          echo "Is main branch: $IS_MAIN_BRANCH"
+
+      # ————————————————————————————————————————————————————————————————
       # GitHub Pages Deployment
       # ————————————————————————————————————————————————————————————————
       - name: 📦 Upload Pages artifact
-        if: always()
+        if: always() && steps.check-main-branch.outputs.is_main_branch == 'true'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: ./coverage-output
 
       - name: 🚀 Deploy to GitHub Pages
-        if: always()
+        if: always() && steps.check-main-branch.outputs.is_main_branch == 'true'
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
 
