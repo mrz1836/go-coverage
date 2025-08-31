@@ -28,7 +28,7 @@ import (
 
 // getMainBranches returns the list of main branches from environment variable or default
 func getMainBranches() []string {
-	mainBranches := os.Getenv("MAIN_BRANCHES")
+	mainBranches := os.Getenv("GO_COVERAGE_MAIN_BRANCHES")
 	if mainBranches == "" {
 		mainBranches = "master,main"
 	}
@@ -437,6 +437,82 @@ update history, and create GitHub PR comment if in PR context.`,
 			// Set PR number if in PR context
 			if isPRContext && prNumber != "" {
 				coverageData.PRNumber = prNumber
+			}
+
+			// Pre-populate history from GitHub artifacts BEFORE dashboard generation
+			// This ensures the dashboard has access to historical data from previous runs
+			{
+				if githubCtx, githubErr := github.DetectEnvironment(); githubErr == nil && githubCtx.IsGitHubActions {
+					cmd.Printf("   📥 Pre-loading history from GitHub artifacts...\n")
+
+					// Create artifact manager
+					artifactMgr, managerErr := artifacts.NewManager()
+					if managerErr != nil {
+						cmd.Printf("   ⚠️  Failed to create artifact manager: %v\n", managerErr)
+					} else {
+						// Download existing history to populate local files before dashboard generation
+						downloadOpts := &artifacts.DownloadOptions{
+							Branch:           originalBranch,
+							MaxRuns:          10,
+							FallbackToBranch: getPrimaryMainBranch(),
+							MaxAge:           24 * 30 * time.Hour, // 30 days
+						}
+
+						if existingHistory, downloadErr := artifactMgr.DownloadHistory(ctx, downloadOpts); downloadErr == nil && existingHistory != nil {
+							cmd.Printf("   ✅ Downloaded %d history records from artifacts\n", len(existingHistory.Records))
+
+							// Write downloaded history to local files so tracker.GetTrend() can read them
+							// Resolve history path for writing
+							historyStoragePath := cfg.History.StoragePath
+							if resolvedPath, pathErr := cfg.ResolveHistoryStoragePath(); pathErr == nil {
+								historyStoragePath = resolvedPath
+							}
+
+							// Ensure history directory exists
+							if err := os.MkdirAll(historyStoragePath, 0o750); err != nil {
+								cmd.Printf("   ⚠️  Failed to create history directory: %v\n", err)
+							} else {
+								// Create history tracker to write records
+								historyConfig := &history.Config{
+									StoragePath:    historyStoragePath,
+									RetentionDays:  cfg.History.RetentionDays,
+									MaxEntries:     cfg.History.MaxEntries,
+									AutoCleanup:    false,
+									MetricsEnabled: false,
+								}
+								tracker := history.NewWithConfig(historyConfig)
+
+								// Write each downloaded record to local files
+								for _, record := range existingHistory.Records {
+									histCtx, histCancel := context.WithTimeout(ctx, 5*time.Second)
+									historyOptions := []history.Option{
+										history.WithBranch(record.Branch),
+									}
+									if record.CommitSHA != "" {
+										historyOptions = append(historyOptions, history.WithCommit(record.CommitSHA, ""))
+									}
+
+									// Convert history.CoverageRecord to *parser.CoverageData
+									coverageData := &parser.CoverageData{
+										Percentage:   record.Percentage,
+										TotalLines:   record.TotalLines,
+										CoveredLines: record.CoveredLines,
+										Timestamp:    record.Timestamp,
+										Packages:     make(map[string]*parser.PackageCoverage),
+									}
+
+									if writeErr := tracker.Record(histCtx, coverageData, historyOptions...); writeErr != nil {
+										cmd.Printf("   ⚠️  Failed to write history record: %v\n", writeErr)
+									}
+									histCancel()
+								}
+								cmd.Printf("   ✅ Pre-populated local history files with artifact data\n")
+							}
+						} else if downloadErr != nil {
+							cmd.Printf("   ℹ️  No existing artifacts to download: %v\n", downloadErr)
+						}
+					}
+				}
 			}
 
 			// Populate history data for dashboard
