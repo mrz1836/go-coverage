@@ -160,9 +160,9 @@ update history, and create GitHub PR comment if in PR context.`,
 			// 1. Explicit PR context from GitHub environment
 			// 2. Branch name is a PR ref (starts with "pr-" after normalization)
 			isPRContext := cfg.IsPullRequestContext() || strings.HasPrefix(branch, "pr-")
+			var prNumber string
 
 			if isPRContext {
-				var prNumber string
 				if cfg.IsPullRequestContext() && cfg.GitHub.PullRequest > 0 {
 					// Use explicit PR number from GitHub context
 					prNumber = fmt.Sprintf("%d", cfg.GitHub.PullRequest)
@@ -171,7 +171,7 @@ update history, and create GitHub PR comment if in PR context.`,
 					prNumber = strings.TrimPrefix(branch, "pr-")
 				}
 				if prNumber != "" {
-					targetOutputDir = filepath.Join(outputDir, "pr", prNumber)
+					targetOutputDir = filepath.Join(outputDir, "reports", "pr", prNumber)
 				} else {
 					// Fallback to branch structure if we can't determine PR number
 					targetOutputDir = filepath.Join(outputDir, "reports", "branch", branch)
@@ -195,8 +195,15 @@ update history, and create GitHub PR comment if in PR context.`,
 
 			// Step 2: Generate badge
 			cmd.Printf("🏷️  Step 2: Generating coverage badge...\n")
-			// Badge goes in target directory and also at root for easy access
-			badgeFile := filepath.Join(targetOutputDir, cfg.Badge.OutputFile)
+
+			// Badge path depends on context - PRs go to badges/pr/{prNumber}/, branches go to target directory
+			var badgeFile string
+			if isPRContext && prNumber != "" {
+				badgeFile = filepath.Join(outputDir, "badges", "pr", prNumber, cfg.Badge.OutputFile)
+			} else {
+				// Badge goes in target directory for branches
+				badgeFile = filepath.Join(targetOutputDir, cfg.Badge.OutputFile)
+			}
 			rootBadgeFile := filepath.Join(outputDir, cfg.Badge.OutputFile)
 
 			var badgeOptions []badge.Option
@@ -245,15 +252,7 @@ update history, and create GitHub PR comment if in PR context.`,
 			// Step 3: Generate HTML report
 			cmd.Printf("📊 Step 3: Generating HTML report...\n")
 
-			// Get PR number if in PR context
-			var prNumber string
-			if isPRContext {
-				if cfg.IsPullRequestContext() && cfg.GitHub.PullRequest > 0 {
-					prNumber = fmt.Sprintf("%d", cfg.GitHub.PullRequest)
-				} else if strings.HasPrefix(branch, "pr-") {
-					prNumber = strings.TrimPrefix(branch, "pr-")
-				}
-			}
+			// PR number is already set from earlier if in PR context
 
 			reportConfig := &report.Config{
 				OutputDir:       targetOutputDir,
