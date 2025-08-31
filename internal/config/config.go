@@ -363,16 +363,25 @@ func (c *Config) GetReportURL() string {
 func (c *Config) getCurrentBranch() string {
 	// Try to get branch from environment variables (GitHub Actions context)
 	// For pull requests, prefer GITHUB_HEAD_REF (source branch)
-	if branch := os.Getenv("GITHUB_HEAD_REF"); branch != "" {
+	if branch := os.Getenv("GITHUB_HEAD_REF"); branch != "" && !strings.Contains(branch, "/merge") {
 		return branch
 	}
+
+	// For push events, use GITHUB_REF_NAME but avoid merge refs
 	if branch := os.Getenv("GITHUB_REF_NAME"); branch != "" {
-		return branch
+		// Skip PR merge refs (e.g., "23/merge")
+		if !strings.Contains(branch, "/merge") {
+			return branch
+		}
 	}
+
 	if ref := os.Getenv("GITHUB_REF"); ref != "" {
 		// Extract branch name from refs/heads/branch-name
 		if strings.HasPrefix(ref, "refs/heads/") {
-			return strings.TrimPrefix(ref, "refs/heads/")
+			extracted := strings.TrimPrefix(ref, "refs/heads/")
+			if !strings.Contains(extracted, "/merge") {
+				return extracted
+			}
 		}
 	}
 

@@ -58,9 +58,30 @@ func getPrimaryMainBranch() string {
 
 // getOriginalBranch returns the original branch name from environment without normalization
 func getOriginalBranch() string {
-	if branch := os.Getenv("GITHUB_REF_NAME"); branch != "" {
-		return branch
+	// Use GitHub package logic to get the proper branch name
+	// This handles PR contexts correctly by using GITHUB_HEAD_REF
+	if ctx, err := github.DetectEnvironment(); err == nil {
+		if ctx.Branch != "" {
+			return ctx.Branch
+		}
 	}
+
+	// Fallback to direct environment check with proper PR handling
+	if eventName := os.Getenv("GITHUB_EVENT_NAME"); eventName == "pull_request" || eventName == "pull_request_target" {
+		// For PR events, use the head branch from GITHUB_HEAD_REF
+		if headRef := os.Getenv("GITHUB_HEAD_REF"); headRef != "" && !strings.Contains(headRef, "/merge") {
+			return headRef
+		}
+	}
+
+	// For push events, use GITHUB_REF_NAME but avoid merge refs
+	if branch := os.Getenv("GITHUB_REF_NAME"); branch != "" {
+		// Skip PR merge refs (e.g., "23/merge")
+		if !strings.Contains(branch, "/merge") {
+			return branch
+		}
+	}
+
 	// Default to master (this repository's default branch)
 	return history.DefaultBranch
 }
