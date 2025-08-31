@@ -80,28 +80,42 @@ func (m *Manager) DownloadHistory(ctx context.Context, opts *DownloadOptions) (*
 		return artifacts[i].CreatedAt.After(artifacts[j].CreatedAt)
 	})
 
-	// Try to find suitable artifact
+	// Try to find suitable artifact using branch variations
 	var selectedArtifact *ArtifactInfo
 
-	// First, try current branch
-	for _, artifact := range artifacts {
-		if artifact.Branch == opts.Branch {
-			if opts.MaxAge > 0 && time.Since(artifact.CreatedAt) > opts.MaxAge {
-				continue
+	// Get all possible branch name variations for the current branch
+	branchVariations := GetBranchVariations(opts.Branch)
+
+	// Try each branch variation in order of preference
+	for _, branchVariation := range branchVariations {
+		for _, artifact := range artifacts {
+			if artifact.Branch == branchVariation {
+				if opts.MaxAge > 0 && time.Since(artifact.CreatedAt) > opts.MaxAge {
+					continue
+				}
+				selectedArtifact = artifact
+				break
 			}
-			selectedArtifact = artifact
+		}
+		if selectedArtifact != nil {
 			break
 		}
 	}
 
 	// Fallback to main/master branch if no current branch history found
 	if selectedArtifact == nil && opts.FallbackToBranch != "" {
-		for _, artifact := range artifacts {
-			if artifact.Branch == opts.FallbackToBranch {
-				if opts.MaxAge > 0 && time.Since(artifact.CreatedAt) > opts.MaxAge {
-					continue
+		fallbackVariations := GetBranchVariations(opts.FallbackToBranch)
+		for _, fallbackVariation := range fallbackVariations {
+			for _, artifact := range artifacts {
+				if artifact.Branch == fallbackVariation {
+					if opts.MaxAge > 0 && time.Since(artifact.CreatedAt) > opts.MaxAge {
+						continue
+					}
+					selectedArtifact = artifact
+					break
 				}
-				selectedArtifact = artifact
+			}
+			if selectedArtifact != nil {
 				break
 			}
 		}

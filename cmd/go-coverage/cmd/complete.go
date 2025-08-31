@@ -56,10 +56,20 @@ func getPrimaryMainBranch() string {
 	return "master"
 }
 
-// getDefaultBranch returns the default branch name, checking environment variables first
-func getDefaultBranch() string {
+// getOriginalBranch returns the original branch name from environment without normalization
+func getOriginalBranch() string {
 	if branch := os.Getenv("GITHUB_REF_NAME"); branch != "" {
 		return branch
+	}
+	// Default to master (this repository's default branch)
+	return history.DefaultBranch
+}
+
+// getDefaultBranch returns the normalized branch name for directory structures
+func getDefaultBranch() string {
+	if branch := os.Getenv("GITHUB_REF_NAME"); branch != "" {
+		// Normalize the branch name to handle PR refs properly
+		return artifacts.NormalizeBranchName(branch)
 	}
 	// Default to master (this repository's default branch)
 	return history.DefaultBranch
@@ -143,12 +153,32 @@ update history, and create GitHub PR comment if in PR context.`,
 			// - Branch: outputDir/reports/branch/{branchName}/
 			// - PR: outputDir/pr/{prNumber}/
 			branch := getDefaultBranch()
+			originalBranch := getOriginalBranch()
 			var targetOutputDir string
-			if cfg.IsPullRequestContext() {
-				// PR context: outputDir/pr/{prNumber}/
-				targetOutputDir = filepath.Join(outputDir, "pr", fmt.Sprintf("%d", cfg.GitHub.PullRequest))
+
+			// Determine if this is a PR context:
+			// 1. Explicit PR context from GitHub environment
+			// 2. Branch name is a PR ref (starts with "pr-" after normalization)
+			isPRContext := cfg.IsPullRequestContext() || strings.HasPrefix(branch, "pr-")
+
+			if isPRContext {
+				var prNumber string
+				if cfg.IsPullRequestContext() && cfg.GitHub.PullRequest > 0 {
+					// Use explicit PR number from GitHub context
+					prNumber = fmt.Sprintf("%d", cfg.GitHub.PullRequest)
+				} else if strings.HasPrefix(branch, "pr-") {
+					// Extract PR number from normalized branch name
+					prNumber = strings.TrimPrefix(branch, "pr-")
+				}
+				if prNumber != "" {
+					targetOutputDir = filepath.Join(outputDir, "pr", prNumber)
+				} else {
+					// Fallback to branch structure if we can't determine PR number
+					targetOutputDir = filepath.Join(outputDir, "reports", "branch", branch)
+				}
 			} else {
 				// Branch context: outputDir/reports/branch/{branchName}/
+				// Use the normalized branch name for directory structure
 				targetOutputDir = filepath.Join(outputDir, "reports", "branch", branch)
 			}
 
@@ -217,15 +247,19 @@ update history, and create GitHub PR comment if in PR context.`,
 
 			// Get PR number if in PR context
 			var prNumber string
-			if cfg.IsPullRequestContext() && cfg.GitHub.PullRequest > 0 {
-				prNumber = fmt.Sprintf("%d", cfg.GitHub.PullRequest)
+			if isPRContext {
+				if cfg.IsPullRequestContext() && cfg.GitHub.PullRequest > 0 {
+					prNumber = fmt.Sprintf("%d", cfg.GitHub.PullRequest)
+				} else if strings.HasPrefix(branch, "pr-") {
+					prNumber = strings.TrimPrefix(branch, "pr-")
+				}
 			}
 
 			reportConfig := &report.Config{
 				OutputDir:       targetOutputDir,
 				RepositoryOwner: cfg.GitHub.Owner,
 				RepositoryName:  cfg.GitHub.Repository,
-				BranchName:      getDefaultBranch(),
+				BranchName:      getOriginalBranch(),
 				CommitSHA:       cfg.GitHub.CommitSHA,
 				PRNumber:        prNumber,
 			}
@@ -249,10 +283,13 @@ update history, and create GitHub PR comment if in PR context.`,
 			// Prepare coverage data for dashboard
 			// branch already declared earlier
 
+			// Get the original branch name for URLs and display purposes (already declared above)
+			// originalBranch already declared earlier
+
 			coverageData := &dashboard.CoverageData{
 				ProjectName:    cfg.Report.Title,
 				RepositoryURL:  fmt.Sprintf("https://github.com/%s/%s", cfg.GitHub.Owner, cfg.GitHub.Repository),
-				Branch:         branch,
+				Branch:         originalBranch,
 				CommitSHA:      cfg.GitHub.CommitSHA,
 				PRNumber:       "",
 				BadgeURL:       fmt.Sprintf("https://%s.github.io/%s/coverage.svg", cfg.GitHub.Owner, cfg.GitHub.Repository),
@@ -351,7 +388,7 @@ update history, and create GitHub PR comment if in PR context.`,
 				// Add GitHub URL for package directory if we have GitHub info
 				if cfg.GitHub.Owner != "" && cfg.GitHub.Repository != "" {
 					pkgCoverage.GitHubURL = fmt.Sprintf("https://github.com/%s/%s/tree/%s/%s",
-						cfg.GitHub.Owner, cfg.GitHub.Repository, branch, pkgName)
+						cfg.GitHub.Owner, cfg.GitHub.Repository, originalBranch, pkgName)
 				}
 
 				// Add file coverage if available
@@ -368,7 +405,7 @@ update history, and create GitHub PR comment if in PR context.`,
 						}
 						if cfg.GitHub.Owner != "" && cfg.GitHub.Repository != "" {
 							fileCoverage.GitHubURL = urlutil.BuildGitHubFileURL(
-								cfg.GitHub.Owner, cfg.GitHub.Repository, branch, fileName)
+								cfg.GitHub.Owner, cfg.GitHub.Repository, originalBranch, fileName)
 						}
 						pkgCoverage.Files = append(pkgCoverage.Files, fileCoverage)
 					}
@@ -378,8 +415,8 @@ update history, and create GitHub PR comment if in PR context.`,
 			}
 
 			// Set PR number if in PR context
-			if cfg.IsPullRequestContext() {
-				coverageData.PRNumber = fmt.Sprintf("%d", cfg.GitHub.PullRequest)
+			if isPRContext && prNumber != "" {
+				coverageData.PRNumber = prNumber
 			}
 
 			// Populate history data for dashboard
@@ -408,12 +445,12 @@ update history, and create GitHub PR comment if in PR context.`,
 				historyCtx, historyCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer historyCancel()
 
-				trendData, err := tracker.GetTrend(historyCtx, history.WithTrendBranch(branch), history.WithTrendDays(30))
+				trendData, err := tracker.GetTrend(historyCtx, history.WithTrendBranch(originalBranch), history.WithTrendDays(30))
 
 				// If no history for current branch and it's not a main branch, try to get primary main branch history
 				primaryMainBranch := getPrimaryMainBranch()
-				if (err != nil || trendData == nil || trendData.Summary.TotalEntries == 0) && branch != primaryMainBranch {
-					cmd.Printf("   📊 No history for branch '%s', checking %s branch...\n", branch, primaryMainBranch)
+				if (err != nil || trendData == nil || trendData.Summary.TotalEntries == 0) && originalBranch != primaryMainBranch {
+					cmd.Printf("   📊 No history for branch '%s', checking %s branch...\n", originalBranch, primaryMainBranch)
 					if mainTrendData, mainErr := tracker.GetTrend(historyCtx, history.WithTrendBranch(primaryMainBranch), history.WithTrendDays(30)); mainErr == nil && mainTrendData != nil {
 						// Use primary main branch data for comparison
 						trendData = mainTrendData
@@ -617,10 +654,10 @@ update history, and create GitHub PR comment if in PR context.`,
 				}
 
 				// Get trend before adding new entry
-				// branch already declared at function level
-				cmd.Printf("   🌿 Using branch: %s\n", branch)
+				// Use original branch name for history operations
+				cmd.Printf("   🌿 Using branch: %s\n", originalBranch)
 
-				if latest, err := tracker.GetLatestEntry(ctx, branch); err == nil {
+				if latest, err := tracker.GetLatestEntry(ctx, originalBranch); err == nil {
 					commitDisplay := latest.CommitSHA
 					if len(commitDisplay) > 8 {
 						commitDisplay = commitDisplay[:8]
@@ -643,8 +680,8 @@ update history, and create GitHub PR comment if in PR context.`,
 				if !dryRun {
 					cmd.Printf("   📝 Recording new history entry...\n")
 					var historyOptions []history.Option
-					historyOptions = append(historyOptions, history.WithBranch(branch))
-					cmd.Printf("   🔧 Branch: %s\n", branch)
+					historyOptions = append(historyOptions, history.WithBranch(originalBranch))
+					cmd.Printf("   🔧 Branch: %s\n", originalBranch)
 
 					if cfg.GitHub.CommitSHA != "" {
 						historyOptions = append(historyOptions, history.WithCommit(cfg.GitHub.CommitSHA, ""))
@@ -686,7 +723,7 @@ update history, and create GitHub PR comment if in PR context.`,
 									{
 										Timestamp:    time.Now(),
 										CommitSHA:    cfg.GitHub.CommitSHA,
-										Branch:       branch,
+										Branch:       originalBranch,
 										Percentage:   coverage.Percentage,
 										TotalLines:   coverage.TotalLines,
 										CoveredLines: coverage.CoveredLines,
@@ -703,7 +740,7 @@ update history, and create GitHub PR comment if in PR context.`,
 
 							// Try to download existing history and merge
 							downloadOpts := &artifacts.DownloadOptions{
-								Branch:           branch,
+								Branch:           originalBranch,
 								MaxRuns:          10,
 								FallbackToBranch: getPrimaryMainBranch(),
 								MaxAge:           24 * 30 * time.Hour, // 30 days
@@ -722,11 +759,11 @@ update history, and create GitHub PR comment if in PR context.`,
 
 							// Upload as artifact
 							uploadOpts := &artifacts.UploadOptions{
-								Branch:    branch,
+								Branch:    originalBranch,
 								CommitSHA: cfg.GitHub.CommitSHA,
 								PRNumber: func() string {
-									if cfg.IsPullRequestContext() && cfg.GitHub.PullRequest > 0 {
-										return fmt.Sprintf("%d", cfg.GitHub.PullRequest)
+									if isPRContext && prNumber != "" {
+										return prNumber
 									}
 									return ""
 								}(),
@@ -756,7 +793,7 @@ update history, and create GitHub PR comment if in PR context.`,
 						cmd.Printf("   ⚠️  Failed to verify history files: %v\n", err)
 					}
 				} else {
-					cmd.Printf("   🧪 DRY RUN: Would record history entry for branch %s\n", branch)
+					cmd.Printf("   🧪 DRY RUN: Would record history entry for branch %s\n", originalBranch)
 				}
 
 				cmd.Printf("   ✅ History update completed (trend: %s)\n", trend)
@@ -884,20 +921,22 @@ update history, and create GitHub PR comment if in PR context.`,
 
 				// Create root index.html redirect only if index.html copy failed and we're on master
 				rootIndexPath := filepath.Join(outputDir, "index.html")
-				if _, err := os.Stat(rootIndexPath); os.IsNotExist(err) && branch == "master" && !cfg.IsPullRequestContext() {
+				if _, err := os.Stat(rootIndexPath); os.IsNotExist(err) && originalBranch == "master" && !cfg.IsPullRequestContext() {
 					cmd.Printf("   ℹ️  Creating fallback redirect for master branch\n")
-					redirectHTML := `<!DOCTYPE html>
+					// Use normalized branch name for the redirect path
+					redirectPath := fmt.Sprintf("reports/branch/%s/", branch)
+					redirectHTML := fmt.Sprintf(`<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>Coverage Report - Redirecting...</title>
-    <meta http-equiv="refresh" content="0; url=reports/branch/master/">
-    <script>window.location.href = "reports/branch/master/";</script>
+    <meta http-equiv="refresh" content="0; url=%s">
+    <script>window.location.href = "%s";</script>
 </head>
 <body>
-    <p>Redirecting to <a href="reports/branch/master/">coverage report</a>...</p>
+    <p>Redirecting to <a href="%s">coverage report</a>...</p>
 </body>
-</html>`
+</html>`, redirectPath, redirectPath, redirectPath)
 					if err := os.WriteFile(rootIndexPath, []byte(redirectHTML), cfg.Storage.FileMode); err != nil {
 						cmd.Printf("   ⚠️  Failed to create fallback root index.html: %v\n", err)
 					} else {
