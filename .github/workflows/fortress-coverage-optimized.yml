@@ -206,8 +206,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.github-token }}
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           # GitHub environment variables for proper branch detection
-          GITHUB_HEAD_REF: ${{ inputs.branch-name }}
+          GITHUB_HEAD_REF: ${{ inputs.event-name == 'pull_request' && inputs.branch-name || '' }}
           GITHUB_REF_NAME: ${{ inputs.branch-name }}
+          GITHUB_EVENT_NAME: ${{ inputs.event-name }}
           GITHUB_SHA: ${{ inputs.commit-sha }}
           GITHUB_PR_NUMBER: ${{ inputs.pr-number }}
         run: |
