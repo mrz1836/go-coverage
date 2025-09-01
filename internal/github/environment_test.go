@@ -552,3 +552,114 @@ func TestIsMergeRef(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRepository(t *testing.T) {
+	// Save original environment
+	originalEnv := saveEnv()
+	defer restoreEnv(originalEnv)
+
+	tests := []struct {
+		name     string
+		envValue string
+		expected string
+	}{
+		{
+			name:     "Repository set",
+			envValue: "owner/repo",
+			expected: "owner/repo",
+		},
+		{
+			name:     "Repository empty",
+			envValue: "",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			clearEnv()
+			if tt.envValue != "" {
+				_ = os.Setenv("GITHUB_REPOSITORY", tt.envValue)
+			}
+
+			result := GetRepository()
+			if result != tt.expected {
+				t.Errorf("GetRepository() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGetCommitSHA(t *testing.T) {
+	// Save original environment
+	originalEnv := saveEnv()
+	defer restoreEnv(originalEnv)
+
+	tests := []struct {
+		name     string
+		envValue string
+		expected string
+	}{
+		{
+			name:     "SHA set",
+			envValue: "abc123def456",
+			expected: "abc123def456",
+		},
+		{
+			name:     "SHA empty",
+			envValue: "",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			clearEnv()
+			if tt.envValue != "" {
+				_ = os.Setenv("GITHUB_SHA", tt.envValue)
+			}
+
+			result := GetCommitSHA()
+			if result != tt.expected {
+				t.Errorf("GetCommitSHA() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGetToken(t *testing.T) {
+	// Save original environment
+	originalEnv := saveEnv()
+	defer restoreEnv(originalEnv)
+
+	tests := []struct {
+		name     string
+		envValue string
+		expected string
+	}{
+		{
+			name:     "Token set",
+			envValue: "ghp_secrettoken123",
+			expected: "ghp_secrettoken123",
+		},
+		{
+			name:     "Token empty",
+			envValue: "",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			clearEnv()
+			if tt.envValue != "" {
+				_ = os.Setenv("GITHUB_TOKEN", tt.envValue)
+			}
+
+			result := GetToken()
+			if result != tt.expected {
+				t.Errorf("GetToken() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
