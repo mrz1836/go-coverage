@@ -466,7 +466,8 @@ func (p *Parser) DiscoverEligibleFiles(ctx context.Context, rootPath string) ([]
 		}
 
 		// Check if file should be excluded using the same logic as coverage parsing
-		if !p.shouldExcludeFile(relPath) {
+		// Use relPath for pattern matching, but pass absolute path for isGeneratedFile
+		if !p.shouldExcludeFileForDiscovery(relPath, path) {
 			eligibleFiles = append(eligibleFiles, relPath)
 		}
 
@@ -477,6 +478,51 @@ func (p *Parser) DiscoverEligibleFiles(ctx context.Context, rootPath string) ([]
 	}
 
 	return eligibleFiles, nil
+}
+
+// shouldExcludeFileForDiscovery determines if a file should be excluded from file discovery
+// It takes both relative and absolute paths for different checks
+func (p *Parser) shouldExcludeFileForDiscovery(relPath, absPath string) bool {
+	// Check include-only paths first (using relative path)
+	if len(p.config.IncludeOnlyPaths) > 0 {
+		included := false
+		for _, path := range p.config.IncludeOnlyPaths {
+			if strings.HasPrefix(relPath, path) {
+				included = true
+				break
+			}
+		}
+		if !included {
+			return true
+		}
+	}
+
+	// Check exclude paths (using relative path)
+	for _, path := range p.config.ExcludePaths {
+		if strings.Contains(relPath, path) {
+			return true
+		}
+	}
+
+	// Check exclude file patterns (using relative path)
+	basename := filepath.Base(relPath)
+	for _, pattern := range p.config.ExcludeFiles {
+		if matched, _ := filepath.Match(pattern, basename); matched {
+			return true
+		}
+	}
+
+	// Check exclude test files (using relative path)
+	if p.config.ExcludeTestFiles && strings.HasSuffix(basename, "_test.go") {
+		return true
+	}
+
+	// Check exclude generated files (using absolute path for file reading)
+	if p.config.ExcludeGenerated && p.isGeneratedFile(absPath) {
+		return true
+	}
+
+	return false
 }
 
 // calculateFileCoverage calculates coverage statistics for a single file
