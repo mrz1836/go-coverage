@@ -178,7 +178,7 @@ update history, and create GitHub PR comment if in PR context.`,
 			if cfg.Badge.Logo != "" {
 				badgeOptions = append(badgeOptions, badge.WithLogo(cfg.Badge.Logo))
 			}
-			if cfg.Badge.LogoColor != "white" {
+			if cfg.Badge.LogoColor != "" {
 				badgeOptions = append(badgeOptions, badge.WithLogoColor(cfg.Badge.LogoColor))
 			}
 
