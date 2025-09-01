@@ -600,3 +600,133 @@ func TestProcessLogoColor(t *testing.T) {
 		})
 	}
 }
+
+// TestApplySVGColor tests the new applySVGColor method that handles various SVG coloring scenarios
+func TestApplySVGColor(t *testing.T) {
+	generator := New()
+
+	tests := []struct {
+		name        string
+		svgContent  string
+		color       string
+		expectedSVG string
+	}{
+		{
+			name:        "replace currentColor",
+			svgContent:  `<svg fill="currentColor"><path d="M0 0"/></svg>`,
+			color:       "white",
+			expectedSVG: `<svg fill="white"><path d="M0 0"/></svg>`,
+		},
+		{
+			name:        "replace 2FAS default red color",
+			svgContent:  `<svg fill="#EC1C24"><path d="M0 0"/></svg>`,
+			color:       "white",
+			expectedSVG: `<svg fill="white"><path d="M0 0"/></svg>`,
+		},
+		{
+			name:        "add fill attribute when missing",
+			svgContent:  `<svg role="img" viewBox="0 0 24 24"><path d="M0 0"/></svg>`,
+			color:       "white",
+			expectedSVG: `<svg role="img" viewBox="0 0 24 24" fill="white"><path d="M0 0"/></svg>`,
+		},
+		{
+			name:        "handle real 2FAS SVG without fill",
+			svgContent:  `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>2FAS</title><path d="M12 0c-.918 0"/></svg>`,
+			color:       "white",
+			expectedSVG: `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="white"><title>2FAS</title><path d="M12 0c-.918 0"/></svg>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := generator.applySVGColor(tt.svgContent, tt.color)
+			assert.Equal(t, tt.expectedSVG, result)
+		})
+	}
+}
+
+// TestApplySVGColorStatic tests the static version used in fetchSimpleIcon
+func TestApplySVGColorStatic(t *testing.T) {
+	tests := []struct {
+		name        string
+		svgContent  string
+		color       string
+		expectedSVG string
+	}{
+		{
+			name:        "replace currentColor",
+			svgContent:  `<svg fill="currentColor"><path d="M0 0"/></svg>`,
+			color:       "white",
+			expectedSVG: `<svg fill="white"><path d="M0 0"/></svg>`,
+		},
+		{
+			name:        "add fill attribute when missing",
+			svgContent:  `<svg role="img" viewBox="0 0 24 24"><path d="M0 0"/></svg>`,
+			color:       "white",
+			expectedSVG: `<svg role="img" viewBox="0 0 24 24" fill="white"><path d="M0 0"/></svg>`,
+		},
+		{
+			name:        "method and static versions are identical",
+			svgContent:  `<svg><path fill="currentColor"/></svg>`,
+			color:       "red",
+			expectedSVG: `<svg><path fill="red"/></svg>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := applySVGColorStatic(tt.svgContent, tt.color)
+			assert.Equal(t, tt.expectedSVG, result)
+		})
+	}
+}
+
+// TestProcessLogoColorWithNewFunctions tests the updated processLogoColor method
+func TestProcessLogoColorWithNewFunctions(t *testing.T) {
+	generator := New()
+
+	tests := []struct {
+		name         string
+		logoURL      string
+		color        string
+		expectedSVG  string
+		shouldModify bool
+	}{
+		{
+			name:         "process SVG without fill attribute",
+			logoURL:      "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(`<svg viewBox="0 0 24 24"><path d="M0 0"/></svg>`)),
+			color:        "white",
+			expectedSVG:  `<svg viewBox="0 0 24 24" fill="white"><path d="M0 0"/></svg>`,
+			shouldModify: true,
+		},
+		{
+			name:         "process SVG with 2FAS red fill",
+			logoURL:      "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(`<svg fill="#EC1C24"><path d="M0 0"/></svg>`)),
+			color:        "white",
+			expectedSVG:  `<svg fill="white"><path d="M0 0"/></svg>`,
+			shouldModify: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := generator.processLogoColor(tt.logoURL, tt.color)
+
+			if !tt.shouldModify {
+				assert.Equal(t, tt.logoURL, result, "Logo should not be modified")
+			} else {
+				assert.NotEqual(t, tt.logoURL, result, "Logo should be modified")
+
+				// Decode and check the SVG content
+				if strings.HasPrefix(result, "data:image/svg+xml;base64,") {
+					base64Content := strings.TrimPrefix(result, "data:image/svg+xml;base64,")
+					svgBytes, err := base64.StdEncoding.DecodeString(base64Content)
+					require.NoError(t, err)
+
+					svgContent := string(svgBytes)
+					assert.Equal(t, tt.expectedSVG, svgContent)
+				}
+			}
+		})
+	}
+}

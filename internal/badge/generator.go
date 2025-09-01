@@ -294,12 +294,96 @@ func (g *Generator) processLogoColor(logoURL, color string) string {
 
 	svgContent := string(svgBytes)
 
-	// Replace currentColor with the specified color
-	modifiedSVG := strings.ReplaceAll(svgContent, "currentColor", color)
+	// Apply color processing to the SVG
+	modifiedSVG := g.applySVGColor(svgContent, color)
 
 	// Re-encode to base64
 	newBase64 := base64.StdEncoding.EncodeToString([]byte(modifiedSVG))
 	return "data:image/svg+xml;base64," + newBase64
+}
+
+// applySVGColor applies the specified color to an SVG by handling various color scenarios
+func (g *Generator) applySVGColor(svgContent, color string) string {
+	// First, replace any currentColor occurrences
+	modifiedSVG := strings.ReplaceAll(svgContent, "currentColor", color)
+
+	// Check if the SVG root element already has a fill attribute
+	if strings.Contains(modifiedSVG, `fill="`) {
+		// Replace existing fill attribute with the desired color
+		// Use regex to find and replace fill="any-color" with fill="desired-color"
+		re := strings.NewReplacer(`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
+			`fill="#000000"`, `fill="`+color+`"`, // black
+			`fill="#000"`, `fill="`+color+`"`, // short black
+			`fill="black"`, `fill="`+color+`"`, // named black
+		)
+		modifiedSVG = re.Replace(modifiedSVG)
+
+		// Generic replacement for other fill colors (hex colors)
+		if strings.Contains(modifiedSVG, `fill="#`) && !strings.Contains(modifiedSVG, `fill="`+color) {
+			// Find the fill attribute and replace it
+			start := strings.Index(modifiedSVG, `fill="`)
+			if start != -1 {
+				end := strings.Index(modifiedSVG[start+6:], `"`)
+				if end != -1 {
+					oldFill := modifiedSVG[start : start+6+end+1]
+					newFill := `fill="` + color + `"`
+					modifiedSVG = strings.Replace(modifiedSVG, oldFill, newFill, 1)
+				}
+			}
+		}
+	} else {
+		// No fill attribute exists, add one to the root SVG element
+		// Find the opening <svg tag and inject the fill attribute
+		svgTagEnd := strings.Index(modifiedSVG, ">")
+		if svgTagEnd != -1 {
+			// Insert fill attribute before the closing >
+			modifiedSVG = modifiedSVG[:svgTagEnd] + ` fill="` + color + `"` + modifiedSVG[svgTagEnd:]
+		}
+	}
+
+	return modifiedSVG
+}
+
+// applySVGColorStatic is a static version of applySVGColor for use in package-level functions
+func applySVGColorStatic(svgContent, color string) string {
+	// First, replace any currentColor occurrences
+	modifiedSVG := strings.ReplaceAll(svgContent, "currentColor", color)
+
+	// Check if the SVG root element already has a fill attribute
+	if strings.Contains(modifiedSVG, `fill="`) {
+		// Replace existing fill attribute with the desired color
+		// Use regex to find and replace fill="any-color" with fill="desired-color"
+		re := strings.NewReplacer(`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
+			`fill="#000000"`, `fill="`+color+`"`, // black
+			`fill="#000"`, `fill="`+color+`"`, // short black
+			`fill="black"`, `fill="`+color+`"`, // named black
+		)
+		modifiedSVG = re.Replace(modifiedSVG)
+
+		// Generic replacement for other fill colors (hex colors)
+		if strings.Contains(modifiedSVG, `fill="#`) && !strings.Contains(modifiedSVG, `fill="`+color) {
+			// Find the fill attribute and replace it
+			start := strings.Index(modifiedSVG, `fill="`)
+			if start != -1 {
+				end := strings.Index(modifiedSVG[start+6:], `"`)
+				if end != -1 {
+					oldFill := modifiedSVG[start : start+6+end+1]
+					newFill := `fill="` + color + `"`
+					modifiedSVG = strings.Replace(modifiedSVG, oldFill, newFill, 1)
+				}
+			}
+		}
+	} else {
+		// No fill attribute exists, add one to the root SVG element
+		// Find the opening <svg tag and inject the fill attribute
+		svgTagEnd := strings.Index(modifiedSVG, ">")
+		if svgTagEnd != -1 {
+			// Insert fill attribute before the closing >
+			modifiedSVG = modifiedSVG[:svgTagEnd] + ` fill="` + color + `"` + modifiedSVG[svgTagEnd:]
+		}
+	}
+
+	return modifiedSVG
 }
 
 // fetchSimpleIcon fetches an SVG icon from Simple Icons CDN with retry logic and returns it as a base64 data URI
@@ -377,8 +461,13 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 			continue
 		}
 
-		// Success! Encode as base64 data URI
-		base64Content := base64.StdEncoding.EncodeToString(svgContent)
+		// Success! Apply color if specified and encode as base64 data URI
+		finalSVG := string(svgContent)
+		if color != "" {
+			// Apply color to the SVG (handle missing fill attributes, currentColor, etc.)
+			finalSVG = applySVGColorStatic(finalSVG, color)
+		}
+		base64Content := base64.StdEncoding.EncodeToString([]byte(finalSVG))
 		return "data:image/svg+xml;base64," + base64Content, nil
 	}
 
@@ -429,7 +518,13 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 			continue
 		}
 
-		base64Content := base64.StdEncoding.EncodeToString(svgContent)
+		// Apply color if specified for GitHub fallback SVGs
+		finalSVG := string(svgContent)
+		if color != "" {
+			// Apply color to the SVG (handle missing fill attributes, currentColor, etc.)
+			finalSVG = applySVGColorStatic(finalSVG, color)
+		}
+		base64Content := base64.StdEncoding.EncodeToString([]byte(finalSVG))
 		return "data:image/svg+xml;base64," + base64Content, nil
 	}
 
