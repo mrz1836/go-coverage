@@ -376,6 +376,148 @@ func TestLoggerInterface(_ *testing.T) {
 	logger.WithContext(context.Background()).Debug("test")
 }
 
+// TestLoggerFormattedMethods tests the formatted logging methods that have 0% coverage
+func TestLoggerFormattedMethods(t *testing.T) {
+	var buf bytes.Buffer
+	config := &Config{
+		Level:  DebugLevel,
+		Format: "text",
+		Output: &buf,
+	}
+
+	logger := NewLogger(config)
+
+	// Test Debugf method
+	logger.Debugf("debug message with %s and %d", "string", 42)
+	output := buf.String()
+	if !strings.Contains(output, "[DEBUG]") {
+		t.Errorf("Expected [DEBUG] in output for Debugf, got: %s", output)
+	}
+	if !strings.Contains(output, "debug message with string and 42") {
+		t.Errorf("Expected formatted message in Debugf output, got: %s", output)
+	}
+
+	buf.Reset()
+
+	// Test Warnf method
+	logger.Warnf("warning message with %s", "format")
+	output = buf.String()
+	if !strings.Contains(output, "[WARN]") {
+		t.Errorf("Expected [WARN] in output for Warnf, got: %s", output)
+	}
+	if !strings.Contains(output, "warning message with format") {
+		t.Errorf("Expected formatted message in Warnf output, got: %s", output)
+	}
+
+	buf.Reset()
+
+	// Test Errorf method
+	logger.Errorf("error message with %s and %v", "text", errTest)
+	output = buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("Expected [ERROR] in output for Errorf, got: %s", output)
+	}
+	if !strings.Contains(output, "error message with text and") {
+		t.Errorf("Expected formatted message in Errorf output, got: %s", output)
+	}
+}
+
+// TestLoggerEntryFormattedMethods tests the formatted methods on entry objects
+func TestLoggerEntryFormattedMethods(t *testing.T) {
+	var buf bytes.Buffer
+	config := &Config{
+		Level:  DebugLevel,
+		Format: "text",
+		Output: &buf,
+	}
+
+	logger := NewLogger(config)
+	entry := logger.WithField("test", "value")
+
+	// Test Debugf method on entry
+	entry.Debugf("entry debug with %d items", 5)
+	output := buf.String()
+	if !strings.Contains(output, "[DEBUG]") {
+		t.Errorf("Expected [DEBUG] in output for entry Debugf, got: %s", output)
+	}
+	if !strings.Contains(output, "entry debug with 5 items") {
+		t.Errorf("Expected formatted message in entry Debugf output, got: %s", output)
+	}
+
+	buf.Reset()
+
+	// Test Infof method on entry
+	entry.Infof("entry info with %s", "parameter")
+	output = buf.String()
+	if !strings.Contains(output, "[INFO]") {
+		t.Errorf("Expected [INFO] in output for entry Infof, got: %s", output)
+	}
+	if !strings.Contains(output, "entry info with parameter") {
+		t.Errorf("Expected formatted message in entry Infof output, got: %s", output)
+	}
+
+	buf.Reset()
+
+	// Test Warnf method on entry
+	entry.Warnf("entry warn with %.2f percent", 85.67)
+	output = buf.String()
+	if !strings.Contains(output, "[WARN]") {
+		t.Errorf("Expected [WARN] in output for entry Warnf, got: %s", output)
+	}
+	if !strings.Contains(output, "entry warn with 85.67 percent") {
+		t.Errorf("Expected formatted message in entry Warnf output, got: %s", output)
+	}
+
+	buf.Reset()
+
+	// Test Errorf method on entry
+	entry.Errorf("entry error with %v", errChain)
+	output = buf.String()
+	if !strings.Contains(output, "[ERROR]") {
+		t.Errorf("Expected [ERROR] in output for entry Errorf, got: %s", output)
+	}
+	if !strings.Contains(output, "entry error with chain error") {
+		t.Errorf("Expected formatted message in entry Errorf output, got: %s", output)
+	}
+}
+
+// TestLoggerEntryWithContext tests the WithContext method that has 0% coverage
+func TestLoggerEntryWithContext(t *testing.T) {
+	var buf bytes.Buffer
+	config := &Config{
+		Level:  InfoLevel,
+		Format: "json",
+		Output: &buf,
+	}
+
+	logger := NewLogger(config)
+	entry := logger.WithField("base", "value")
+
+	// Test WithContext method on entry
+	type requestIDKey string
+	ctx := context.WithValue(context.Background(), requestIDKey("request-id"), "test-123")
+	contextEntry := entry.WithContext(ctx)
+
+	// Verify it returns a new entry and doesn't panic
+	if contextEntry == nil {
+		t.Error("WithContext should return a non-nil entry")
+	}
+
+	// Log a message to verify it works
+	contextEntry.Info("test message with context")
+	output := buf.String()
+
+	// Parse JSON output to verify structure
+	var logEntry map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &logEntry); err != nil {
+		t.Fatalf("Failed to parse JSON output: %v", err)
+	}
+
+	if logEntry["message"] != "test message with context" {
+		t.Errorf("Expected message to be preserved, got: %v", logEntry["message"])
+	}
+}
+
 func TestEntryImmutability(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{

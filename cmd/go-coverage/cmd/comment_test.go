@@ -885,3 +885,236 @@ func TestNewCommentCmdValidationErrors(t *testing.T) {
 		})
 	}
 }
+
+// TestNewCommentCmdDryRunMode tests the dry-run functionality
+func TestNewCommentCmdDryRunMode(t *testing.T) {
+	// Create a minimal test coverage file
+	tempFile, err := os.CreateTemp("", "coverage_test_*.out")
+	require.NoError(t, err)
+	defer func() {
+		_ = os.Remove(tempFile.Name())
+	}()
+
+	// Write minimal coverage data
+	coverageData := `mode: atomic
+github.com/test/repo/main.go:1.1,5.10 2 1
+`
+	_, err = tempFile.WriteString(coverageData)
+	require.NoError(t, err)
+	require.NoError(t, tempFile.Close())
+
+	// Setup environment for dry run test
+	setupEnv := func() func() {
+		originalToken := os.Getenv("GITHUB_TOKEN")
+		originalOwner := os.Getenv("GITHUB_REPOSITORY_OWNER")
+		originalRepo := os.Getenv("GITHUB_REPOSITORY")
+
+		require.NoError(t, os.Setenv("GITHUB_TOKEN", "test-token"))
+		require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner"))
+		require.NoError(t, os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo"))
+
+		return func() {
+			if originalToken != "" {
+				_ = os.Setenv("GITHUB_TOKEN", originalToken)
+			} else {
+				_ = os.Unsetenv("GITHUB_TOKEN")
+			}
+			if originalOwner != "" {
+				_ = os.Setenv("GITHUB_REPOSITORY_OWNER", originalOwner)
+			} else {
+				_ = os.Unsetenv("GITHUB_REPOSITORY_OWNER")
+			}
+			if originalRepo != "" {
+				_ = os.Setenv("GITHUB_REPOSITORY", originalRepo)
+			} else {
+				_ = os.Unsetenv("GITHUB_REPOSITORY")
+			}
+		}
+	}
+
+	cleanup := setupEnv()
+	defer cleanup()
+
+	// Create command and set dry-run mode
+	commands := &Commands{}
+	cmd := commands.newCommentCmd()
+
+	require.NoError(t, cmd.Flags().Set("pr", "123"))
+	require.NoError(t, cmd.Flags().Set("coverage", tempFile.Name()))
+	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+
+	// Execute command
+	err = cmd.RunE(cmd, []string{})
+	// In dry-run mode, should succeed without making API calls
+	require.NoError(t, err)
+}
+
+// TestNewCommentCmdWithInvalidCoverageFile tests error handling for invalid coverage files
+func TestNewCommentCmdWithInvalidCoverageFile(t *testing.T) {
+	// Setup environment
+	setupEnv := func() func() {
+		originalToken := os.Getenv("GITHUB_TOKEN")
+		originalOwner := os.Getenv("GITHUB_REPOSITORY_OWNER")
+		originalRepo := os.Getenv("GITHUB_REPOSITORY")
+
+		require.NoError(t, os.Setenv("GITHUB_TOKEN", "test-token"))
+		require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner"))
+		require.NoError(t, os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo"))
+
+		return func() {
+			if originalToken != "" {
+				_ = os.Setenv("GITHUB_TOKEN", originalToken)
+			} else {
+				_ = os.Unsetenv("GITHUB_TOKEN")
+			}
+			if originalOwner != "" {
+				_ = os.Setenv("GITHUB_REPOSITORY_OWNER", originalOwner)
+			} else {
+				_ = os.Unsetenv("GITHUB_REPOSITORY_OWNER")
+			}
+			if originalRepo != "" {
+				_ = os.Setenv("GITHUB_REPOSITORY", originalRepo)
+			} else {
+				_ = os.Unsetenv("GITHUB_REPOSITORY")
+			}
+		}
+	}
+
+	cleanup := setupEnv()
+	defer cleanup()
+
+	tests := []struct {
+		name           string
+		coverageFile   string
+		expectedErrMsg string
+	}{
+		{
+			name:           "NonExistentFile",
+			coverageFile:   "/nonexistent/coverage.out",
+			expectedErrMsg: "failed to parse coverage file",
+		},
+		{
+			name:           "EmptyFilename",
+			coverageFile:   "",
+			expectedErrMsg: "failed to parse coverage file",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			commands := &Commands{}
+			cmd := commands.newCommentCmd()
+
+			require.NoError(t, cmd.Flags().Set("pr", "123"))
+			require.NoError(t, cmd.Flags().Set("coverage", tt.coverageFile))
+			require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+
+			err := cmd.RunE(cmd, []string{})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedErrMsg)
+		})
+	}
+}
+
+// TestNewCommentCmdFlagCombinations tests various flag combinations
+func TestNewCommentCmdFlagCombinations(t *testing.T) {
+	// Create test coverage file
+	coverageFile, err := os.CreateTemp("", "coverage_*.out")
+	require.NoError(t, err)
+	defer func() { _ = os.Remove(coverageFile.Name()) }()
+
+	coverageData := `mode: atomic
+github.com/test/repo/main.go:1.1,5.10 2 1
+`
+	_, err = coverageFile.WriteString(coverageData)
+	require.NoError(t, err)
+	require.NoError(t, coverageFile.Close())
+
+	// Setup environment
+	setupEnv := func() func() {
+		originalToken := os.Getenv("GITHUB_TOKEN")
+		originalOwner := os.Getenv("GITHUB_REPOSITORY_OWNER")
+		originalRepo := os.Getenv("GITHUB_REPOSITORY")
+
+		require.NoError(t, os.Setenv("GITHUB_TOKEN", "test-token"))
+		require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner"))
+		require.NoError(t, os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo"))
+
+		return func() {
+			if originalToken != "" {
+				_ = os.Setenv("GITHUB_TOKEN", originalToken)
+			} else {
+				_ = os.Unsetenv("GITHUB_TOKEN")
+			}
+			if originalOwner != "" {
+				_ = os.Setenv("GITHUB_REPOSITORY_OWNER", originalOwner)
+			} else {
+				_ = os.Unsetenv("GITHUB_REPOSITORY_OWNER")
+			}
+			if originalRepo != "" {
+				_ = os.Setenv("GITHUB_REPOSITORY", originalRepo)
+			} else {
+				_ = os.Unsetenv("GITHUB_REPOSITORY")
+			}
+		}
+	}
+
+	cleanup := setupEnv()
+	defer cleanup()
+
+	tests := []struct {
+		name  string
+		flags map[string]string
+	}{
+		{
+			name: "AllFeaturesEnabled",
+			flags: map[string]string{
+				"pr":              "123",
+				"coverage":        coverageFile.Name(),
+				"dry-run":         "true",
+				"status":          "true",
+				"block-merge":     "true",
+				"generate-badges": "true",
+				"enable-analysis": "true",
+				"anti-spam":       "true",
+				"badge-url":       "https://example.com/badge.svg",
+				"report-url":      "https://example.com/report",
+			},
+		},
+		{
+			name: "MinimalFlags",
+			flags: map[string]string{
+				"pr":       "456",
+				"coverage": coverageFile.Name(),
+				"dry-run":  "true",
+			},
+		},
+		{
+			name: "DisabledFeatures",
+			flags: map[string]string{
+				"pr":              "789",
+				"coverage":        coverageFile.Name(),
+				"dry-run":         "true",
+				"status":          "false",
+				"enable-analysis": "false",
+				"anti-spam":       "false",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			commands := &Commands{}
+			cmd := commands.newCommentCmd()
+
+			// Set all flags
+			for flag, value := range tt.flags {
+				require.NoError(t, cmd.Flags().Set(flag, value))
+			}
+
+			// Execute command - should succeed in dry-run mode
+			err := cmd.RunE(cmd, []string{})
+			require.NoError(t, err, "Flag combination should work in dry-run mode")
+		})
+	}
+}

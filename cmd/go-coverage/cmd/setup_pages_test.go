@@ -1187,3 +1187,278 @@ func TestNewSetupPagesCmdFlags(t *testing.T) {
 	protectBranches, _ := cmd.Flags().GetBool("protect-branches")
 	require.True(t, protectBranches)
 }
+
+// TestNewSetupPagesCmdDryRunSuccess tests successful dry run execution
+func TestNewSetupPagesCmdDryRunSuccess(t *testing.T) {
+	commands := &Commands{}
+	cmd := commands.newSetupPagesCmd()
+
+	// Set dry-run mode to avoid external dependencies
+	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+	require.NoError(t, cmd.Flags().Set("verbose", "true"))
+
+	// Test with valid repository format
+	err := cmd.RunE(cmd, []string{"testowner/testrepo"})
+	// In dry-run mode, should either succeed or fail with known GitHub CLI errors
+	if err != nil {
+		// Allow known errors related to missing GitHub CLI
+		allowedErrors := []string{
+			"prerequisites check failed",
+			"github CLI",
+			"not found",
+			"not authenticated",
+		}
+
+		errStr := strings.ToLower(err.Error())
+		hasAllowedError := false
+		for _, allowed := range allowedErrors {
+			if strings.Contains(errStr, allowed) {
+				hasAllowedError = true
+				break
+			}
+		}
+		require.True(t, hasAllowedError, "Unexpected error: %v", err)
+	}
+}
+
+// TestNewSetupPagesCmdWithAllFlags tests command execution with all flags
+func TestNewSetupPagesCmdWithAllFlags(t *testing.T) {
+	commands := &Commands{}
+	cmd := commands.newSetupPagesCmd()
+
+	// Set all flags
+	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+	require.NoError(t, cmd.Flags().Set("verbose", "true"))
+	require.NoError(t, cmd.Flags().Set("custom-domain", "coverage.example.com"))
+	require.NoError(t, cmd.Flags().Set("protect-branches", "true"))
+
+	// Execute with valid repository
+	err := cmd.RunE(cmd, []string{"testowner/testrepo"})
+	// Should either succeed in dry-run or fail with known GitHub CLI errors
+	if err != nil {
+		allowedErrors := []string{
+			"prerequisites check failed",
+			"github CLI",
+			"not found",
+			"not authenticated",
+		}
+
+		errStr := strings.ToLower(err.Error())
+		hasAllowedError := false
+		for _, allowed := range allowedErrors {
+			if strings.Contains(errStr, allowed) {
+				hasAllowedError = true
+				break
+			}
+		}
+		require.True(t, hasAllowedError, "Unexpected error: %v", err)
+	}
+}
+
+// TestNewSetupPagesCmdAutoDetection tests repository auto-detection
+func TestNewSetupPagesCmdAutoDetection(t *testing.T) {
+	commands := &Commands{}
+	cmd := commands.newSetupPagesCmd()
+
+	// Set dry-run mode
+	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+
+	// Execute without repository argument (should auto-detect)
+	err := cmd.RunE(cmd, []string{})
+	// Should either succeed, fail with git repo detection, or GitHub CLI errors
+	if err != nil {
+		allowedErrors := []string{
+			"prerequisites check failed",
+			"github CLI",
+			"not found",
+			"not authenticated",
+			"failed to determine repository",
+			"not in a git repository",
+			"could not parse GitHub repository",
+		}
+
+		errStr := strings.ToLower(err.Error())
+		hasAllowedError := false
+		for _, allowed := range allowedErrors {
+			if strings.Contains(errStr, allowed) {
+				hasAllowedError = true
+				break
+			}
+		}
+		require.True(t, hasAllowedError, "Unexpected error: %v", err)
+	}
+}
+
+// TestCreateInitialGhPagesBranchEdgeCases tests additional edge cases for createInitialGhPagesBranch
+func TestCreateInitialGhPagesBranchEdgeCases(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		repo       string
+		dryRun     bool
+		verbose    bool
+		expectedOK bool
+		skipReason string
+	}{
+		{
+			name:       "EmptyRepositoryDryRun",
+			repo:       "",
+			dryRun:     true,
+			verbose:    false,
+			expectedOK: true, // Empty repo should succeed in dry-run mode
+		},
+		{
+			name:       "LongRepositoryNameDryRun",
+			repo:       "very-long-organization-name-that-exceeds-typical-length/very-long-repository-name-that-also-exceeds-typical-length",
+			dryRun:     true,
+			verbose:    true,
+			expectedOK: true,
+		},
+		{
+			name:       "SpecialCharactersInRepo",
+			repo:       "test-org_123/test.repo-456",
+			dryRun:     true,
+			verbose:    false,
+			expectedOK: true,
+		},
+		{
+			name:       "NonDryRunMode",
+			repo:       "testowner/testrepo",
+			dryRun:     false,
+			verbose:    true,
+			skipReason: "Requires GitHub CLI, git access, and network connectivity",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.skipReason != "" {
+				t.Skip(tt.skipReason)
+			}
+
+			ctx := context.Background()
+			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+
+			err := createInitialGhPagesBranch(ctx, cmd, tt.repo, tt.dryRun, tt.verbose)
+
+			if tt.expectedOK && tt.dryRun {
+				// Dry run should always succeed without external dependencies
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// TestVerifySetupEdgeCases tests additional scenarios for verifySetup function
+func TestVerifySetupEdgeCases(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		repo        string
+		verbose     bool
+		expectError bool
+		skipReason  string
+	}{
+		{
+			name:        "InvalidRepositoryFormat",
+			repo:        "invalid-repo-format",
+			verbose:     false,
+			expectError: true,
+		},
+		{
+			name:        "EmptyRepository",
+			repo:        "",
+			verbose:     false,
+			expectError: true,
+		},
+		{
+			name:        "RepositoryWithSpecialChars",
+			repo:        "test@invalid/repo#name",
+			verbose:     true,
+			expectError: true,
+		},
+		{
+			name:       "ValidRepositoryVerboseMode",
+			repo:       "testowner/testrepo",
+			verbose:    true,
+			skipReason: "Requires GitHub CLI and network access",
+		},
+		{
+			name:       "ValidRepositoryQuietMode",
+			repo:       "testowner/testrepo",
+			verbose:    false,
+			skipReason: "Requires GitHub CLI and network access",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.skipReason != "" {
+				t.Skip(tt.skipReason)
+			}
+
+			ctx := context.Background()
+			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+
+			err := verifySetup(ctx, cmd, tt.repo, tt.verbose)
+
+			if tt.expectError {
+				require.Error(t, err)
+				if !isValidRepositoryFormat(tt.repo) {
+					assert.Contains(t, err.Error(), "repository format")
+				}
+			}
+		})
+	}
+}
+
+// TestSetupFunctionsErrorPropagation tests error handling across setup functions
+func TestSetupFunctionsErrorPropagation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		functionName string
+		repo         string
+		expectedErr  string
+	}{
+		{
+			name:         "SetupPagesEnvironmentInvalidRepo",
+			functionName: "setupPagesEnvironment",
+			repo:         "invalid-format",
+			expectedErr:  "repository format",
+		},
+		{
+			name:         "CheckRepositoryAccessInvalidRepo",
+			functionName: "checkRepositoryAccess",
+			repo:         "invalid-format",
+			expectedErr:  "repository not found",
+		},
+		{
+			name:         "CheckRepositoryAccessEmptyRepo",
+			functionName: "checkRepositoryAccess",
+			repo:         "",
+			expectedErr:  "repository not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+
+			var err error
+			switch tt.functionName {
+			case "setupPagesEnvironment":
+				err = setupPagesEnvironment(ctx, cmd, tt.repo, true, false)
+			case "checkRepositoryAccess":
+				err = checkRepositoryAccess(ctx, cmd, tt.repo, false)
+			}
+
+			require.Error(t, err)
+			assert.Contains(t, strings.ToLower(err.Error()), strings.ToLower(tt.expectedErr))
+		})
+	}
+}

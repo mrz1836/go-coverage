@@ -462,3 +462,276 @@ func TestParseOnlyMode(t *testing.T) {
 	assert.Equal(t, 0, coverage.CoveredLines)
 	assert.InDelta(t, 0.0, coverage.Percentage, 0.001)
 }
+
+// TestDiscoverEligibleFiles tests the DiscoverEligibleFiles function with various scenarios
+func TestDiscoverEligibleFiles(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        *Config
+		setupFiles    func() (string, func()) // returns tmpDir and cleanup function
+		expectedFiles []string
+		expectedError bool
+	}{
+		{
+			name: "basic Go files discovery",
+			config: &Config{
+				ExcludePaths:     []string{},
+				ExcludeFiles:     []string{},
+				ExcludeGenerated: false,
+				ExcludeTestFiles: false,
+			},
+			setupFiles: func() (string, func()) {
+				tmpDir := t.TempDir()
+
+				// Create test files
+				err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main\nfunc main() {}"), 0o600)
+				require.NoError(t, err)
+
+				err = os.WriteFile(filepath.Join(tmpDir, "config.go"), []byte("package config\nfunc Config() {}"), 0o600)
+				require.NoError(t, err)
+
+				// Create non-Go file (should be ignored)
+				err = os.WriteFile(filepath.Join(tmpDir, "README.md"), []byte("# README"), 0o600)
+				require.NoError(t, err)
+
+				return tmpDir, func() {}
+			},
+			expectedFiles: []string{"config.go", "main.go"},
+			expectedError: false,
+		},
+		{
+			name: "exclude test files",
+			config: &Config{
+				ExcludePaths:     []string{},
+				ExcludeFiles:     []string{},
+				ExcludeGenerated: false,
+				ExcludeTestFiles: true,
+			},
+			setupFiles: func() (string, func()) {
+				tmpDir := t.TempDir()
+
+				err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main\nfunc main() {}"), 0o600)
+				require.NoError(t, err)
+
+				err = os.WriteFile(filepath.Join(tmpDir, "main_test.go"), []byte("package main\nfunc TestMain() {}"), 0o600)
+				require.NoError(t, err)
+
+				return tmpDir, func() {}
+			},
+			expectedFiles: []string{"main.go"},
+			expectedError: false,
+		},
+		{
+			name: "exclude specific paths",
+			config: &Config{
+				ExcludePaths:     []string{"vendor/", "testdata/"},
+				ExcludeFiles:     []string{},
+				ExcludeGenerated: false,
+				ExcludeTestFiles: false,
+			},
+			setupFiles: func() (string, func()) {
+				tmpDir := t.TempDir()
+
+				// Create regular file
+				err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main\nfunc main() {}"), 0o600)
+				require.NoError(t, err)
+
+				// Create vendor directory and file
+				vendorDir := filepath.Join(tmpDir, "vendor")
+				err = os.MkdirAll(vendorDir, 0o750)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(vendorDir, "lib.go"), []byte("package lib\nfunc Lib() {}"), 0o600)
+				require.NoError(t, err)
+
+				// Create testdata directory and file
+				testdataDir := filepath.Join(tmpDir, "testdata")
+				err = os.MkdirAll(testdataDir, 0o750)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(testdataDir, "data.go"), []byte("package data\nfunc Data() {}"), 0o600)
+				require.NoError(t, err)
+
+				return tmpDir, func() {}
+			},
+			expectedFiles: []string{"main.go"},
+			expectedError: false,
+		},
+		{
+			name: "exclude file patterns",
+			config: &Config{
+				ExcludePaths:     []string{},
+				ExcludeFiles:     []string{"*.pb.go", "*_mock.go"},
+				ExcludeGenerated: false,
+				ExcludeTestFiles: false,
+			},
+			setupFiles: func() (string, func()) {
+				tmpDir := t.TempDir()
+
+				err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main\nfunc main() {}"), 0o600)
+				require.NoError(t, err)
+
+				err = os.WriteFile(filepath.Join(tmpDir, "proto.pb.go"), []byte("package proto\nfunc Proto() {}"), 0o600)
+				require.NoError(t, err)
+
+				err = os.WriteFile(filepath.Join(tmpDir, "service_mock.go"), []byte("package mocks\nfunc Mock() {}"), 0o600)
+				require.NoError(t, err)
+
+				return tmpDir, func() {}
+			},
+			expectedFiles: []string{"main.go"},
+			expectedError: false,
+		},
+		{
+			name: "include only specific paths",
+			config: &Config{
+				ExcludePaths:     []string{},
+				ExcludeFiles:     []string{},
+				IncludeOnlyPaths: []string{"internal/"},
+				ExcludeGenerated: false,
+				ExcludeTestFiles: false,
+			},
+			setupFiles: func() (string, func()) {
+				tmpDir := t.TempDir()
+
+				// Create file in root (should be excluded)
+				err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main\nfunc main() {}"), 0o600)
+				require.NoError(t, err)
+
+				// Create internal directory and file (should be included)
+				internalDir := filepath.Join(tmpDir, "internal")
+				err = os.MkdirAll(internalDir, 0o750)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(internalDir, "config.go"), []byte("package config\nfunc Config() {}"), 0o600)
+				require.NoError(t, err)
+
+				return tmpDir, func() {}
+			},
+			expectedFiles: []string{"internal/config.go"},
+			expectedError: false,
+		},
+		{
+			name: "exclude generated files",
+			config: &Config{
+				ExcludePaths:     []string{},
+				ExcludeFiles:     []string{},
+				ExcludeGenerated: true,
+				ExcludeTestFiles: false,
+			},
+			setupFiles: func() (string, func()) {
+				tmpDir := t.TempDir()
+
+				err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main\nfunc main() {}"), 0o600)
+				require.NoError(t, err)
+
+				// Create generated file with proper header - use first line as pattern match
+				generatedContent := "// Code generated by protoc-gen-go. DO NOT EDIT.\npackage proto\nfunc Generated() {}"
+				err = os.WriteFile(filepath.Join(tmpDir, "generated.go"), []byte(generatedContent), 0o600)
+				require.NoError(t, err)
+
+				return tmpDir, func() {}
+			},
+			expectedFiles: []string{"main.go"}, // generated.go should be excluded due to generated header
+			expectedError: false,
+		},
+		{
+			name: "nested directories",
+			config: &Config{
+				ExcludePaths:     []string{},
+				ExcludeFiles:     []string{},
+				ExcludeGenerated: false,
+				ExcludeTestFiles: false,
+			},
+			setupFiles: func() (string, func()) {
+				tmpDir := t.TempDir()
+
+				// Create nested structure
+				pkgADir := filepath.Join(tmpDir, "pkg", "a")
+				err := os.MkdirAll(pkgADir, 0o750)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(pkgADir, "a.go"), []byte("package a\nfunc A() {}"), 0o600)
+				require.NoError(t, err)
+
+				pkgBDir := filepath.Join(tmpDir, "pkg", "b")
+				err = os.MkdirAll(pkgBDir, 0o750)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(pkgBDir, "b.go"), []byte("package b\nfunc B() {}"), 0o600)
+				require.NoError(t, err)
+
+				return tmpDir, func() {}
+			},
+			expectedFiles: []string{"pkg/a/a.go", "pkg/b/b.go"},
+			expectedError: false,
+		},
+		{
+			name: "empty directory",
+			config: &Config{
+				ExcludePaths:     []string{},
+				ExcludeFiles:     []string{},
+				ExcludeGenerated: false,
+				ExcludeTestFiles: false,
+			},
+			setupFiles: func() (string, func()) {
+				tmpDir := t.TempDir()
+				return tmpDir, func() {}
+			},
+			expectedFiles: []string{},
+			expectedError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := NewWithConfig(tt.config)
+			tmpDir, cleanup := tt.setupFiles()
+			defer cleanup()
+
+			ctx := context.Background()
+			files, err := parser.DiscoverEligibleFiles(ctx, tmpDir)
+
+			if tt.expectedError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Len(t, files, len(tt.expectedFiles))
+
+			// Check that all expected files are present
+			for _, expectedFile := range tt.expectedFiles {
+				assert.Contains(t, files, expectedFile, "Expected file %s not found in result", expectedFile)
+			}
+
+			// Verify all returned files are Go files
+			for _, file := range files {
+				assert.True(t, strings.HasSuffix(file, ".go"), "Non-Go file returned: %s", file)
+			}
+		})
+	}
+}
+
+// TestDiscoverEligibleFilesCancellation tests context cancellation
+func TestDiscoverEligibleFilesCancellation(t *testing.T) {
+	parser := New()
+	tmpDir := t.TempDir()
+
+	// Create some files
+	err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main\nfunc main() {}"), 0o600)
+	require.NoError(t, err)
+
+	// Create canceled context
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err = parser.DiscoverEligibleFiles(ctx, tmpDir)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "context canceled")
+}
+
+// TestDiscoverEligibleFilesNonExistentDirectory tests with non-existent directory
+func TestDiscoverEligibleFilesNonExistentDirectory(t *testing.T) {
+	parser := New()
+	ctx := context.Background()
+
+	_, err := parser.DiscoverEligibleFiles(ctx, "/non/existent/path")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to discover Go files")
+}

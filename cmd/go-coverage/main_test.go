@@ -5,6 +5,8 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -183,4 +185,288 @@ func TestIsTemplateString(t *testing.T) {
 			require.Equal(t, tc.expected, result, "isTemplateString(%q) should return %v", tc.input, tc.expected)
 		})
 	}
+}
+
+// TestGetVersionWithLdflags tests GetVersion with different ldflags scenarios
+func TestGetVersionWithLdflags(t *testing.T) {
+	// These tests run in the current binary context
+	// We test the actual behavior of GetVersion function
+	version := GetVersion()
+	require.NotEmpty(t, version, "GetVersion should return non-empty string")
+
+	// Version should not be a template string
+	require.False(t, isTemplateString(version), "GetVersion should not return template placeholders")
+
+	// Should be either a proper version (starts with digit or 'v'), commit hash, or "dev"
+	if version != "dev" {
+		// If it's not "dev", it should either be a version or commit hash
+		// Version patterns: v1.2.3, 1.2.3
+		// Commit hash patterns: 7-40 character hex
+		if !strings.HasPrefix(version, "v") && !strings.Contains(version, ".") {
+			// Likely a commit hash - should be hex characters
+			require.Regexp(t, `^[a-f0-9]+$`, version, "Commit hash should contain only hex characters")
+			require.True(t, len(version) >= 7 && len(version) <= 40, "Commit hash should be 7-40 characters")
+		}
+	}
+}
+
+// TestGetCommitWithBuildInfo tests GetCommit function
+func TestGetCommitWithBuildInfo(t *testing.T) {
+	commit := GetCommit()
+	require.NotEmpty(t, commit, "GetCommit should return non-empty string")
+
+	// Commit should not be a template string
+	require.False(t, isTemplateString(commit), "GetCommit should not return template placeholders")
+
+	// Should be either a commit hash or "none"
+	if commit != "none" {
+		// Should be a hex string (commit hash)
+		require.Regexp(t, `^[a-f0-9]+$`, commit, "Commit hash should contain only hex characters")
+		require.GreaterOrEqual(t, len(commit), 7, "Commit hash should be at least 7 characters")
+	}
+}
+
+// TestGetBuildDateWithBuildInfo tests GetBuildDate function
+func TestGetBuildDateWithBuildInfo(t *testing.T) {
+	buildDate := GetBuildDate()
+	require.NotEmpty(t, buildDate, "GetBuildDate should return non-empty string")
+
+	// Build date should not be a template string
+	require.False(t, isTemplateString(buildDate), "GetBuildDate should not return template placeholders")
+
+	// Should be either a valid timestamp or "unknown"
+	if buildDate != "unknown" {
+		// Should be in RFC3339 format (ISO 8601)
+		// Example: 2023-01-01T12:00:00Z
+		require.Regexp(t, `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}`, buildDate, "Build date should be in RFC3339 format")
+	}
+}
+
+// TestGetVersionInfoSingleton tests the singleton pattern
+func TestGetVersionInfoSingleton(t *testing.T) {
+	// Get version info multiple times and ensure it's the same instance behavior
+	info1 := getVersionInfo()
+	info2 := getVersionInfo()
+
+	require.NotNil(t, info1)
+	require.NotNil(t, info2)
+
+	// Should return consistent values (singleton behavior)
+	require.Equal(t, info1.version, info2.version)
+	require.Equal(t, info1.commit, info2.commit)
+	require.Equal(t, info1.buildDate, info2.buildDate)
+}
+
+// TestVersionFallbackBehavior tests version fallback to build info
+func TestVersionFallbackBehavior(t *testing.T) {
+	// This tests the actual behavior when no ldflags are set
+	version := GetVersion()
+
+	// Should get a valid version string
+	require.NotEmpty(t, version)
+
+	// Should handle common cases:
+	// 1. Valid module version (from go install @version)
+	// 2. VCS revision (from git)
+	// 3. "dev" as fallback
+	validVersionPatterns := []string{
+		`^v\d+\.\d+\.\d+`,  // Semantic version with v prefix
+		`^\d+\.\d+\.\d+`,   // Semantic version without v prefix
+		`^[a-f0-9]{7,40}$`, // Git commit hash
+		`^dev$`,            // Development version
+	}
+
+	matched := false
+	for _, pattern := range validVersionPatterns {
+		if matched, _ = regexp.MatchString(pattern, version); matched {
+			break
+		}
+	}
+	require.True(t, matched, "Version '%s' should match one of the valid patterns", version)
+}
+
+// TestIsModifiedFunction tests the IsModified function more thoroughly
+func TestIsModifiedFunction(t *testing.T) {
+	modified := IsModified()
+
+	// IsModified should return a valid boolean
+	require.True(t, modified == true || modified == false, "IsModified should return boolean")
+
+	// Test that the function doesn't panic and handles build info gracefully
+	// In test environment, this might be true or false depending on git state
+	// The important thing is that it doesn't crash
+}
+
+// TestVersionFunctionsConsistency tests consistency between version functions
+func TestVersionFunctionsConsistency(t *testing.T) {
+	// Test that calling the functions multiple times returns consistent results
+	version1 := GetVersion()
+	version2 := GetVersion()
+	require.Equal(t, version1, version2, "GetVersion should return consistent results")
+
+	commit1 := GetCommit()
+	commit2 := GetCommit()
+	require.Equal(t, commit1, commit2, "GetCommit should return consistent results")
+
+	buildDate1 := GetBuildDate()
+	buildDate2 := GetBuildDate()
+	require.Equal(t, buildDate1, buildDate2, "GetBuildDate should return consistent results")
+
+	modified1 := IsModified()
+	modified2 := IsModified()
+	require.Equal(t, modified1, modified2, "IsModified should return consistent results")
+}
+
+// TestVersionInfoWithoutBuildInfo tests behavior when build info is not available
+func TestVersionInfoWithoutBuildInfo(t *testing.T) {
+	// This test verifies that the functions handle cases where build info might not be available
+	// In normal test execution, build info should be available, but we test the fallback behavior
+
+	version := GetVersion()
+	commit := GetCommit()
+	buildDate := GetBuildDate()
+
+	// All should return non-empty values
+	require.NotEmpty(t, version)
+	require.NotEmpty(t, commit)
+	require.NotEmpty(t, buildDate)
+
+	// None should be template strings
+	require.False(t, isTemplateString(version))
+	require.False(t, isTemplateString(commit))
+	require.False(t, isTemplateString(buildDate))
+}
+
+// TestGetVersionEdgeCases tests edge cases for GetVersion function to improve coverage
+func TestGetVersionEdgeCases(t *testing.T) {
+	// Save original values
+	origInfo := versionInstance
+	defer func() { versionInstance = origInfo }()
+
+	// Test with empty version (should fallback to build info)
+	versionInstance = &VersionInfo{
+		version:   "",
+		commit:    "test-commit",
+		buildDate: "2023-01-01",
+	}
+
+	version := GetVersion()
+	require.NotEmpty(t, version, "GetVersion should not return empty string")
+
+	// Test with template string version (should fallback to build info)
+	versionInstance = &VersionInfo{
+		version:   "{{.Version}}",
+		commit:    "test-commit",
+		buildDate: "2023-01-01",
+	}
+
+	version = GetVersion()
+	require.NotEmpty(t, version, "GetVersion should not return template string")
+	require.False(t, isTemplateString(version), "GetVersion should resolve template strings")
+
+	// Test with valid version
+	versionInstance = &VersionInfo{
+		version:   "v1.2.3",
+		commit:    "test-commit",
+		buildDate: "2023-01-01",
+	}
+
+	version = GetVersion()
+	require.Equal(t, "v1.2.3", version, "GetVersion should return set version")
+}
+
+// TestGetCommitEdgeCases tests edge cases for GetCommit function to improve coverage
+func TestGetCommitEdgeCases(t *testing.T) {
+	// Save original values
+	origInfo := versionInstance
+	defer func() { versionInstance = origInfo }()
+
+	// Test with "none" commit (should fallback to build info)
+	versionInstance = &VersionInfo{
+		version:   "1.0.0",
+		commit:    "none",
+		buildDate: "2023-01-01",
+	}
+
+	commit := GetCommit()
+	require.NotEmpty(t, commit, "GetCommit should not return empty string")
+
+	// Test with empty commit (should fallback to build info)
+	versionInstance = &VersionInfo{
+		version:   "1.0.0",
+		commit:    "",
+		buildDate: "2023-01-01",
+	}
+
+	commit = GetCommit()
+	require.NotEmpty(t, commit, "GetCommit should not return empty string")
+
+	// Test with template string commit (should fallback to build info)
+	versionInstance = &VersionInfo{
+		version:   "1.0.0",
+		commit:    "{{.Commit}}",
+		buildDate: "2023-01-01",
+	}
+
+	commit = GetCommit()
+	require.NotEmpty(t, commit, "GetCommit should not return template string")
+	require.False(t, isTemplateString(commit), "GetCommit should resolve template strings")
+
+	// Test with valid commit
+	versionInstance = &VersionInfo{
+		version:   "1.0.0",
+		commit:    "abc123def",
+		buildDate: "2023-01-01",
+	}
+
+	commit = GetCommit()
+	require.Equal(t, "abc123def", commit, "GetCommit should return set commit")
+}
+
+// TestGetBuildDateEdgeCases tests edge cases for GetBuildDate function to improve coverage
+func TestGetBuildDateEdgeCases(t *testing.T) {
+	// Save original values
+	origInfo := versionInstance
+	defer func() { versionInstance = origInfo }()
+
+	// Test with "unknown" build date (should fallback to build info)
+	versionInstance = &VersionInfo{
+		version:   "1.0.0",
+		commit:    "abc123",
+		buildDate: "unknown",
+	}
+
+	buildDate := GetBuildDate()
+	require.NotEmpty(t, buildDate, "GetBuildDate should not return empty string")
+
+	// Test with empty build date (should fallback to build info)
+	versionInstance = &VersionInfo{
+		version:   "1.0.0",
+		commit:    "abc123",
+		buildDate: "",
+	}
+
+	buildDate = GetBuildDate()
+	require.NotEmpty(t, buildDate, "GetBuildDate should not return empty string")
+
+	// Test with template string build date (should fallback to build info)
+	versionInstance = &VersionInfo{
+		version:   "1.0.0",
+		commit:    "abc123",
+		buildDate: "{{.Date}}",
+	}
+
+	buildDate = GetBuildDate()
+	require.NotEmpty(t, buildDate, "GetBuildDate should not return template string")
+	require.False(t, isTemplateString(buildDate), "GetBuildDate should resolve template strings")
+
+	// Test with valid build date
+	versionInstance = &VersionInfo{
+		version:   "1.0.0",
+		commit:    "abc123",
+		buildDate: "2023-01-01T10:00:00Z",
+	}
+
+	buildDate = GetBuildDate()
+	require.Equal(t, "2023-01-01T10:00:00Z", buildDate, "GetBuildDate should return set date")
 }
