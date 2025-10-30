@@ -226,8 +226,16 @@ func BenchmarkGetStatistics(b *testing.B) {
 
 	for i := 0; i < 100; i++ {
 		coverage := createBenchmarkCoverage()
-		branch := branches[i%len(branches)]
-		project := projects[i%len(projects)]
+		branchIdx := i % len(branches)
+		projectIdx := i % len(projects)
+
+		// Bounds check to satisfy gosec G602
+		if branchIdx >= len(branches) || projectIdx >= len(projects) {
+			b.Fatalf("index out of bounds: branchIdx=%d, projectIdx=%d", branchIdx, projectIdx)
+		}
+
+		branch := branches[branchIdx]
+		project := projects[projectIdx]
 
 		err := tracker.Record(ctx, coverage,
 			WithBranch(branch),
