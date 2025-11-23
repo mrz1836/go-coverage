@@ -228,11 +228,19 @@ update history, and create GitHub PR comment if in PR context.`,
 						continue
 					}
 
-					// Write variant to root output directory with style suffix
+					// Write variant to BOTH target directory AND root for deployment
 					variantFilename := fmt.Sprintf("coverage-%s.svg", style)
-					variantPath := filepath.Join(outputDir, variantFilename)
-					if writeErr := os.WriteFile(variantPath, variantSVG, cfg.Storage.FileMode); writeErr != nil {
-						cmd.Printf("   ⚠️  Failed to write %s badge variant: %v\n", style, writeErr)
+
+					// Write to target directory (for deployment to branch-specific location)
+					variantTargetPath := filepath.Join(targetOutputDir, variantFilename)
+					if writeErr := os.WriteFile(variantTargetPath, variantSVG, cfg.Storage.FileMode); writeErr != nil {
+						cmd.Printf("   ⚠️  Failed to write %s variant to target: %v\n", style, writeErr)
+					}
+
+					// Also write to root for easy access
+					variantRootPath := filepath.Join(outputDir, variantFilename)
+					if writeErr := os.WriteFile(variantRootPath, variantSVG, cfg.Storage.FileMode); writeErr != nil {
+						cmd.Printf("   ⚠️  Failed to write %s variant to root: %v\n", style, writeErr)
 					} else {
 						cmd.Printf("   ✅ Badge variant saved: %s\n", variantFilename)
 					}
