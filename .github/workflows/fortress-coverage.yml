@@ -1413,7 +1413,7 @@ jobs:
           echo ""
 
           # Verify critical files exist with detailed reporting
-          CRITICAL_FILES=("index.html" "coverage.html" "coverage.svg" ".nojekyll")
+          CRITICAL_FILES=("index.html" "coverage.html" "coverage.svg" "coverage-flat.svg" "coverage-flat-square.svg" "coverage-for-the-badge.svg" ".nojekyll")
           echo "🎯 Verifying critical files for GitHub Pages:"
 
           ALL_EXIST=true
