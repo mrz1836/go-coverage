@@ -1646,6 +1646,17 @@ jobs:
           mkdir -p "$TEMP_STAGING"
           echo "📁 Created temporary staging area: $TEMP_STAGING"
 
+          # Update gh-pages .gitignore from latest build assets (ensures badge variants are allowed)
+          if [[ -f "$DEPLOY_DIR/assets/gh-pages.gitignore" ]]; then
+            echo "📋 Updating gh-pages .gitignore from build assets..."
+            cp "$DEPLOY_DIR/assets/gh-pages.gitignore" "$TEMP_PAGES_DIR/.gitignore"
+            GH_PAGES_GITIGNORE="$TEMP_PAGES_DIR/.gitignore"
+            echo "✅ Updated .gitignore with latest coverage file patterns"
+          else
+            echo "⚠️ No gh-pages.gitignore found in assets, using existing"
+            GH_PAGES_GITIGNORE="$TEMP_PAGES_DIR/.gitignore"
+          fi
+
           # Update root files (main branch deployments) with filtering
           source /tmp/branch_helpers.sh
           if is_main_branch "$BRANCH_NAME"; then
