@@ -206,6 +206,37 @@ update history, and create GitHub PR comment if in PR context.`,
 				} else if writeErr := os.WriteFile(rootBadgeFile, svgContent, cfg.Storage.FileMode); writeErr != nil {
 					cmd.Printf("   ⚠️  Failed to write root badge file: %v\n", writeErr)
 				}
+
+				// Generate badge style variants for URL-based style selection
+				badgeStyles := []string{"flat", "flat-square", "for-the-badge"}
+				for _, style := range badgeStyles {
+					// Build options for this style variant
+					variantOptions := []badge.Option{badge.WithStyle(style)}
+					if cfg.Badge.Label != "coverage" {
+						variantOptions = append(variantOptions, badge.WithLabel(cfg.Badge.Label))
+					}
+					if cfg.Badge.Logo != "" {
+						variantOptions = append(variantOptions, badge.WithLogo(cfg.Badge.Logo))
+					}
+					if cfg.Badge.LogoColor != "" {
+						variantOptions = append(variantOptions, badge.WithLogoColor(cfg.Badge.LogoColor))
+					}
+
+					variantSVG, variantErr := badgeGen.Generate(ctx, coverage.Percentage, variantOptions...)
+					if variantErr != nil {
+						cmd.Printf("   ⚠️  Failed to generate %s badge variant: %v\n", style, variantErr)
+						continue
+					}
+
+					// Write variant to root output directory with style suffix
+					variantFilename := fmt.Sprintf("coverage-%s.svg", style)
+					variantPath := filepath.Join(outputDir, variantFilename)
+					if writeErr := os.WriteFile(variantPath, variantSVG, cfg.Storage.FileMode); writeErr != nil {
+						cmd.Printf("   ⚠️  Failed to write %s badge variant: %v\n", style, writeErr)
+					} else {
+						cmd.Printf("   ✅ Badge variant saved: %s\n", variantFilename)
+					}
+				}
 			}
 
 			cmd.Printf("   ✅ Badge saved: %s\n", badgeFile)
