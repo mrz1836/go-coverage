@@ -222,7 +222,11 @@ update history, and create GitHub PR comment if in PR context.`,
 						variantOptions = append(variantOptions, badge.WithLogoColor(cfg.Badge.LogoColor))
 					}
 
-					variantSVG, variantErr := badgeGen.Generate(ctx, coverage.Percentage, variantOptions...)
+					// Create fresh context for each variant with adequate timeout for logo fetching
+					// (Simple Icons CDN can be slow and has retry logic with delays)
+					variantCtx, variantCancel := context.WithTimeout(context.Background(), 30*time.Second)
+					variantSVG, variantErr := badgeGen.Generate(variantCtx, coverage.Percentage, variantOptions...)
+					variantCancel()
 					if variantErr != nil {
 						cmd.Printf("   ⚠️  Failed to generate %s badge variant: %v\n", style, variantErr)
 						continue
