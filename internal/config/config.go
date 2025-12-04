@@ -557,7 +557,7 @@ func getEnvIntBounded(key string, defaultValue, minValue, maxValue int) uint32 {
 
 	// At this point, value is guaranteed to be between 0 and maxFileMode (0o777 = 511)
 	// which safely fits in uint32
-	return uint32(value) //nolint:gosec // value is bounded between 0 and 511
+	return uint32(value)
 }
 
 func getEnvFloat(key string, defaultValue float64) float64 {
