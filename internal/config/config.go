@@ -556,7 +556,11 @@ func getEnvIntBounded(key string, defaultValue, minValue, maxValue int) uint32 {
 	}
 
 	// At this point, value is guaranteed to be between 0 and maxFileMode (0o777 = 511)
-	// which safely fits in uint32
+	// Ensure the value is non-negative before converting to uint32
+	if value < 0 {
+		value = 0
+	}
+	// #nosec G115 -- value is bounded to 0-511 range which safely fits in uint32
 	return uint32(value)
 }
 
