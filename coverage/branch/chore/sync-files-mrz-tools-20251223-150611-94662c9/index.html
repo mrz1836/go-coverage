@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mrz1836/go-coverage Coverage Dashboard</title>
+    <meta name="description" content="Coverage tracking and analytics for mrz1836/go-coverage">
+
+    
+    <link rel="icon" type="image/x-icon" href="./assets/images/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg">
+    <link rel="shortcut icon" href="./assets/images/favicon.ico">
+    <link rel="manifest" href="./assets/site.webmanifest">
+
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    
+    <link rel="stylesheet" href="./assets/css/coverage.css">
+
+    
+    <meta property="og:title" content="mrz1836/go-coverage Coverage Report">
+    <meta property="og:description" content="Code coverage analysis for mrz1836/go-coverage">
+    <meta property="og:type" content="website">
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2622QHXCV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-W2622QHXCV');
+    </script>
+
+</head>
+<body>
+    <div class="theme-toggle fixed" onclick="toggleTheme()" aria-label="Toggle theme">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/>
+        </svg>
+    </div>
+
+    <div class="container">
+        <header class="header enhanced">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1>PR #93 Coverage</h1>
+                    <p class="subtitle">Coverage analysis for this pull request</p>
+                </div>
+
+                <div class="header-status">
+                    <div class="status-indicator">
+                        <span class="status-dot active"></span>
+                        <span class="status-text">Coverage Active</span>
+                    </div>
+                    <div class="last-sync">
+                        <span>🕐 <span class="dynamic-timestamp" data-timestamp="2025-12-23T20:11:10Z">2025-12-23 20:11:10 UTC</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="repo-info-enhanced">
+                <div class="repo-details">
+                    <a href="https://github.com/mrz1836/go-coverage" target="_blank" class="repo-item repo-item-clickable">
+                        <span class="repo-icon">📦</span>
+                        <span class="repo-label">Repository</span>
+                        <span class="repo-value repo-link-light">mrz1836/go-coverage</span>
+                    </a>
+                    <a href="https://github.com/mrz1836" target="_blank" class="repo-item repo-item-clickable">
+                        <span class="repo-icon">👤</span>
+                        <span class="repo-label">Owner</span>
+                        <span class="repo-value">mrz1836</span>
+                    </a>
+                    <a href="https://github.com/mrz1836/go-coverage/tree/93/merge" target="_blank" class="repo-item repo-item-clickable">
+                        <span class="repo-icon">🌿</span>
+                        <span class="repo-label">Branch</span>
+                        <span class="repo-value">93/merge</span>
+                    </a>
+                        <a href="https://github.com/mrz1836/go-coverage/commit/d0d29c5dbbd77296d6d329e84d324c05abfde39a" target="_blank" class="repo-item repo-item-clickable">
+                            <span class="repo-icon">🔗</span>
+                            <span class="repo-label">Commit</span>
+                            <span class="repo-value commit-link">d0d29c5</span>
+                        </a>
+                </div>
+
+                <div class="header-actions">
+                    <button class="action-btn primary" onclick="window.location.reload()">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Refresh</span>
+                    </button>
+                    <button class="action-btn secondary" onclick="window.open('./coverage.html', '_blank')">
+                        <span class="btn-icon">📄</span>
+                        <span class="btn-text">Detailed Report</span>
+                    </button>
+                    <button class="action-btn secondary" onclick="window.open('https:\/\/github.com\/mrz1836\/go-coverage', '_blank')">
+                        <span class="btn-icon">📦</span>
+                        <span class="btn-text">Repository</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>📊 Overall Coverage</h3>
+                    <div class="metric-value success">81.3%</div>
+                    <div class="metric-label">PR Coverage</div>
+                    <div class="coverage-bar">
+                        <div class="coverage-fill" style="width: 81.3%; background:var(--gradient-primary);"></div>
+                    </div>
+                        <div class="status-badge">
+                            🆕 New PR Coverage
+                        </div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>📁 Packages</h3>
+                    <div class="metric-value">15</div>
+                    <div class="metric-label">Packages analyzed</div>
+                    <div style="margin-top: 1rem;">
+                        <div style="font-size: 0.9rem; color: var(--color-text-secondary);">
+                            • All packages tracked
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>🎯 Quality Gate</h3>
+                    <div class="quality-gate-badge">
+                        <svg class="quality-gate-icon" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.1"/>
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="quality-gate-text">PASSED</span>
+                    </div>
+                    <div class="metric-label">Threshold: 80% (exceeded)</div>
+                    <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--color-success);">
+                        Coverage meets quality standards
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>🔄 Coverage Trend</h3>
+                    
+                        <div class="metric-value" style="font-size: 1.5rem;">📊</div>
+                        <div class="metric-label">Trend Analysis</div>
+                        <div style="margin-top: 1rem;">
+                            
+                                <div style="font-size: 0.9rem; color: var(--color-primary);">
+                                    
+                                        📊 PR Coverage Analysis
+                                    
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--color-text-secondary); margin-top: 0.5rem;">
+                                    
+                                        Base branch comparison pending
+                                    
+                                </div>
+                            
+                        </div>
+                    
+                </div>
+            </div>
+
+            <div class="links-section">
+                <h3 style="margin-bottom: 1rem;">📋 Coverage Reports & Tools</h3>
+                <div class="links-grid">
+                    <a href="./coverage.html" class="link-item" target="_blank">
+                        📄 Detailed HTML Report
+                    </a>
+                    <button class="link-item" onclick="copyBadgeURL(event, 'https:\/\/mrz1836.github.io\/go-coverage\/coverage.svg')">
+                        🏷️ <span class="btn-text">Copy Badge URL</span>
+                    </button>
+                    <a href="https://github.com/mrz1836/go-coverage" class="link-item" target="_blank">
+                        📦 Source Repository
+                    </a>
+                    <a href="https://github.com/mrz1836/go-coverage/actions" class="link-item" target="_blank">
+                        🚀 GitHub Actions
+                    </a>
+                </div>
+            </div>
+            <div class="package-list dashboard">
+                <h3 style="margin-bottom: 1rem;">📦 Package Coverage</h3>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">dashboard</div>
+                    <div class="package-coverage" style="color:#3fb950;">90.16%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 90.16%; background:var(--gradient-success);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">config</div>
+                    <div class="package-coverage" style="color:#58a6ff;">88.75%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 88.75%; background:var(--gradient-primary);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">cmd</div>
+                    <div class="package-coverage" style="color:#d29922;">67.27%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 67.27%; background:var(--gradient-warning);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">history</div>
+                    <div class="package-coverage" style="color:#58a6ff;">84.62%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 84.62%; background:var(--gradient-primary);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">urlutil</div>
+                    <div class="package-coverage" style="color:#3fb950;">95.59%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 95.59%; background:var(--gradient-success);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">parser</div>
+                    <div class="package-coverage" style="color:#3fb950;">95.41%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 95.41%; background:var(--gradient-success);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">analysis</div>
+                    <div class="package-coverage" style="color:#3fb950;">93.77%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 93.77%; background:var(--gradient-success);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">badge</div>
+                    <div class="package-coverage" style="color:#d29922;">77.46%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 77.46%; background:var(--gradient-warning);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">github</div>
+                    <div class="package-coverage" style="color:#58a6ff;">82.52%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 82.52%; background:var(--gradient-primary);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">go-coverage</div>
+                    <div class="package-coverage" style="color:#58a6ff;">80.39%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 80.39%; background:var(--gradient-primary);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">assets</div>
+                    <div class="package-coverage" style="color:#58a6ff;">82.86%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 82.86%; background:var(--gradient-primary);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">version</div>
+                    <div class="package-coverage" style="color:#3fb950;">94.37%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 94.37%; background:var(--gradient-success);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">templates</div>
+                    <div class="package-coverage" style="color:#3fb950;">93.57%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 93.57%; background:var(--gradient-success);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">logger</div>
+                    <div class="package-coverage" style="color:#3fb950;">96.55%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 96.55%; background:var(--gradient-success);"></div>
+                    </div>
+                </div>
+                <div class="package-item dashboard">
+                    <div class="package-name dashboard">report</div>
+                    <div class="package-coverage" style="color:#58a6ff;">86.32%</div>
+                    <div class="package-bar">
+                        <div class="package-bar-fill" style="width: 86.32%; background:var(--gradient-primary);"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    
+    <footer class="footer">
+        <div class="footer-content dashboard">
+            <div class="footer-info">
+                <div class="footer-version">
+                    <a href="https://github.com/mrz1836/go-coverage/releases/tag/v1.1.17" target="_blank" class="version-link">
+                        <span class="version-icon">🏷️</span>
+                        <span class="version-text">v1.1.17</span>
+                    </a>
+                </div>
+                <span class="footer-separator">•</span>
+                <div class="footer-powered">
+                    <span class="powered-text">Powered by</span>
+                    <a href="https://github.com/mrz1836/go-coverage" target="_blank" class="go-coverage-link">
+                        <span class="coverage-icon">📊</span>
+                        <span class="coverage-text">go-coverage</span>
+                    </a>
+                </div>
+                <span class="footer-separator">•</span>
+                <div class="footer-timestamp">
+                    <span class="timestamp-icon">🕐</span>
+                    <span class="timestamp-text dynamic-timestamp" data-timestamp="2025-12-23T20:11:10Z">Generated 2025-12-23 20:11:10 UTC</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="./assets/js/coverage-time.js"></script>
+	<script src="./assets/js/theme.js"></script>
+    </div>
+
+</body>
+</html>
