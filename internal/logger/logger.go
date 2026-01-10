@@ -387,7 +387,7 @@ func (l *simpleLogger) writeEntry(entry logEntry) {
 	default: // text
 		fieldsStr := ""
 		if len(entry.Fields) > 0 {
-			var parts []string
+			parts := make([]string, 0, len(entry.Fields))
 			for k, v := range entry.Fields {
 				parts = append(parts, fmt.Sprintf("%s=%v", k, v))
 			}
