@@ -164,7 +164,7 @@ func TestRootCommandSubcommands(t *testing.T) {
 
 	// Test that all expected subcommands are added
 	expectedCommands := []string{"complete", "history", "comment", "parse", "setup-pages", "upgrade"}
-	actualCommands := make([]string, 0)
+	actualCommands := make([]string, 0, len(commands.Root.Commands()))
 
 	for _, cmd := range commands.Root.Commands() {
 		actualCommands = append(actualCommands, cmd.Name())

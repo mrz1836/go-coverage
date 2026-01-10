@@ -129,7 +129,7 @@ func showTrendData(ctx context.Context, tracker *history.Tracker, branch string,
 		days = 30
 	}
 
-	var options []history.TrendOption
+	options := make([]history.TrendOption, 0, 2)
 	options = append(options, history.WithTrendBranch(branch))
 	options = append(options, history.WithTrendDays(days))
 
