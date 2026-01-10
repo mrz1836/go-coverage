@@ -917,7 +917,7 @@ func TestNotificationChannelInterface(t *testing.T) {
 	})
 
 	t.Run("interface can be used polymorphically", func(t *testing.T) {
-		var channels []NotificationChannel
+		channels := make([]NotificationChannel, 0, 3)
 		channels = append(channels, &MockNotificationChannel{channelType: ChannelSlack})
 		channels = append(channels, &MockNotificationChannel{channelType: ChannelEmail})
 		channels = append(channels, &MockNotificationChannel{channelType: ChannelWebhook})
