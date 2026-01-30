@@ -1748,7 +1748,7 @@ jobs:
             echo "📋 Updating root coverage files for main branch (with filtering)..."
 
             # Define allowed root files explicitly
-            ALLOWED_ROOT_FILES=("index.html" "coverage.html" "coverage.svg" "coverage-flat.svg" "coverage-flat-square.svg" "coverage-for-the-badge.svg" ".nojekyll" "data" "assets")
+            ALLOWED_ROOT_FILES=("index.html" "coverage.html" "coverage.svg" "coverage-flat.svg" "coverage-flat-square.svg" "coverage-for-the-badge.svg" "coverage.out" ".nojekyll" "data" "assets")
 
             # Copy only allowed root files
             for file in "${ALLOWED_ROOT_FILES[@]}"; do
@@ -1813,7 +1813,7 @@ jobs:
           rm -rf "$TEMP_STAGING"/*
 
           # Define allowed branch files
-          ALLOWED_BRANCH_FILES=("index.html" "coverage.html" "coverage.svg" "coverage-flat.svg" "coverage-flat-square.svg" "coverage-for-the-badge.svg" "data" "assets")
+          ALLOWED_BRANCH_FILES=("index.html" "coverage.html" "coverage.svg" "coverage-flat.svg" "coverage-flat-square.svg" "coverage-for-the-badge.svg" "coverage.out" "data" "assets")
 
           # Copy branch-specific files from deployment directory to staging first
           if [[ -d "$DEPLOY_DIR/coverage/branch/$BRANCH_NAME" ]]; then
