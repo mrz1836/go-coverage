@@ -697,11 +697,10 @@ jobs:
             --output "$OUTPUT_DIR"; then
             echo "✅ Main coverage processing completed successfully"
 
-            # Copy raw coverage file for download
-            echo "📥 Copying coverage.out for download..."
+            # Copy raw coverage file for main download
+            echo "📥 Copying coverage.out for main download..."
             cp "$COVERAGE_FILE" "$OUTPUT_DIR/coverage.out"
-            cp "$COVERAGE_FILE" "$BRANCH_OUTPUT_DIR/coverage.out"
-            echo "✅ coverage.out copied to deployment directories"
+            echo "✅ coverage.out copied to main directory"
           else
             echo "❌ Main coverage processing failed"
             exit 1
@@ -797,6 +796,11 @@ jobs:
             --input "$COVERAGE_FILE" \
             --output "$BRANCH_OUTPUT_DIR"; then
             echo "✅ Branch-specific coverage processing completed successfully"
+
+            # Copy raw coverage file for branch download
+            echo "📥 Copying coverage.out for branch download..."
+            cp "$COVERAGE_FILE" "$BRANCH_OUTPUT_DIR/coverage.out"
+            echo "✅ coverage.out copied to branch directory"
           else
             echo "❌ Branch-specific coverage processing failed"
             exit 1
