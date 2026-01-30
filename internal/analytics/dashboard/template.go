@@ -254,6 +254,9 @@ func getDashboardTemplate() string {
                     <a href="./coverage.html" class="link-item" target="_blank">
                         📄 Detailed HTML Report
                     </a>
+                    <a href="./coverage.out" class="link-item" download="coverage.out">
+                        📥 Download coverage.out
+                    </a>
                     {{- if .BadgeURL}}
                     <button class="link-item" onclick="copyBadgeURL(event, '{{.BadgeURL}}')">
                         🏷️ <span class="btn-text">Copy Badge URL</span>

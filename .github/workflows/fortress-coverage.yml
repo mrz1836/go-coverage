@@ -696,6 +696,12 @@ jobs:
             --input "$COVERAGE_FILE" \
             --output "$OUTPUT_DIR"; then
             echo "✅ Main coverage processing completed successfully"
+
+            # Copy raw coverage file for download
+            echo "📥 Copying coverage.out for download..."
+            cp "$COVERAGE_FILE" "$OUTPUT_DIR/coverage.out"
+            cp "$COVERAGE_FILE" "$BRANCH_OUTPUT_DIR/coverage.out"
+            echo "✅ coverage.out copied to deployment directories"
           else
             echo "❌ Main coverage processing failed"
             exit 1
