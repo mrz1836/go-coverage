@@ -1225,6 +1225,7 @@ jobs:
             "coverage-flat.svg"
             "coverage-flat-square.svg"
             "coverage-for-the-badge.svg"
+            "coverage.out"
           )
 
           # Selectively copy coverage files to avoid nested directory structures
@@ -1280,6 +1281,7 @@ jobs:
               "coverage-flat-square.svg"
               "coverage-for-the-badge.svg"
               "coverage.html"
+              "coverage.out"
               "index.html"
               "dashboard.html"
               "coverage-data.json"
