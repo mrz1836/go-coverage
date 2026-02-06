@@ -51,3 +51,4 @@ history/*.json
 cmd/go-coverage/go-coverage
 /go-coverage
 .mage-cache
+/cmd/go-coverage/cmd/history
