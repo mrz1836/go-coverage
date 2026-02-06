@@ -308,11 +308,12 @@ github.com/test/repo/utils.go:8.1,10.2 2 2
 
 	// Set required environment variables to avoid config validation errors
 	originalEnvs := map[string]string{
-		"GITHUB_REPOSITORY":       os.Getenv("GITHUB_REPOSITORY"),
-		"GITHUB_REPOSITORY_OWNER": os.Getenv("GITHUB_REPOSITORY_OWNER"),
-		"GITHUB_SHA":              os.Getenv("GITHUB_SHA"),
-		"GITHUB_TOKEN":            os.Getenv("GITHUB_TOKEN"),
-		"GO_COVERAGE_THRESHOLD":   os.Getenv("GO_COVERAGE_THRESHOLD"),
+		"GITHUB_REPOSITORY":           os.Getenv("GITHUB_REPOSITORY"),
+		"GITHUB_REPOSITORY_OWNER":     os.Getenv("GITHUB_REPOSITORY_OWNER"),
+		"GITHUB_SHA":                  os.Getenv("GITHUB_SHA"),
+		"GITHUB_TOKEN":                os.Getenv("GITHUB_TOKEN"),
+		"GO_COVERAGE_THRESHOLD":       os.Getenv("GO_COVERAGE_THRESHOLD"),
+		"GO_COVERAGE_TEST_CONFIG_DIR": os.Getenv("GO_COVERAGE_TEST_CONFIG_DIR"),
 	}
 	defer func() {
 		for key, val := range originalEnvs {
@@ -324,6 +325,7 @@ github.com/test/repo/utils.go:8.1,10.2 2 2
 		}
 	}()
 
+	require.NoError(t, os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", "/nonexistent-test-isolation-dir"))
 	require.NoError(t, os.Setenv("GITHUB_REPOSITORY", "test/repo"))
 	require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", "test"))
 	require.NoError(t, os.Setenv("GITHUB_SHA", "abc123"))

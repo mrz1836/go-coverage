@@ -32,7 +32,10 @@ func (c *Commands) newHistoryCmd() *cobra.Command {
 			format, _ := cmd.Flags().GetString("format")
 
 			// Load configuration
-			cfg := config.Load()
+			cfg, err := config.Load()
+			if err != nil {
+				return fmt.Errorf("failed to load configuration: %w", err)
+			}
 
 			// Create history tracker
 			historyConfig := &history.Config{

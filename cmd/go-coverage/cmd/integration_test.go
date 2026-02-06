@@ -302,6 +302,10 @@ func TestHistoryCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Isolate from real .github/env/ files in the repository
+			_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", "/nonexistent-test-isolation-dir")
+			defer func() { _ = os.Unsetenv("GO_COVERAGE_TEST_CONFIG_DIR") }()
+
 			// Set environment variables
 			for key, value := range tt.envVars {
 				_ = os.Setenv(key, value)
@@ -437,6 +441,10 @@ func TestCommentCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Isolate from real .github/env/ files in the repository
+			_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", "/nonexistent-test-isolation-dir")
+			defer func() { _ = os.Unsetenv("GO_COVERAGE_TEST_CONFIG_DIR") }()
+
 			// Set environment variables
 			for key, value := range tt.envVars {
 				_ = os.Setenv(key, value)
@@ -635,6 +643,10 @@ func TestCompleteCommand(t *testing.T) {
 			for i, filePath := range tt.checkFiles {
 				updatedCheckFiles[i] = strings.ReplaceAll(filePath, outputDir, testOutputDir)
 			}
+
+			// Isolate from real .github/env/ files in the repository
+			_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", "/nonexistent-test-isolation-dir")
+			defer func() { _ = os.Unsetenv("GO_COVERAGE_TEST_CONFIG_DIR") }()
 
 			// Set environment variables
 			for key, value := range tt.envVars {

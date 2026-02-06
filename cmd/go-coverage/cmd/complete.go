@@ -86,7 +86,10 @@ update history, and create GitHub PR comment if in PR context.`,
 			dryRun, _ := cmd.Flags().GetBool("dry-run")
 
 			// Load configuration
-			cfg := config.Load()
+			cfg, err := config.Load()
+			if err != nil {
+				return fmt.Errorf("failed to load configuration: %w", err)
+			}
 
 			// Set defaults
 			if inputFile == "" {
@@ -97,7 +100,7 @@ update history, and create GitHub PR comment if in PR context.`,
 			}
 
 			// Validate configuration
-			if err := cfg.Validate(); err != nil {
+			if err = cfg.Validate(); err != nil {
 				return fmt.Errorf("configuration validation failed: %w", err)
 			}
 
