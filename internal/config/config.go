@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mrz1836/go-coverage/internal/envfile"
 )
 
 // Static error definitions
@@ -24,6 +26,7 @@ var (
 	ErrInvalidReportTheme       = errors.New("invalid report theme")
 	ErrInvalidRetentionDays     = errors.New("history retention days must be positive")
 	ErrInvalidMaxEntries        = errors.New("history max entries must be positive")
+	ErrEnvFileNotFound          = errors.New("environment configuration file not found")
 )
 
 // isMainBranch checks if a branch name is one of the configured main branches
@@ -181,8 +184,128 @@ type AnalyticsConfig struct {
 	BrandingEnabled bool `json:"branding_enabled"`
 }
 
-// Load loads configuration from environment variables with defaults
-func Load() *Config {
+// findEnvDir looks for the modular .github/env/ directory by walking up from the
+// current working directory. Returns empty string if not found.
+// For testing, the GO_COVERAGE_TEST_CONFIG_DIR environment variable overrides detection.
+func findEnvDir() string {
+	// Test override
+	if testDir := os.Getenv("GO_COVERAGE_TEST_CONFIG_DIR"); testDir != "" {
+		envDir := filepath.Join(testDir, ".github", "env")
+		if hasEnvFiles(envDir) {
+			return envDir
+		}
+		return ""
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+
+	for {
+		candidate := filepath.Join(dir, ".github", "env")
+		if hasEnvFiles(candidate) {
+			return candidate
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+
+	return ""
+}
+
+// hasEnvFiles checks if a directory exists and contains at least one .env file.
+func hasEnvFiles(dirPath string) bool {
+	info, err := os.Stat(dirPath)
+	if err != nil || !info.IsDir() {
+		return false
+	}
+
+	matches, err := filepath.Glob(filepath.Join(dirPath, "*.env"))
+	if err != nil {
+		return false
+	}
+
+	return len(matches) > 0
+}
+
+// findBaseEnvFile looks for the legacy .github/.env.base file by walking up from the
+// current working directory. Returns the path and nil error if found.
+// For testing, the GO_COVERAGE_TEST_CONFIG_DIR environment variable overrides detection.
+func findBaseEnvFile() (string, error) {
+	var startDir string
+
+	if testDir := os.Getenv("GO_COVERAGE_TEST_CONFIG_DIR"); testDir != "" {
+		startDir = testDir
+	} else {
+		var err error
+		startDir, err = os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("failed to get working directory: %w", err)
+		}
+	}
+
+	dir := startDir
+	for {
+		candidate := filepath.Join(dir, ".github", ".env.base")
+		if _, statErr := os.Stat(candidate); statErr == nil {
+			return candidate, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+
+	return "", ErrEnvFileNotFound
+}
+
+// findCustomEnvFile looks for .env.custom in the same directory as the base env file.
+func findCustomEnvFile(basePath string) string {
+	customPath := filepath.Join(filepath.Dir(basePath), ".env.custom")
+	if _, err := os.Stat(customPath); err == nil {
+		return customPath
+	}
+	return ""
+}
+
+// isCI returns true when running in a CI environment.
+func isCI() bool {
+	return os.Getenv("CI") == "true"
+}
+
+// Load loads configuration from environment variables with defaults.
+// It first attempts to load modular .github/env/*.env files (preferred),
+// then falls back to legacy .github/.env.base + .env.custom.
+// If no env files are found, it proceeds silently with os.Getenv() defaults.
+func Load() (*Config, error) {
+	// Try modular mode first (preferred)
+	if envDir := findEnvDir(); envDir != "" {
+		if err := envfile.LoadDir(envDir, isCI()); err != nil {
+			return nil, fmt.Errorf("failed to load modular configuration from %s: %w", envDir, err)
+		}
+	} else {
+		// Fall back to legacy mode
+		basePath, err := findBaseEnvFile()
+		if err == nil {
+			if loadErr := envfile.Load(basePath); loadErr != nil {
+				return nil, fmt.Errorf("failed to load %s: %w", basePath, loadErr)
+			}
+			if customPath := findCustomEnvFile(basePath); customPath != "" {
+				if overloadErr := envfile.Overload(customPath); overloadErr != nil {
+					return nil, fmt.Errorf("failed to load %s: %w", customPath, overloadErr)
+				}
+			}
+		}
+		// If no env files found at all, continue silently (backward compatible)
+	}
+
 	config := &Config{
 		Coverage: CoverageConfig{
 			InputFile:          getEnvString("GO_COVERAGE_INPUT_FILE", "coverage.txt"),
@@ -245,7 +368,7 @@ func Load() *Config {
 		},
 	}
 
-	return config
+	return config, nil
 }
 
 // Validate validates the configuration and returns an error if invalid

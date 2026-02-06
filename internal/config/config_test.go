@@ -17,7 +17,8 @@ func TestLoad(t *testing.T) {
 	clearEnvironment()
 	defer clearEnvironment()
 
-	config := Load()
+	config, err := Load()
+	require.NoError(t, err)
 
 	assert.NotNil(t, config)
 
@@ -119,7 +120,8 @@ func TestLoadWithEnvironmentVariables(t *testing.T) {
 	_ = os.Setenv("GO_COVERAGE_FILE_MODE", "420")
 	_ = os.Setenv("GO_COVERAGE_DIR_MODE", "493")
 
-	config := Load()
+	config, err := Load()
+	require.NoError(t, err)
 
 	// Test coverage settings
 	assert.Equal(t, "custom-coverage.txt", config.Coverage.InputFile)
@@ -759,7 +761,8 @@ func TestConfigErrorHandling(t *testing.T) {
 		_ = os.Setenv("GO_COVERAGE_HISTORY_RETENTION_DAYS", "-1")
 		_ = os.Setenv("GO_COVERAGE_HISTORY_MAX_ENTRIES", "0")
 
-		config := Load()
+		config, err := Load()
+		require.NoError(t, err)
 
 		// Should fallback to default values when parsing fails
 		assert.InDelta(t, 80.0, config.Coverage.Threshold, 0.001) // Default value
@@ -774,21 +777,25 @@ func TestConfigErrorHandling(t *testing.T) {
 
 		// Test negative threshold - config doesn't validate during load
 		_ = os.Setenv("GO_COVERAGE_THRESHOLD", "-10")
-		config := Load()
+		config, err := Load()
+		require.NoError(t, err)
 		assert.InDelta(t, -10.0, config.Coverage.Threshold, 0.001) // Parses the value as-is
 
 		// Test threshold > 100 - config doesn't validate during load
 		_ = os.Setenv("GO_COVERAGE_THRESHOLD", "150")
-		config = Load()
+		config, err = Load()
+		require.NoError(t, err)
 		assert.InDelta(t, 150.0, config.Coverage.Threshold, 0.001) // Parses the value as-is
 
 		// Test valid boundary values
 		_ = os.Setenv("GO_COVERAGE_THRESHOLD", "0")
-		config = Load()
+		config, err = Load()
+		require.NoError(t, err)
 		assert.InDelta(t, 0.0, config.Coverage.Threshold, 0.001)
 
 		_ = os.Setenv("GO_COVERAGE_THRESHOLD", "100")
-		config = Load()
+		config, err = Load()
+		require.NoError(t, err)
 		assert.InDelta(t, 100.0, config.Coverage.Threshold, 0.001)
 	})
 
@@ -799,7 +806,8 @@ func TestConfigErrorHandling(t *testing.T) {
 		_ = os.Setenv("GO_COVERAGE_OUTPUT_DIR", "   ")
 		_ = os.Setenv("GO_COVERAGE_BADGE_LABEL", "\t\n")
 
-		config := Load()
+		config, err := Load()
+		require.NoError(t, err)
 
 		// Config loads environment values as-is without trimming whitespace
 		assert.Equal(t, "coverage.txt", config.Coverage.InputFile) // Empty string uses default
@@ -865,7 +873,8 @@ func TestConfigErrorHandling(t *testing.T) {
 					_ = os.Setenv("GITHUB_REPOSITORY_OWNER", tt.owner)
 				}
 
-				config := Load()
+				config, err := Load()
+				require.NoError(t, err)
 				assert.Equal(t, tt.expectedOwner, config.GitHub.Owner)
 				assert.Equal(t, tt.expectedRepo, config.GitHub.Repository)
 			})
@@ -891,7 +900,10 @@ func TestConfigValidationExtensive(t *testing.T) {
 		{
 			name: "config with zero threshold",
 			setupConfig: func() *Config {
-				config := Load()
+				config, err := Load()
+				if err != nil {
+					return nil
+				}
 				config.Coverage.Threshold = 0
 				return config
 			},
@@ -900,7 +912,10 @@ func TestConfigValidationExtensive(t *testing.T) {
 		{
 			name: "config with 100% threshold",
 			setupConfig: func() *Config {
-				config := Load()
+				config, err := Load()
+				if err != nil {
+					return nil
+				}
 				config.Coverage.Threshold = 100.0
 				return config
 			},
@@ -909,7 +924,10 @@ func TestConfigValidationExtensive(t *testing.T) {
 		{
 			name: "config with slightly over 100% threshold",
 			setupConfig: func() *Config {
-				config := Load()
+				config, err := Load()
+				if err != nil {
+					return nil
+				}
 				config.Coverage.Threshold = 100.1
 				return config
 			},
@@ -919,7 +937,10 @@ func TestConfigValidationExtensive(t *testing.T) {
 		{
 			name: "config with empty input file",
 			setupConfig: func() *Config {
-				config := Load()
+				config, err := Load()
+				if err != nil {
+					return nil
+				}
 				config.Coverage.InputFile = ""
 				return config
 			},
@@ -929,7 +950,10 @@ func TestConfigValidationExtensive(t *testing.T) {
 		{
 			name: "config with whitespace-only input file",
 			setupConfig: func() *Config {
-				config := Load()
+				config, err := Load()
+				if err != nil {
+					return nil
+				}
 				config.Coverage.InputFile = "   \t\n   "
 				// Since whitespace-only isn't considered empty by validation,
 				// and PostComments defaults to true, it will fail on GitHub token
@@ -941,7 +965,10 @@ func TestConfigValidationExtensive(t *testing.T) {
 		{
 			name: "config with multiple validation errors",
 			setupConfig: func() *Config {
-				config := Load()
+				config, err := Load()
+				if err != nil {
+					return nil
+				}
 				config.Coverage.InputFile = ""
 				config.Coverage.Threshold = -1
 				config.Badge.Style = "invalid-style"
@@ -982,7 +1009,8 @@ func TestGetBranchFromGitErrorHandling(t *testing.T) {
 	t.Run("git command not available", func(t *testing.T) {
 		// This test would require mocking the exec.Command call
 		// For now, we just ensure the function doesn't panic with invalid git state
-		config := Load()
+		config, err := Load()
+		require.NoError(t, err)
 		branch := config.getBranchFromGit()
 		// Should return some value (possibly empty or "unknown") without panicking
 		// Just ensure it doesn't panic - branch can be empty string which is valid
@@ -1007,7 +1035,8 @@ func TestPathResolutionErrorHandling(t *testing.T) {
 			}
 		}()
 
-		config := Load()
+		config, err := Load()
+		require.NoError(t, err)
 		// Should still load configuration with default values
 		assert.NotNil(t, config)
 		assert.NotEmpty(t, config.Coverage.InputFile)
@@ -1015,7 +1044,8 @@ func TestPathResolutionErrorHandling(t *testing.T) {
 
 	t.Run("repository root detection failure", func(t *testing.T) {
 		// Test when we can't detect repository root
-		config := Load()
+		config, err := Load()
+		require.NoError(t, err)
 		root, err := config.GetRepositoryRoot()
 		// Should return some valid path or handle error gracefully
 		assert.True(t, len(root) >= 0 || err != nil) // Just ensure it doesn't panic
@@ -1037,7 +1067,7 @@ func TestConcurrentConfigAccess(t *testing.T) {
 	// Load configuration concurrently
 	for i := 0; i < numGoroutines; i++ {
 		go func() {
-			config := Load()
+			config, _ := Load()
 			results <- config
 		}()
 	}
@@ -1108,7 +1138,8 @@ func TestGitHubActionsIntegration(t *testing.T) {
 	_ = os.Setenv("GITHUB_SHA", "abc123def456")
 	_ = os.Setenv("GITHUB_PR_NUMBER", "456")
 
-	config := Load()
+	config, err := Load()
+	require.NoError(t, err)
 
 	assert.Equal(t, "test-token", config.GitHub.Token)
 	assert.Equal(t, "test-owner", config.GitHub.Owner)
@@ -1752,7 +1783,9 @@ func TestResolveHistoryStoragePathErrorCases(t *testing.T) {
 	})
 }
 
-// Helper function to clear environment variables
+// Helper function to clear environment variables.
+// It also sets GO_COVERAGE_TEST_CONFIG_DIR to a non-existent path so that
+// Load() does not pick up the real .github/env/ from the repo working directory.
 func clearEnvironment() {
 	envVars := []string{
 		"GO_COVERAGE_INPUT_FILE", "GO_COVERAGE_OUTPUT_DIR", "GO_COVERAGE_THRESHOLD",
@@ -1766,10 +1799,295 @@ func clearEnvironment() {
 		"GO_COVERAGE_HISTORY_ENABLED", "GO_COVERAGE_HISTORY_PATH", "GO_COVERAGE_HISTORY_RETENTION",
 		"GO_COVERAGE_HISTORY_MAX_ENTRIES", "GO_COVERAGE_HISTORY_CLEANUP", "GO_COVERAGE_HISTORY_METRICS",
 		"GO_COVERAGE_BASE_DIR", "GO_COVERAGE_AUTO_CREATE_DIRS", "GO_COVERAGE_FILE_MODE", "GO_COVERAGE_DIR_MODE",
+		"GO_COVERAGE_ALLOW_LABEL_OVERRIDE",
+		"GO_COVERAGE_LOG_LEVEL", "GO_COVERAGE_LOG_FORMAT", "GO_COVERAGE_LOG_ENABLED",
+		"GO_COVERAGE_BRANDING_ENABLED", "GOOGLE_ANALYTICS_ID",
 		"TEST_STRING", "TEST_INT", "TEST_FLOAT", "TEST_BOOL", "TEST_DURATION", "TEST_SLICE",
+		"CI",
+		"CORE_VAR", "TOOLS_VAR", "PROJECT_VAR", "SHARED_VAR", "LOCAL_VAR", "ORDER_VAR",
 	}
 
 	for _, envVar := range envVars {
 		_ = os.Unsetenv(envVar)
 	}
+
+	// Point to a non-existent directory so Load() does not discover
+	// the real .github/env/ from the repo working directory during tests.
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", "/nonexistent-test-isolation-dir")
+}
+
+// TestLoadModularMode tests that modular .github/env/ loading works
+func TestLoadModularMode(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	// Create temp directory with .github/env/ structure
+	tmpDir := t.TempDir()
+	envDir := filepath.Join(tmpDir, ".github", "env")
+	require.NoError(t, os.MkdirAll(envDir, 0o750))
+
+	// Write env files
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "00-core.env"),
+		[]byte("GO_COVERAGE_THRESHOLD=75.0\n"), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "10-tools.env"),
+		[]byte("GO_COVERAGE_BADGE_STYLE=flat-square\n"), 0o600))
+
+	// Point config detection to temp dir
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+
+	config, err := Load()
+	require.NoError(t, err)
+	assert.NotNil(t, config)
+	assert.InDelta(t, 75.0, config.Coverage.Threshold, 0.001)
+	assert.Equal(t, "flat-square", config.Badge.Style)
+}
+
+// TestLoadModularModeOverrideOrder verifies last-wins semantics in modular loading
+func TestLoadModularModeOverrideOrder(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	tmpDir := t.TempDir()
+	envDir := filepath.Join(tmpDir, ".github", "env")
+	require.NoError(t, os.MkdirAll(envDir, 0o750))
+
+	// 00-core.env sets threshold to 60
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "00-core.env"),
+		[]byte("GO_COVERAGE_THRESHOLD=60.0\n"), 0o600))
+	// 90-project.env overrides threshold to 85
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "90-project.env"),
+		[]byte("GO_COVERAGE_THRESHOLD=85.0\n"), 0o600))
+
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+
+	config, err := Load()
+	require.NoError(t, err)
+	assert.InDelta(t, 85.0, config.Coverage.Threshold, 0.001)
+}
+
+// TestLoadModularModePrefersOverLegacy verifies modular mode is preferred over legacy
+func TestLoadModularModePrefersOverLegacy(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	tmpDir := t.TempDir()
+
+	// Create modular env dir
+	envDir := filepath.Join(tmpDir, ".github", "env")
+	require.NoError(t, os.MkdirAll(envDir, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "10-coverage.env"),
+		[]byte("GO_COVERAGE_THRESHOLD=77.0\n"), 0o600))
+
+	// Also create legacy .env.base with different value
+	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, ".github", ".env.base"),
+		[]byte("GO_COVERAGE_THRESHOLD=55.0\n"), 0o600))
+
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+
+	config, err := Load()
+	require.NoError(t, err)
+	// Modular mode wins
+	assert.InDelta(t, 77.0, config.Coverage.Threshold, 0.001)
+}
+
+// TestLoadLegacyFallbackWhenNoEnvDir tests legacy mode when no .github/env/ exists
+func TestLoadLegacyFallbackWhenNoEnvDir(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	// Create only legacy .env.base - no .github/env/ directory
+	tmpDir := t.TempDir()
+	githubDir := filepath.Join(tmpDir, ".github")
+	require.NoError(t, os.MkdirAll(githubDir, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(githubDir, ".env.base"),
+		[]byte("GO_COVERAGE_THRESHOLD=66.0\n"), 0o600))
+
+	// Set test config dir so findEnvDir checks inside tmpDir
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+
+	// Save and change working directory for findBaseEnvFile
+	originalDir, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(tmpDir))
+	defer func() { _ = os.Chdir(originalDir) }()
+
+	config, loadErr := Load()
+	require.NoError(t, loadErr)
+	assert.InDelta(t, 66.0, config.Coverage.Threshold, 0.001)
+}
+
+// TestLoadLegacyWithCustom tests legacy mode with .env.base + .env.custom
+func TestLoadLegacyWithCustom(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	tmpDir := t.TempDir()
+	githubDir := filepath.Join(tmpDir, ".github")
+	require.NoError(t, os.MkdirAll(githubDir, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(githubDir, ".env.base"),
+		[]byte("GO_COVERAGE_THRESHOLD=60.0\nGO_COVERAGE_BADGE_STYLE=flat\n"), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(githubDir, ".env.custom"),
+		[]byte("GO_COVERAGE_THRESHOLD=90.0\n"), 0o600))
+
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+
+	originalDir, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(tmpDir))
+	defer func() { _ = os.Chdir(originalDir) }()
+
+	config, loadErr := Load()
+	require.NoError(t, loadErr)
+	// Custom overrides base
+	assert.InDelta(t, 90.0, config.Coverage.Threshold, 0.001)
+	// Base value preserved where not overridden
+	assert.Equal(t, "flat", config.Badge.Style)
+}
+
+// TestLoadNoEnvFiles tests backward compatibility when no env files exist
+func TestLoadNoEnvFiles(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	tmpDir := t.TempDir()
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+
+	originalDir, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(tmpDir))
+	defer func() { _ = os.Chdir(originalDir) }()
+
+	config, loadErr := Load()
+	require.NoError(t, loadErr)
+	assert.NotNil(t, config)
+	// Defaults should be used
+	assert.InDelta(t, 80.0, config.Coverage.Threshold, 0.001)
+}
+
+// TestFindEnvDir tests the env directory detection
+func TestFindEnvDir(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	t.Run("with test config dir override", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		envDir := filepath.Join(tmpDir, ".github", "env")
+		require.NoError(t, os.MkdirAll(envDir, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(envDir, "00-core.env"),
+			[]byte("KEY=value\n"), 0o600))
+
+		_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+		defer func() { _ = os.Unsetenv("GO_COVERAGE_TEST_CONFIG_DIR") }()
+
+		result := findEnvDir()
+		assert.Equal(t, envDir, result)
+	})
+
+	t.Run("empty dir returns empty string", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		envDir := filepath.Join(tmpDir, ".github", "env")
+		require.NoError(t, os.MkdirAll(envDir, 0o750))
+		// No .env files
+
+		_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+		defer func() { _ = os.Unsetenv("GO_COVERAGE_TEST_CONFIG_DIR") }()
+
+		result := findEnvDir()
+		assert.Empty(t, result)
+	})
+}
+
+// TestFindEnvDirInParentDirectory tests directory tree walking
+func TestFindEnvDirInParentDirectory(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	tmpDir := t.TempDir()
+	envDir := filepath.Join(tmpDir, ".github", "env")
+	require.NoError(t, os.MkdirAll(envDir, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "00-core.env"),
+		[]byte("KEY=value\n"), 0o600))
+
+	// Create a subdirectory
+	subDir := filepath.Join(tmpDir, "sub", "dir")
+	require.NoError(t, os.MkdirAll(subDir, 0o750))
+
+	// Unset test override so findEnvDir walks from cwd
+	require.NoError(t, os.Unsetenv("GO_COVERAGE_TEST_CONFIG_DIR"))
+
+	// Change working directory to subdirectory
+	originalDir, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(subDir))
+	defer func() { _ = os.Chdir(originalDir) }()
+
+	// Without test override, findEnvDir walks up from cwd
+	result := findEnvDir()
+	// Normalize paths for macOS symlink (/var -> /private/var)
+	resultClean := strings.Replace(result, "/private/var", "/var", 1)
+	envDirClean := strings.Replace(envDir, "/private/var", "/var", 1)
+	assert.Equal(t, envDirClean, resultClean)
+}
+
+// TestLoadModularModeSkipsLocalInCI tests that 99-local.env is skipped in CI
+func TestLoadModularModeSkipsLocalInCI(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	tmpDir := t.TempDir()
+	envDir := filepath.Join(tmpDir, ".github", "env")
+	require.NoError(t, os.MkdirAll(envDir, 0o750))
+
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "00-core.env"),
+		[]byte("GO_COVERAGE_THRESHOLD=70.0\n"), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "99-local.env"),
+		[]byte("GO_COVERAGE_THRESHOLD=99.0\n"), 0o600))
+
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+	_ = os.Setenv("CI", "true")
+
+	config, err := Load()
+	require.NoError(t, err)
+	// 99-local.env should be skipped in CI
+	assert.InDelta(t, 70.0, config.Coverage.Threshold, 0.001)
+}
+
+// TestLoadModularModeIncludesLocalWhenNotCI tests that 99-local.env is loaded outside CI
+func TestLoadModularModeIncludesLocalWhenNotCI(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	tmpDir := t.TempDir()
+	envDir := filepath.Join(tmpDir, ".github", "env")
+	require.NoError(t, os.MkdirAll(envDir, 0o750))
+
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "00-core.env"),
+		[]byte("GO_COVERAGE_THRESHOLD=70.0\n"), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(envDir, "99-local.env"),
+		[]byte("GO_COVERAGE_THRESHOLD=99.0\n"), 0o600))
+
+	_ = os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", tmpDir)
+	// CI is not set
+
+	config, err := Load()
+	require.NoError(t, err)
+	// 99-local.env should be loaded, overriding 00-core.env
+	assert.InDelta(t, 99.0, config.Coverage.Threshold, 0.001)
+}
+
+// TestIsCI tests CI environment detection
+func TestIsCI(t *testing.T) {
+	clearEnvironment()
+	defer clearEnvironment()
+
+	assert.False(t, isCI())
+
+	_ = os.Setenv("CI", "true")
+	assert.True(t, isCI())
+
+	_ = os.Setenv("CI", "false")
+	assert.False(t, isCI())
+
+	_ = os.Setenv("CI", "1")
+	assert.False(t, isCI()) // Only "true" counts
 }
