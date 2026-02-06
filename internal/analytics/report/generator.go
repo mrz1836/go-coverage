@@ -276,7 +276,10 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 	}
 
 	// Load global config for template settings
-	globalConfig := globalconfig.Load()
+	globalConfig, err := globalconfig.Load()
+	if err != nil {
+		globalConfig = &globalconfig.Config{}
+	}
 
 	// Determine Google Analytics ID - use generator config first, then fall back to global config
 	var googleAnalyticsID string

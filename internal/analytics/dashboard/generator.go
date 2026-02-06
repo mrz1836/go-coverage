@@ -302,7 +302,10 @@ func (g *Generator) prepareTemplateData(ctx context.Context, data *CoverageData)
 	latestTag := getLatestGitTag(ctx)
 
 	// Load global config to get analytics settings
-	globalConfig := globalconfig.Load()
+	globalConfig, err := globalconfig.Load()
+	if err != nil {
+		globalConfig = &globalconfig.Config{}
+	}
 
 	return map[string]interface{}{
 		"BaselineCoverage":   data.BaselineCoverage,
