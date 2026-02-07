@@ -20,43 +20,36 @@ Complete configuration reference for **go-coverage**, including environment vari
 Go-coverage supports configuration through multiple methods:
 
 1. **Command Line Flags** - Override specific options per command (highest priority)
-2. **Environment Variables** - Set via `.env.base` and `.env.custom` files
+2. **Environment Variables** - Set via modular env files in [`.github/env/`](.github/env/README.md)
 3. **Configuration Files** - JSON-based configuration for complex setups
 4. **Runtime Detection** - Automatic GitHub context detection (lowest priority)
 
-## 🗂️ Two-File Configuration System
+## 🗂️ Modular Configuration System
 
-The GoFortress workflow system uses a two-file configuration approach:
+The GoFortress workflow system uses a modular, layered configuration approach via [`.github/env/`](.github/env/README.md).
 
-### Base Configuration (`.github/.env.base`)
-- Contains all default settings that work for most Go projects
-- Includes comprehensive documentation for each variable
-- Should be tracked in version control
-- Gets updated with new GoFortress releases
+Files are loaded in numeric order, with later files overriding earlier ones:
 
-### Custom Configuration (`.github/.env.custom`)
-- Optional file for project-specific overrides
-- Only include variables you want to change from defaults
-- Can be tracked in version control or kept local
-- Takes precedence over base configuration
+| File | Purpose |
+|------|---------|
+| `00-core.env` | Foundation — Go versions, runners, feature flags, timeouts |
+| `10-*.env` | Tool configuration — coverage, security, linting, pre-commit |
+| `20-*.env` | Service configuration — workflows, Redis, etc. |
+| `90-project.env` | **Project-specific overrides** (this is where you customize) |
+| `99-local.env` | Local developer overrides (not tracked in git) |
 
 ### Usage Example
 
-1. **Copy the example file:**
+1. **Edit your project configuration:**
 ```bash
-cp .github/.env.custom.example .github/.env.custom
-```
-
-2. **Edit your custom configuration:**
-```bash
-# In .github/.env.custom
+# In .github/env/90-project.env
 GO_COVERAGE_THRESHOLD=85.0
 ENABLE_BENCHMARKS=false
 PRIMARY_RUNNER=macos-15
 ```
 
-3. **The system automatically merges:**
-- Base defaults + Custom overrides = Final configuration
+2. **The system automatically merges all files in order:**
+- Core defaults → Tool config → Service config → Project overrides = Final configuration
 
 ## 🌍 Environment Variables
 
