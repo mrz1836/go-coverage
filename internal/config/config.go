@@ -345,7 +345,7 @@ func Load() (*Config, error) {
 			LogoTimeout:        getEnvDuration("GO_COVERAGE_LOGO_TIMEOUT", 8*time.Second),
 			LogoHTTPTimeout:    getEnvDuration("GO_COVERAGE_LOGO_HTTP_TIMEOUT", 3*time.Second),
 			LogoRetries:        getEnvInt("GO_COVERAGE_LOGO_RETRIES", 2),
-			LogoGitHubFallback: getEnvBool("GO_COVERAGE_LOGO_GITHUB_FALLBACK", false),
+			LogoGitHubFallback: getEnvBool("GO_COVERAGE_LOGO_GITHUB_FALLBACK", true),
 		},
 		Report: ReportConfig{
 			OutputFile:   getEnvString("GO_COVERAGE_REPORT_OUTPUT", "coverage.html"),
