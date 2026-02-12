@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/mrz1836/go-coverage/internal/config"
 )
 
 // ErrIconFetchFailed is returned when fetching an icon from Simple Icons CDN fails
@@ -219,8 +221,27 @@ func (g *Generator) resolveLogo(ctx context.Context, logo, color string) string 
 		// but trust the Simple Icons CDN to handle requests for non-existent logos gracefully
 		logoName := strings.ToLower(logo)
 		if isValidSimpleIconName(logoName) {
+			// Create a bounded timeout context for logo fetching
+			// Load configuration to get timeout settings
+			cfg, err := config.Load()
+			if err != nil {
+				log.Printf("Warning: Failed to load config for logo timeout: %v, using defaults", err)
+				cfg = &config.Config{
+					Badge: config.BadgeConfig{
+						LogoTimeout:        8 * time.Second,
+						LogoHTTPTimeout:    3 * time.Second,
+						LogoRetries:        2,
+						LogoGitHubFallback: false,
+					},
+				}
+			}
+
+			// Create timeout context for logo operations
+			logoCtx, logoCancel := context.WithTimeout(ctx, cfg.Badge.LogoTimeout)
+			defer logoCancel()
+
 			// First attempt: Fetch the icon with color (if specified)
-			if dataURI, err := fetchSimpleIcon(ctx, logoName, color); err == nil {
+			if dataURI, err := fetchSimpleIcon(logoCtx, logoName, color, cfg); err == nil {
 				return dataURI
 			} else {
 				log.Printf("Warning: Failed to fetch logo '%s' with color '%s': %v", logoName, color, err)
@@ -229,7 +250,7 @@ func (g *Generator) resolveLogo(ctx context.Context, logo, color string) string 
 			// Fallback attempt: Try fetching without color if the first attempt failed and color was specified
 			if color != "" {
 				log.Printf("Retrying logo '%s' without color...", logoName)
-				if dataURI, err := fetchSimpleIcon(ctx, logoName, ""); err == nil {
+				if dataURI, err := fetchSimpleIcon(logoCtx, logoName, "", cfg); err == nil {
 					log.Printf("Success: Fetched logo '%s' without color", logoName)
 					return dataURI
 				} else {
@@ -387,7 +408,7 @@ func applySVGColorStatic(svgContent, color string) string {
 }
 
 // fetchSimpleIcon fetches an SVG icon from Simple Icons CDN with retry logic and returns it as a base64 data URI
-func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error) {
+func fetchSimpleIcon(ctx context.Context, iconName, color string, cfg *config.Config) (string, error) {
 	// Build the URL for Simple Icons CDN
 	var url string
 	if color != "" {
@@ -398,20 +419,22 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 		url = fmt.Sprintf("https://cdn.simpleicons.org/%s", iconName)
 	}
 
-	// Retry configuration
-	const maxRetries = 3
-	const baseDelay = 500 * time.Millisecond
+	// Retry configuration from config
+	maxRetries := cfg.Badge.LogoRetries
+	httpTimeout := cfg.Badge.LogoHTTPTimeout
+	const baseDelay = 200 * time.Millisecond // Reduced from 500ms to 200ms
 
 	var lastErr error
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		// Check if context was canceled
-		if ctx.Err() != nil {
+		// Check if context was canceled or deadline exceeded
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
+			log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
 			return "", ctx.Err()
 		}
 
-		// Create HTTP client with timeout
+		// Create HTTP client with timeout from config
 		client := &http.Client{
-			Timeout: 15 * time.Second, // Increased timeout for slower networks
+			Timeout: httpTimeout,
 		}
 
 		// Create request with context
@@ -428,9 +451,19 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 		resp, err := client.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
+			// Check if context was canceled after request failure
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
+				log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
+				return "", ctx.Err()
+			}
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
+				shift := uint(attempt)
+				if shift > 20 { // cap shift to prevent overflow
+					shift = 20
+				}
+				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
 			continue
@@ -442,7 +475,12 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, url, attempt+1, maxRetries)
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
+				shift := uint(attempt)
+				if shift > 20 { // cap shift to prevent overflow
+					shift = 20
+				}
+				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
 			continue
@@ -455,7 +493,12 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
+				shift := uint(attempt)
+				if shift > 20 { // cap shift to prevent overflow
+					shift = 20
+				}
+				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
 			continue
@@ -471,14 +514,22 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 		return "data:image/svg+xml;base64," + base64Content, nil
 	}
 
-	// CDN failed, attempt to fetch directly from GitHub repository
+	// CDN failed, attempt GitHub fallback only if enabled
+	if !cfg.Badge.LogoGitHubFallback {
+		log.Printf("GitHub fallback disabled, skipping fallback attempt for logo '%s'", iconName)
+		return "", fmt.Errorf("failed to fetch icon after %d attempts (GitHub fallback disabled): %w", maxRetries, lastErr)
+	}
+
+	log.Printf("Attempting GitHub fallback for logo '%s'", iconName)
 	fallbackURL := fmt.Sprintf("https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/%s.svg", iconName)
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		if ctx.Err() != nil {
+		// Check if context was canceled or deadline exceeded
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
+			log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
 			return "", ctx.Err()
 		}
 
-		client := &http.Client{Timeout: 15 * time.Second}
+		client := &http.Client{Timeout: httpTimeout}
 		req, err := http.NewRequestWithContext(ctx, "GET", fallbackURL, nil)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to create request for %s: %w", fallbackURL, err)
@@ -490,8 +541,18 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 		resp, err := client.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
+			// Check if context was canceled after request failure
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
+				log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
+				return "", ctx.Err()
+			}
 			if attempt < maxRetries-1 {
-				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
+				shift := uint(attempt)
+				if shift > 20 { // cap shift to prevent overflow
+					shift = 20
+				}
+				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
 			continue
@@ -501,7 +562,12 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 			_ = resp.Body.Close()
 			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, fallbackURL, attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
+				shift := uint(attempt)
+				if shift > 20 { // cap shift to prevent overflow
+					shift = 20
+				}
+				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
 			continue
@@ -512,7 +578,12 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string) (string, error
 		if err != nil {
 			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
 			if attempt < maxRetries-1 {
-				delay := time.Duration(1<<uint(attempt)) * baseDelay
+				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
+				shift := uint(attempt)
+				if shift > 20 { // cap shift to prevent overflow
+					shift = 20
+				}
+				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
 			continue

@@ -120,6 +120,14 @@ type BadgeConfig struct {
 	OutputFile string `json:"output_file"`
 	// Whether to generate trend badge
 	IncludeTrend bool `json:"include_trend"`
+	// Max time for all logo fetch attempts
+	LogoTimeout time.Duration `json:"logo_timeout"`
+	// Per-request timeout for logo fetching
+	LogoHTTPTimeout time.Duration `json:"logo_http_timeout"`
+	// Number of retries for logo fetching
+	LogoRetries int `json:"logo_retries"`
+	// Enable GitHub fallback for logo fetching
+	LogoGitHubFallback bool `json:"logo_github_fallback"`
 }
 
 // ReportConfig holds HTML report generation settings
@@ -328,12 +336,16 @@ func Load() (*Config, error) {
 			Timeout:        getEnvDuration("GITHUB_TIMEOUT", 30*time.Second),
 		},
 		Badge: BadgeConfig{
-			Style:        getEnvString("GO_COVERAGE_BADGE_STYLE", "flat"),
-			Label:        getEnvString("GO_COVERAGE_BADGE_LABEL", "coverage"),
-			Logo:         getEnvString("GO_COVERAGE_BADGE_LOGO", ""),
-			LogoColor:    getEnvString("GO_COVERAGE_BADGE_LOGO_COLOR", "white"),
-			OutputFile:   getEnvString("GO_COVERAGE_BADGE_OUTPUT", "coverage.svg"),
-			IncludeTrend: getEnvBool("GO_COVERAGE_BADGE_TREND", false),
+			Style:              getEnvString("GO_COVERAGE_BADGE_STYLE", "flat"),
+			Label:              getEnvString("GO_COVERAGE_BADGE_LABEL", "coverage"),
+			Logo:               getEnvString("GO_COVERAGE_BADGE_LOGO", ""),
+			LogoColor:          getEnvString("GO_COVERAGE_BADGE_LOGO_COLOR", "white"),
+			OutputFile:         getEnvString("GO_COVERAGE_BADGE_OUTPUT", "coverage.svg"),
+			IncludeTrend:       getEnvBool("GO_COVERAGE_BADGE_TREND", false),
+			LogoTimeout:        getEnvDuration("GO_COVERAGE_LOGO_TIMEOUT", 8*time.Second),
+			LogoHTTPTimeout:    getEnvDuration("GO_COVERAGE_LOGO_HTTP_TIMEOUT", 3*time.Second),
+			LogoRetries:        getEnvInt("GO_COVERAGE_LOGO_RETRIES", 2),
+			LogoGitHubFallback: getEnvBool("GO_COVERAGE_LOGO_GITHUB_FALLBACK", false),
 		},
 		Report: ReportConfig{
 			OutputFile:   getEnvString("GO_COVERAGE_REPORT_OUTPUT", "coverage.html"),
