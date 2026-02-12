@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -497,7 +500,33 @@ func TestResolveLogo(t *testing.T) {
 }
 
 func TestGenerateWithResolvedLogos(t *testing.T) {
-	generator := New()
+	// Create mock Simple Icons CDN server
+	mockServer := createMockSimpleIconsServer(t)
+	defer mockServer.Close()
+
+	// Create custom HTTP client that redirects to mock server
+	mockClient := &http.Client{
+		Transport: &mockTransport{
+			mockServerURL: mockServer.URL,
+		},
+		Timeout: 3 * time.Second,
+	}
+
+	// Create generator with injected HTTP client
+	generator := NewWithConfig(&Config{
+		Style:     "flat",
+		Label:     "coverage",
+		Logo:      "",
+		LogoColor: "white",
+		ThresholdConfig: ThresholdConfig{
+			Excellent:  95.0,
+			Good:       85.0,
+			Acceptable: 75.0,
+			Low:        60.0,
+		},
+		HTTPClient: mockClient,
+	})
+
 	ctx := context.Background()
 
 	tests := []struct {
@@ -520,17 +549,34 @@ func TestGenerateWithResolvedLogos(t *testing.T) {
 			svgStr := string(svg)
 			if tt.hasImage {
 				assert.Contains(t, svgStr, "<image")
-				// Check for either data URI or Simple Icons CDN URL
-				if strings.Contains(svgStr, "xlink:href=\"data:") || strings.Contains(svgStr, "xlink:href=\"https://cdn.simpleicons.org") {
-					// Valid image reference found
-				} else {
-					t.Errorf("Expected image element to have valid xlink:href")
-				}
+				// Check for data URI (mocked icons return data URIs)
+				assert.Contains(t, svgStr, "xlink:href=\"data:")
 			} else {
 				assert.NotContains(t, svgStr, "<image")
 			}
 		})
 	}
+}
+
+func TestGenerateWithRealSimpleIcons(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test with external CDN in short mode")
+	}
+
+	// This test uses the real CDN and is skipped in CI via -short flag
+	generator := New()
+	ctx := context.Background()
+
+	svg, err := generator.Generate(ctx, 85.5, WithLogo("github"))
+	require.NoError(t, err)
+	assert.NotEmpty(t, svg)
+
+	svgStr := string(svg)
+	assert.Contains(t, svgStr, "<image")
+	// Should have either data URI or CDN URL
+	hasValidImage := strings.Contains(svgStr, "xlink:href=\"data:") ||
+		strings.Contains(svgStr, "xlink:href=\"https://cdn.simpleicons.org")
+	assert.True(t, hasValidImage, "Expected valid image reference")
 }
 
 func TestProcessLogoColor(t *testing.T) {
@@ -729,4 +775,55 @@ func TestProcessLogoColorWithNewFunctions(t *testing.T) {
 			}
 		})
 	}
+}
+
+// mockTransport rewrites Simple Icons CDN URLs to point to mock server
+type mockTransport struct {
+	mockServerURL string
+}
+
+func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Rewrite cdn.simpleicons.org URLs to mock server
+	if strings.Contains(req.URL.Host, "cdn.simpleicons.org") ||
+		strings.Contains(req.URL.Host, "raw.githubusercontent.com") {
+		// Preserve the path but change the host
+		mockURL := m.mockServerURL + req.URL.Path
+		newReq, err := http.NewRequestWithContext(req.Context(), req.Method, mockURL, req.Body)
+		if err != nil {
+			return nil, err
+		}
+		// Copy headers
+		newReq.Header = req.Header
+		req = newReq
+	}
+	return http.DefaultTransport.RoundTrip(req)
+}
+
+// createMockSimpleIconsServer creates an httptest server that mocks cdn.simpleicons.org
+func createMockSimpleIconsServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	// Mock SVG content for GitHub icon
+	githubSVG := `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+		<title>GitHub</title>
+		<path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+	</svg>`
+
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check User-Agent header
+		if r.Header.Get("User-Agent") == "" {
+			http.Error(w, "User-Agent required", http.StatusForbidden)
+			return
+		}
+
+		// Handle different icon requests
+		switch {
+		case strings.Contains(r.URL.Path, "/github"):
+			w.Header().Set("Content-Type", "image/svg+xml")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(githubSVG))
+		default:
+			http.Error(w, "Icon not found", http.StatusNotFound)
+		}
+	}))
 }

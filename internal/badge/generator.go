@@ -22,7 +22,8 @@ var ErrIconFetchFailed = errors.New("failed to fetch icon")
 
 // Generator creates professional SVG badges matching GitHub's design language
 type Generator struct {
-	config *Config
+	config     *Config
+	httpClient *http.Client // Optional HTTP client for testing
 }
 
 // Config holds badge generation configuration
@@ -32,6 +33,7 @@ type Config struct {
 	Logo            string
 	LogoColor       string
 	ThresholdConfig ThresholdConfig
+	HTTPClient      *http.Client // Optional HTTP client for dependency injection
 }
 
 // ThresholdConfig defines coverage thresholds for color coding
@@ -80,13 +82,18 @@ func New() *Generator {
 				Acceptable: 75.0,
 				Low:        60.0,
 			},
+			HTTPClient: nil, // Use default http.Client
 		},
+		httpClient: nil, // Will create default clients when needed
 	}
 }
 
 // NewWithConfig creates a new badge generator with custom configuration
 func NewWithConfig(config *Config) *Generator {
-	return &Generator{config: config}
+	return &Generator{
+		config:     config,
+		httpClient: config.HTTPClient, // Use injected client if provided
+	}
 }
 
 // sanitizeUTF8 ensures the string is valid UTF-8, replacing invalid sequences
@@ -241,7 +248,7 @@ func (g *Generator) resolveLogo(ctx context.Context, logo, color string) string 
 			defer logoCancel()
 
 			// First attempt: Fetch the icon with color (if specified)
-			if dataURI, err := fetchSimpleIcon(logoCtx, logoName, color, cfg); err == nil {
+			if dataURI, err := g.fetchSimpleIcon(logoCtx, logoName, color, cfg); err == nil {
 				return dataURI
 			} else {
 				log.Printf("Warning: Failed to fetch logo '%s' with color '%s': %v", logoName, color, err)
@@ -250,7 +257,7 @@ func (g *Generator) resolveLogo(ctx context.Context, logo, color string) string 
 			// Fallback attempt: Try fetching without color if the first attempt failed and color was specified
 			if color != "" {
 				log.Printf("Retrying logo '%s' without color...", logoName)
-				if dataURI, err := fetchSimpleIcon(logoCtx, logoName, "", cfg); err == nil {
+				if dataURI, err := g.fetchSimpleIcon(logoCtx, logoName, "", cfg); err == nil {
 					log.Printf("Success: Fetched logo '%s' without color", logoName)
 					return dataURI
 				} else {
@@ -408,7 +415,7 @@ func applySVGColorStatic(svgContent, color string) string {
 }
 
 // fetchSimpleIcon fetches an SVG icon from Simple Icons CDN with retry logic and returns it as a base64 data URI
-func fetchSimpleIcon(ctx context.Context, iconName, color string, cfg *config.Config) (string, error) {
+func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string, cfg *config.Config) (string, error) {
 	// Build the URL for Simple Icons CDN
 	var url string
 	if color != "" {
@@ -432,9 +439,14 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string, cfg *config.Co
 			return "", ctx.Err()
 		}
 
-		// Create HTTP client with timeout from config
-		client := &http.Client{
-			Timeout: httpTimeout,
+		// Use injected HTTP client if available, otherwise create one with timeout
+		var client *http.Client
+		if g.httpClient != nil {
+			client = g.httpClient
+		} else {
+			client = &http.Client{
+				Timeout: httpTimeout,
+			}
 		}
 
 		// Create request with context
@@ -529,7 +541,13 @@ func fetchSimpleIcon(ctx context.Context, iconName, color string, cfg *config.Co
 			return "", ctx.Err()
 		}
 
-		client := &http.Client{Timeout: httpTimeout}
+		// Use injected HTTP client if available, otherwise create one with timeout
+		var client *http.Client
+		if g.httpClient != nil {
+			client = g.httpClient
+		} else {
+			client = &http.Client{Timeout: httpTimeout}
+		}
 		req, err := http.NewRequestWithContext(ctx, "GET", fallbackURL, nil)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to create request for %s: %w", fallbackURL, err)
