@@ -323,7 +323,28 @@ Features:
 
 			// Create status checks if requested
 			if createStatus && cfg.GitHub.CommitSHA != "" {
-				statusManager := github.NewStatusCheckManager(client, nil)
+				statusManager := github.NewStatusCheckManager(client, &github.StatusCheckConfig{
+					ContextPrefix:          "go-coverage",
+					MainContext:            "coverage/total",
+					AdditionalContexts:     []string{"coverage/trend", "coverage/quality"},
+					EnableBlocking:         true,
+					BlockOnFailure:         true,
+					BlockOnError:           false,
+					RequireAllPassing:      false,
+					CoverageThreshold:      cfg.Coverage.Threshold,
+					QualityThreshold:       "C",
+					AllowThresholdOverride: cfg.Coverage.AllowLabelOverride,
+					AllowLabelOverride:     cfg.Coverage.AllowLabelOverride,
+					EnableQualityGates:     true,
+					IncludeTargetURLs:      true,
+					UpdateStrategy:         github.UpdateAlways,
+					StatusTimeout:          30 * time.Second,
+					RetrySettings: github.RetrySettings{
+						MaxRetries:    3,
+						RetryDelay:    1 * time.Second,
+						BackoffFactor: 2.0,
+					},
+				})
 
 				statusRequest := &github.StatusCheckRequest{
 					Owner:      cfg.GitHub.Owner,
