@@ -174,6 +174,7 @@ Features:
 				ShowCoverageHistory:      true,
 				EnableStatusChecks:       createStatus,
 				FailBelowThreshold:       true,
+				CoverageThreshold:        cfg.Coverage.Threshold,
 				BlockMergeOnFailure:      blockOnFailure,
 			}
 
