@@ -37,9 +37,10 @@ type PRCommentConfig struct {
 	BadgeStyle string // Badge style (flat, flat-square, for-the-badge)
 
 	// Status check settings
-	EnableStatusChecks  bool // Enable GitHub status checks
-	FailBelowThreshold  bool // Fail status if below threshold
-	BlockMergeOnFailure bool // Block PR merge on coverage failure
+	EnableStatusChecks  bool    // Enable GitHub status checks
+	FailBelowThreshold  bool    // Fail status if below threshold
+	CoverageThreshold   float64 // Coverage threshold for status checks
+	BlockMergeOnFailure bool    // Block PR merge on coverage failure
 }
 
 // CoverageComparison represents coverage comparison between base and PR branches
@@ -119,6 +120,7 @@ func NewPRCommentManager(client *Client, config *PRCommentConfig) *PRCommentMana
 			BadgeStyle:               "flat",
 			EnableStatusChecks:       true,
 			FailBelowThreshold:       true,
+			CoverageThreshold:        80.0, // Default threshold, should be overridden from main config
 			BlockMergeOnFailure:      false,
 		}
 	}
@@ -475,7 +477,7 @@ func (m *PRCommentManager) createCoverageStatusCheck(ctx context.Context, owner,
 	var state string
 	var description string
 
-	threshold := 80.0 // Default threshold, should come from config
+	threshold := m.config.CoverageThreshold
 
 	if comparison.PRCoverage.Percentage >= threshold {
 		state = StatusSuccess
