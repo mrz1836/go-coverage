@@ -93,14 +93,14 @@ func validateBalancedBrackets(t *testing.T, content, filename string) {
 			case inSingleLineComment:
 				continue
 			case inString:
-				if byte(char) == stringChar && (i == 0 || line[i-1] != '\\') {
+				if byte(char) == stringChar && (i == 0 || line[i-1] != '\\') { //nolint:gosec // G115: char is a rune from range over ASCII string, safe byte conversion
 					inString = false
 					stringChar = 0
 				}
 				continue
 			case char == '"' || char == '\'' || char == '`':
 				inString = true
-				stringChar = byte(char)
+				stringChar = byte(char) //nolint:gosec // G115: char is a rune from range over ASCII string, safe byte conversion
 				continue
 			case i < len(line)-1 && char == '/' && line[i+1] == '/':
 				inSingleLineComment = true

@@ -228,7 +228,7 @@ func findEnvDir() string {
 
 // hasEnvFiles checks if a directory exists and contains at least one .env file.
 func hasEnvFiles(dirPath string) bool {
-	info, err := os.Stat(dirPath)
+	info, err := os.Stat(dirPath) //nolint:gosec // G703: dirPath is derived from filepath.Glob patterns, not user input
 	if err != nil || !info.IsDir() {
 		return false
 	}
@@ -260,7 +260,7 @@ func findBaseEnvFile() (string, error) {
 	dir := startDir
 	for {
 		candidate := filepath.Join(dir, ".github", ".env.base")
-		if _, statErr := os.Stat(candidate); statErr == nil {
+		if _, statErr := os.Stat(candidate); statErr == nil { //nolint:gosec // G703: candidate is constructed from filepath.Join with a fixed pattern, not user input
 			return candidate, nil
 		}
 

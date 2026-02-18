@@ -84,7 +84,7 @@ func (c *Client) GetPRDiff(ctx context.Context, owner, repo string, pr int) (*PR
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("failed to get PR diff: %w", err)
 	}

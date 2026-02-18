@@ -332,9 +332,9 @@ func checkRepositoryAccess(ctx context.Context, cmd *cobra.Command, repo string,
 	}
 
 	// Try to view the repository
-	viewCmd := exec.CommandContext(ctx, "gh", "repo", "view", repo)
-	viewCmd.Stdout = nil // Suppress output
-	viewCmd.Stderr = nil // Suppress errors
+	viewCmd := exec.CommandContext(ctx, "gh", "repo", "view", repo) //nolint:gosec // G204: repo is validated by isValidRepositoryFormat before use
+	viewCmd.Stdout = nil                                            // Suppress output
+	viewCmd.Stderr = nil                                            // Suppress errors
 	if err := viewCmd.Run(); err != nil {
 		cmd.Printf("   ❌ Cannot access repository '%s'\n", repo)
 		cmd.Printf("   💡 Please check:\n")

@@ -313,7 +313,7 @@ func (b *URLBuilder) BuildGitHubCommitURL(sha string) string {
 }
 
 func (b *URLBuilder) BuildGitHubPRURL(number int) string {
-	return "https://" + b.host + "/" + b.owner + "/" + b.repo + "/pull/" + string(rune('0'+number))
+	return "https://" + b.host + "/" + b.owner + "/" + b.repo + "/pull/" + string(rune('0'+number)) //nolint:gosec // G115: number is a small positive int (PR number), safe to convert
 }
 
 func (b *URLBuilder) BuildGitHubFileURL(branch, path string) string {
@@ -321,7 +321,7 @@ func (b *URLBuilder) BuildGitHubFileURL(branch, path string) string {
 }
 
 func (b *URLBuilder) BuildGitHubFileURLWithLine(branch, path string, line int) string {
-	return b.BuildGitHubFileURL(branch, path) + "#L" + string(rune('0'+line))
+	return b.BuildGitHubFileURL(branch, path) + "#L" + string(rune('0'+line)) //nolint:gosec // G115: line is a small positive int (line number), safe to convert
 }
 
 type URLUtil struct{}

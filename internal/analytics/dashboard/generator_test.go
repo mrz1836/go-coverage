@@ -33,7 +33,7 @@ func TestNewGenerator(t *testing.T) {
 }
 
 func TestNewGeneratorWithGitHubToken(t *testing.T) {
-	config := &GeneratorConfig{
+	config := &GeneratorConfig{ //nolint:gosec // G101: test struct with a fake token, not a real credential
 		ProjectName:      "test-project",
 		RepositoryOwner:  "owner",
 		RepositoryName:   "repo",

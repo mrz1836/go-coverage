@@ -189,7 +189,7 @@ func (c *Client) CreateStatus(ctx context.Context, owner, repo, sha string, stat
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return fmt.Errorf("failed to create status: %w", err)
 	}
@@ -215,7 +215,7 @@ func (c *Client) GetPullRequest(ctx context.Context, owner, repo string, pr int)
 	req.Header.Set("Authorization", "token "+c.token)
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("failed to get PR: %w", err)
 	}
@@ -247,7 +247,7 @@ func (c *Client) findCoverageComment(ctx context.Context, owner, repo string, pr
 	req.Header.Set("Authorization", "token "+c.token)
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments: %w", err)
 	}
@@ -291,7 +291,7 @@ func (c *Client) createComment(ctx context.Context, owner, repo string, pr int, 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("failed to create comment: %w", err)
 	}
@@ -328,7 +328,7 @@ func (c *Client) updateComment(ctx context.Context, owner, repo string, commentI
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("failed to update comment: %w", err)
 	}
@@ -409,7 +409,7 @@ func (c *Client) GetWorkflowRuns(ctx context.Context, owner, repo string, limit 
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow runs: %w", err)
 	}
@@ -450,7 +450,7 @@ func (c *Client) GetWorkflowRunsByWorkflow(ctx context.Context, owner, repo, wor
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow runs: %w", err)
 	}
@@ -482,7 +482,7 @@ func (c *Client) GetWorkflowRun(ctx context.Context, owner, repo string, runID i
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow run: %w", err)
 	}
@@ -514,7 +514,7 @@ func (c *Client) getWorkflowIDByName(ctx context.Context, owner, repo, workflowN
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return 0, fmt.Errorf("failed to get workflows: %w", err)
 	}

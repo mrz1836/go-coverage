@@ -50,7 +50,7 @@ func GetLatestRelease(owner, repo string) (*GitHubRelease, error) {
 	req.Header.Set("User-Agent", fmt.Sprintf("go-coverage/%s (%s/%s)", "dev", runtime.GOOS, runtime.GOARCH))
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 	if err != nil {
 		return nil, fmt.Errorf("fetching release: %w", err)
 	}

@@ -892,7 +892,7 @@ func TestNewCommentCmdDryRunMode(t *testing.T) {
 	tempFile, err := os.CreateTemp("", "coverage_test_*.out")
 	require.NoError(t, err)
 	defer func() {
-		_ = os.Remove(tempFile.Name())
+		_ = os.Remove(tempFile.Name()) //nolint:gosec // G703: tempFile.Name() is from os.CreateTemp, not user-controlled
 	}()
 
 	// Write minimal coverage data
@@ -1021,7 +1021,7 @@ func TestNewCommentCmdFlagCombinations(t *testing.T) {
 	// Create test coverage file
 	coverageFile, err := os.CreateTemp("", "coverage_*.out")
 	require.NoError(t, err)
-	defer func() { _ = os.Remove(coverageFile.Name()) }()
+	defer func() { _ = os.Remove(coverageFile.Name()) }() //nolint:gosec // G703: coverageFile.Name() is from os.CreateTemp, not user-controlled
 
 	coverageData := `mode: atomic
 github.com/test/repo/main.go:1.1,5.10 2 1

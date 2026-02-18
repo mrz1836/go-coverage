@@ -263,7 +263,7 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 		req.Header.Set("Authorization", "token "+m.client.token)
 		req.Header.Set("User-Agent", m.client.config.UserAgent)
 
-		resp, err := m.client.httpClient.Do(req)
+		resp, err := m.client.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 		if err != nil {
 			lastErr = fmt.Errorf("failed to get comments: %w", err)
 			m.logger.Error("Failed to execute request", map[string]interface{}{
@@ -536,7 +536,7 @@ func (m *PRCommentManager) DeletePRComments(ctx context.Context, owner, repo str
 		req.Header.Set("Authorization", "token "+m.client.token)
 		req.Header.Set("User-Agent", m.client.config.UserAgent)
 
-		resp, err := m.client.httpClient.Do(req)
+		resp, err := m.client.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from the GitHub API base URL, SSRF risk is acceptable
 		if err != nil {
 			continue // Skip this comment if deletion fails
 		}

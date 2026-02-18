@@ -176,7 +176,7 @@ func TestProgressBar(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(string(rune(int(tt.value))), func(t *testing.T) {
+		t.Run(string(rune(int(tt.value))), func(t *testing.T) { //nolint:gosec // G115: tt.value is a test float64 coverage percentage (0-100), safe conversion
 			result := engine.progressBar(tt.value, 100, 20)
 			assert.Equal(t, tt.expected, result)
 		})

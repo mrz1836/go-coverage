@@ -460,7 +460,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 		req.Header.Set("User-Agent", "go-coverage/1.0 (+https://github.com/mrz1836/go-coverage)")
 
 		// Make the request
-		resp, err := client.Do(req)
+		resp, err := client.Do(req) //nolint:gosec // G704: request URLs come from a known CDN list, SSRF risk is acceptable
 		if err != nil {
 			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
 			// Check if context was canceled after request failure
@@ -470,7 +470,6 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			}
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
 				shift := uint(attempt)
 				if shift > 20 { // cap shift to prevent overflow
 					shift = 20
@@ -487,7 +486,6 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, url, attempt+1, maxRetries)
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
 				shift := uint(attempt)
 				if shift > 20 { // cap shift to prevent overflow
 					shift = 20
@@ -505,7 +503,6 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
 				shift := uint(attempt)
 				if shift > 20 { // cap shift to prevent overflow
 					shift = 20
@@ -556,7 +553,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 
 		req.Header.Set("User-Agent", "go-coverage/1.0 (+https://github.com/mrz1836/go-coverage)")
 
-		resp, err := client.Do(req)
+		resp, err := client.Do(req) //nolint:gosec // G704: request URLs come from a known GitHub CDN, SSRF risk is acceptable
 		if err != nil {
 			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
 			// Check if context was canceled after request failure
@@ -565,7 +562,6 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 				return "", ctx.Err()
 			}
 			if attempt < maxRetries-1 {
-				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
 				shift := uint(attempt)
 				if shift > 20 { // cap shift to prevent overflow
 					shift = 20
@@ -580,7 +576,6 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			_ = resp.Body.Close()
 			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, fallbackURL, attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
 				shift := uint(attempt)
 				if shift > 20 { // cap shift to prevent overflow
 					shift = 20
@@ -596,7 +591,6 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 		if err != nil {
 			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
 			if attempt < maxRetries-1 {
-				//nolint:gosec // G115: attempt is bounded by maxRetries (small positive value), safe to convert
 				shift := uint(attempt)
 				if shift > 20 { // cap shift to prevent overflow
 					shift = 20
