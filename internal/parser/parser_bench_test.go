@@ -177,8 +177,8 @@ func generateCoverageData(numFiles int) string {
 		// Generate 5-10 statements per file
 		for j := 0; j < 5+i%6; j++ {
 			line := 10 + j*5
-			builder.WriteString(fmt.Sprintf("%s:%d.1,%d.10 %d %d\n",
-				file, line, line+2, 1+j%3, i%3))
+			fmt.Fprintf(&builder, "%s:%d.1,%d.10 %d %d\n",
+				file, line, line+2, 1+j%3, i%3)
 		}
 	}
 
@@ -207,8 +207,8 @@ func generateMixedCoverageData(numFiles int) string {
 		// Generate statements
 		for j := 0; j < 3; j++ {
 			line := 10 + j*5
-			builder.WriteString(fmt.Sprintf("%s:%d.1,%d.10 1 %d\n",
-				file, line, line+2, i%2))
+			fmt.Fprintf(&builder, "%s:%d.1,%d.10 1 %d\n",
+				file, line, line+2, i%2)
 		}
 	}
 
