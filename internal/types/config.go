@@ -30,7 +30,7 @@ type EmailConfig struct {
 	SMTPHost    string   `json:"smtp_host"`
 	SMTPPort    int      `json:"smtp_port"`
 	Username    string   `json:"username"`
-	Password    string   `json:"password"` //nolint:gosec // G117: struct field for SMTP config, not a hardcoded credential
+	Password    string   `json:"password"`
 	FromEmail   string   `json:"from_email"`
 	FromName    string   `json:"from_name,omitempty"`
 	ToEmails    []string `json:"to_emails"`
@@ -49,7 +49,7 @@ type WebhookConfig struct {
 	Headers      map[string]string `json:"headers,omitempty"`
 	ContentType  string            `json:"content_type"`
 	AuthType     string            `json:"auth_type,omitempty"`
-	AuthToken    string            `json:"auth_token,omitempty"` //nolint:gosec // G117: struct field for webhook auth config, not a hardcoded credential
+	AuthToken    string            `json:"auth_token,omitempty"`
 	AuthUsername string            `json:"auth_username,omitempty"`
 	AuthPassword string            `json:"auth_password,omitempty"`
 	Enabled      bool              `json:"enabled"`

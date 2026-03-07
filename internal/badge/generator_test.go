@@ -788,7 +788,7 @@ func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		strings.Contains(req.URL.Host, "raw.githubusercontent.com") {
 		// Preserve the path but change the host
 		mockURL := m.mockServerURL + req.URL.Path
-		newReq, err := http.NewRequestWithContext(req.Context(), req.Method, mockURL, req.Body)
+		newReq, err := http.NewRequestWithContext(req.Context(), req.Method, mockURL, req.Body) //nolint:gosec // G704: mockURL is constructed from test server URL, SSRF risk is acceptable in tests
 		if err != nil {
 			return nil, err
 		}

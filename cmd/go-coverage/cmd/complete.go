@@ -571,7 +571,7 @@ update history, and create GitHub PR comment if in PR context.`,
 					return ErrEmptyIndexHTML
 				}
 
-				if writeErr := os.WriteFile(dashboardPath, indexContent, cfg.Storage.FileMode); writeErr != nil {
+				if writeErr := os.WriteFile(dashboardPath, indexContent, cfg.Storage.FileMode); writeErr != nil { //nolint:gosec // G703: dashboardPath is constructed from config paths, not user-controlled
 					cmd.Printf("   ❌ Failed to create dashboard.html: %v\n", writeErr)
 					return fmt.Errorf("failed to create dashboard.html: %w", writeErr)
 				}
@@ -830,7 +830,7 @@ update history, and create GitHub PR comment if in PR context.`,
 					}
 
 					// Write to root output directory
-					if err := os.WriteFile(destFile, content, cfg.Storage.FileMode); err != nil {
+					if err := os.WriteFile(destFile, content, cfg.Storage.FileMode); err != nil { //nolint:gosec // G703: destFile is constructed from config paths, not user-controlled
 						cmd.Printf("   ⚠️  Failed to copy %s to root: %v\n", file.filename, err)
 					} else {
 						cmd.Printf("   ✅ Copied %s to root output directory\n", file.filename)
