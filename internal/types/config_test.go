@@ -165,7 +165,7 @@ func TestEmailConfigJSONSerialization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			jsonData, err := json.Marshal(tt.config)
+			jsonData, err := json.Marshal(tt.config) //nolint:gosec // G117: test data marshaling, not a real credential
 			require.NoError(t, err)
 			assert.JSONEq(t, tt.expected, string(jsonData))
 
@@ -237,7 +237,7 @@ func TestWebhookConfigJSONSerialization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			jsonData, err := json.Marshal(tt.config)
+			jsonData, err := json.Marshal(tt.config) //nolint:gosec // G117: test data marshaling, not a real credential
 			require.NoError(t, err)
 			assert.JSONEq(t, tt.expected, string(jsonData))
 
@@ -405,7 +405,7 @@ func TestConfigSpecialCharacters(t *testing.T) {
 		}
 
 		// Test JSON serialization/deserialization with complex data
-		jsonData, err := json.Marshal(config)
+		jsonData, err := json.Marshal(config) //nolint:gosec // G117: test data marshaling, not a real credential
 		require.NoError(t, err)
 
 		var unmarshalled WebhookConfig
