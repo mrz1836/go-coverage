@@ -460,7 +460,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 		req.Header.Set("User-Agent", "go-coverage/1.0 (+https://github.com/mrz1836/go-coverage)")
 
 		// Make the request
-		resp, err := client.Do(req) //nolint:gosec // G704: request URLs come from a known CDN list, SSRF risk is acceptable
+		resp, err := client.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
 			// Check if context was canceled after request failure
@@ -553,7 +553,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 
 		req.Header.Set("User-Agent", "go-coverage/1.0 (+https://github.com/mrz1836/go-coverage)")
 
-		resp, err := client.Do(req) //nolint:gosec // G704: request URLs come from a known GitHub CDN, SSRF risk is acceptable
+		resp, err := client.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
 			// Check if context was canceled after request failure
