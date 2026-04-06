@@ -100,7 +100,7 @@ func validateBalancedBrackets(t *testing.T, content, filename string) {
 				continue
 			case char == '"' || char == '\'' || char == '`':
 				inString = true
-				stringChar = byte(char) //nolint:gosec // G115: char is a rune from range over ASCII string, safe byte conversion
+				stringChar = byte(char) //nolint:gocritic // char is a rune from range over ASCII string, safe byte conversion
 				continue
 			case i < len(line)-1 && char == '/' && line[i+1] == '/':
 				inSingleLineComment = true
