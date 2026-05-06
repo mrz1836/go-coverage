@@ -15,7 +15,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	token := "test-token"
+	token := testToken
 	client := New(token)
 
 	assert.NotNil(t, client)
@@ -115,13 +115,13 @@ func TestCreateComment(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -183,13 +183,13 @@ func TestCreateCommentError(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -254,7 +254,7 @@ func TestCreateStatus(t *testing.T) {
 				assert.Contains(t, r.URL.Path, "/statuses/")
 				assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
 				assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
-				assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+				assert.Equal(t, testAgent, r.Header.Get("User-Agent"))
 
 				var status StatusRequest
 				err := json.NewDecoder(r.Body).Decode(&status)
@@ -268,13 +268,13 @@ func TestCreateStatus(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -337,7 +337,7 @@ func TestGetPullRequest(t *testing.T) {
 				assert.Equal(t, "GET", r.Method)
 				assert.Contains(t, r.URL.Path, fmt.Sprintf("/pulls/%d", tt.prNumber))
 				assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
-				assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+				assert.Equal(t, testAgent, r.Header.Get("User-Agent"))
 
 				w.WriteHeader(tt.statusCode)
 				_, _ = w.Write([]byte(tt.responseBody))
@@ -345,13 +345,13 @@ func TestGetPullRequest(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -383,13 +383,13 @@ func TestContextCancellation(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		token:   "test-token",
+		token:   testToken,
 		baseURL: server.URL,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
 		config: &Config{
-			UserAgent: "test-agent",
+			UserAgent: testAgent,
 		},
 	}
 
@@ -507,13 +507,13 @@ func TestFindCoverageCommentIntegration(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		token:   "test-token",
+		token:   testToken,
 		baseURL: server.URL,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
 		config: &Config{
-			UserAgent: "test-agent",
+			UserAgent: testAgent,
 		},
 	}
 
@@ -627,7 +627,7 @@ func TestGetWorkflowRuns(t *testing.T) {
 				assert.Contains(t, r.URL.Path, "/actions/runs")
 				assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
 				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
-				assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+				assert.Equal(t, testAgent, r.Header.Get("User-Agent"))
 
 				// Check for per_page parameter if limit > 0
 				if tt.limit > 0 {
@@ -640,13 +640,13 @@ func TestGetWorkflowRuns(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -767,7 +767,7 @@ func TestGetWorkflowRunsByWorkflow(t *testing.T) {
 				assert.Equal(t, "GET", r.Method)
 				assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
 				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
-				assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+				assert.Equal(t, testAgent, r.Header.Get("User-Agent"))
 
 				w.WriteHeader(200)
 				if strings.Contains(r.URL.Path, "/workflows") && !strings.Contains(r.URL.Path, "/runs") {
@@ -789,13 +789,13 @@ func TestGetWorkflowRunsByWorkflow(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -914,7 +914,7 @@ func TestGetWorkflowRun(t *testing.T) {
 				assert.Contains(t, r.URL.Path, fmt.Sprintf("/actions/runs/%d", tt.runID))
 				assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
 				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
-				assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+				assert.Equal(t, testAgent, r.Header.Get("User-Agent"))
 
 				w.WriteHeader(tt.statusCode)
 				_, _ = w.Write([]byte(tt.responseBody))
@@ -922,13 +922,13 @@ func TestGetWorkflowRun(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 

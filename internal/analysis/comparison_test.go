@@ -77,7 +77,7 @@ func TestCompareCoverage(t *testing.T) {
 	engine := NewComparisonEngine(nil)
 
 	baseSnapshot := &CoverageSnapshot{
-		Branch:    "master",
+		Branch:    testBranch,
 		CommitSHA: "abc123",
 		Timestamp: time.Now().Add(-time.Hour),
 		OverallCoverage: CoverageMetrics{
@@ -90,19 +90,19 @@ func TestCompareCoverage(t *testing.T) {
 			CoveredFunctions:  80,
 		},
 		FileCoverage: map[string]FileMetrics{
-			"main.go": {
-				Filename:          "main.go",
-				Package:           "master",
+			testMainFile: {
+				Filename:          testMainFile,
+				Package:           testBranch,
 				Percentage:        75.0,
 				TotalStatements:   100,
 				CoveredStatements: 75,
 				UncoveredLines:    []int{10, 15, 20},
-				Functions:         []string{"master", "init"},
+				Functions:         []string{testBranch, "init"},
 				IsTestFile:        false,
 			},
 			"helper.go": {
 				Filename:          "helper.go",
-				Package:           "master",
+				Package:           testBranch,
 				Percentage:        90.0,
 				TotalStatements:   50,
 				CoveredStatements: 45,
@@ -112,8 +112,8 @@ func TestCompareCoverage(t *testing.T) {
 			},
 		},
 		PackageCoverage: map[string]PackageMetrics{
-			"master": {
-				Package:           "master",
+			testBranch: {
+				Package:           testBranch,
 				Percentage:        80.0,
 				TotalStatements:   150,
 				CoveredStatements: 120,
@@ -143,14 +143,14 @@ func TestCompareCoverage(t *testing.T) {
 			CoveredFunctions:  94,
 		},
 		FileCoverage: map[string]FileMetrics{
-			"main.go": {
-				Filename:          "main.go",
-				Package:           "master",
+			testMainFile: {
+				Filename:          testMainFile,
+				Package:           testBranch,
 				Percentage:        80.0,
 				TotalStatements:   110,
 				CoveredStatements: 88,
 				UncoveredLines:    []int{10, 15},
-				Functions:         []string{"master", "init", "newFunc"},
+				Functions:         []string{testBranch, "init", "newFunc"},
 				IsTestFile:        false,
 				LinesAdded:        10,
 				LinesRemoved:      0,
@@ -158,7 +158,7 @@ func TestCompareCoverage(t *testing.T) {
 			},
 			"helper.go": {
 				Filename:          "helper.go",
-				Package:           "master",
+				Package:           testBranch,
 				Percentage:        90.0,
 				TotalStatements:   50,
 				CoveredStatements: 45,
@@ -168,7 +168,7 @@ func TestCompareCoverage(t *testing.T) {
 			},
 			"new_file.go": {
 				Filename:          "new_file.go",
-				Package:           "master",
+				Package:           testBranch,
 				Percentage:        70.0,
 				TotalStatements:   30,
 				CoveredStatements: 21,
@@ -180,8 +180,8 @@ func TestCompareCoverage(t *testing.T) {
 			},
 		},
 		PackageCoverage: map[string]PackageMetrics{
-			"master": {
-				Package:           "master",
+			testBranch: {
+				Package:           testBranch,
 				Percentage:        82.0,
 				TotalStatements:   190,
 				CoveredStatements: 156,
@@ -408,8 +408,8 @@ func TestAnalyzeFileChangesIgnoreTestFiles(t *testing.T) {
 
 	baseSnapshot := &CoverageSnapshot{
 		FileCoverage: map[string]FileMetrics{
-			"main.go": {
-				Filename:          "main.go",
+			testMainFile: {
+				Filename:          testMainFile,
 				Percentage:        80.0,
 				TotalStatements:   100,
 				CoveredStatements: 80,
@@ -427,8 +427,8 @@ func TestAnalyzeFileChangesIgnoreTestFiles(t *testing.T) {
 
 	prSnapshot := &CoverageSnapshot{
 		FileCoverage: map[string]FileMetrics{
-			"main.go": {
-				Filename:          "main.go",
+			testMainFile: {
+				Filename:          testMainFile,
 				Percentage:        85.0, // 5% increase = significant change
 				TotalStatements:   100,
 				CoveredStatements: 85,
@@ -448,7 +448,7 @@ func TestAnalyzeFileChangesIgnoreTestFiles(t *testing.T) {
 
 	// Should only analyze non-test files (test files should be ignored)
 	require.Len(t, changes, 1)
-	require.Equal(t, "main.go", changes[0].Filename)
+	require.Equal(t, testMainFile, changes[0].Filename)
 }
 
 func TestAnalyzePackageChanges(t *testing.T) {
@@ -456,8 +456,8 @@ func TestAnalyzePackageChanges(t *testing.T) {
 
 	baseSnapshot := &CoverageSnapshot{
 		PackageCoverage: map[string]PackageMetrics{
-			"master": {
-				Package:    "master",
+			testBranch: {
+				Package:    testBranch,
 				Percentage: 80.0,
 				FileCount:  2,
 			},
@@ -476,8 +476,8 @@ func TestAnalyzePackageChanges(t *testing.T) {
 
 	prSnapshot := &CoverageSnapshot{
 		PackageCoverage: map[string]PackageMetrics{
-			"master": {
-				Package:    "master",
+			testBranch: {
+				Package:    testBranch,
 				Percentage: 85.0,
 				FileCount:  2,
 			},
@@ -503,7 +503,7 @@ func TestAnalyzePackageChanges(t *testing.T) {
 	var mainChange, utilsChange *PackageChangeAnalysis
 	for i := range changes {
 		switch changes[i].Package {
-		case "master":
+		case testBranch:
 			mainChange = &changes[i]
 		case "utils":
 			utilsChange = &changes[i]
@@ -585,7 +585,7 @@ func TestCalculateRisk(t *testing.T) {
 				PRPercentage: 40.0,
 				Direction:    DirectionDegraded,
 			},
-			expected: "high",
+			expected: priorityHigh,
 		},
 		{
 			name: "medium risk - low coverage",
@@ -593,7 +593,7 @@ func TestCalculateRisk(t *testing.T) {
 				PRPercentage: 60.0,
 				Direction:    DirectionStable,
 			},
-			expected: "medium",
+			expected: priorityMedium,
 		},
 		{
 			name: "medium risk - large change",
@@ -601,7 +601,7 @@ func TestCalculateRisk(t *testing.T) {
 				PRPercentage:     85.0,
 				PercentageChange: -15.0,
 			},
-			expected: "medium",
+			expected: priorityMedium,
 		},
 		{
 			name: "low risk - good coverage and stable",
@@ -610,7 +610,7 @@ func TestCalculateRisk(t *testing.T) {
 				PercentageChange: 2.0,
 				Direction:        DirectionImproved,
 			},
-			expected: "low",
+			expected: priorityLow,
 		},
 	}
 
@@ -721,12 +721,12 @@ func TestCalculateRiskLevel(t *testing.T) {
 				IsSignificant: true,
 			},
 			fileChanges: []FileChangeAnalysis{
-				{Risk: "high"},
-				{Risk: "high"},
-				{Risk: "high"},
-				{Risk: "high"},
-				{Risk: "high"},
-				{Risk: "high"},
+				{Risk: priorityHigh},
+				{Risk: priorityHigh},
+				{Risk: priorityHigh},
+				{Risk: priorityHigh},
+				{Risk: priorityHigh},
+				{Risk: priorityHigh},
 			},
 			expected: "critical",
 		},
@@ -738,10 +738,10 @@ func TestCalculateRiskLevel(t *testing.T) {
 				IsSignificant: true,
 			},
 			fileChanges: []FileChangeAnalysis{
-				{Risk: "high"},
-				{Risk: "high"},
+				{Risk: priorityHigh},
+				{Risk: priorityHigh},
 			},
-			expected: "high",
+			expected: priorityHigh,
 		},
 		{
 			name:     "medium risk - acceptable coverage",
@@ -750,9 +750,9 @@ func TestCalculateRiskLevel(t *testing.T) {
 				Direction: DirectionStable,
 			},
 			fileChanges: []FileChangeAnalysis{
-				{Risk: "medium"},
+				{Risk: priorityMedium},
 			},
-			expected: "medium",
+			expected: priorityMedium,
 		},
 		{
 			name:     "low risk - good coverage and stable",
@@ -761,9 +761,9 @@ func TestCalculateRiskLevel(t *testing.T) {
 				Direction: DirectionImproved,
 			},
 			fileChanges: []FileChangeAnalysis{
-				{Risk: "low"},
+				{Risk: priorityLow},
 			},
-			expected: "low",
+			expected: priorityLow,
 		},
 	}
 
@@ -837,7 +837,7 @@ func TestIsTestFile(t *testing.T) {
 		filename string
 		expected bool
 	}{
-		{"main.go", false},
+		{testMainFile, false},
 		{"main_test.go", true},
 		{"pkg/test/helper.go", true},
 		{"pkg/tests/integration.go", true},
@@ -905,7 +905,7 @@ func TestSaveComparisonResult(t *testing.T) {
 
 	result := &ComparisonResult{
 		BaseSnapshot: CoverageSnapshot{
-			Branch: "master",
+			Branch: testBranch,
 			OverallCoverage: CoverageMetrics{
 				Percentage: 80.0,
 			},
@@ -956,9 +956,9 @@ func TestGenerateQualityAssessment(t *testing.T) {
 	}
 
 	fileChanges := []FileChangeAnalysis{
-		{PRPercentage: 90.0, Risk: "low"},
-		{PRPercentage: 80.0, Risk: "medium"},
-		{PRPercentage: 40.0, Risk: "high"},
+		{PRPercentage: 90.0, Risk: priorityLow},
+		{PRPercentage: 80.0, Risk: priorityMedium},
+		{PRPercentage: 40.0, Risk: priorityHigh},
 	}
 
 	assessment := engine.generateQualityAssessment(prSnapshot, overallChange, fileChanges)
@@ -966,7 +966,7 @@ func TestGenerateQualityAssessment(t *testing.T) {
 	require.Equal(t, "B+", assessment.CoverageGrade)
 	require.Equal(t, "A", assessment.TrendGrade)
 	require.Equal(t, "B+", assessment.OverallGrade)
-	require.Equal(t, "low", assessment.RiskLevel)
+	require.Equal(t, priorityLow, assessment.RiskLevel)
 	require.InDelta(t, 90.0, assessment.QualityScore, 0.001)
 	require.NotEmpty(t, assessment.Strengths)
 	require.NotEmpty(t, assessment.Weaknesses)
@@ -989,9 +989,9 @@ func TestGenerateRecommendations(t *testing.T) {
 			IsSignificant: true,
 		},
 		FileChanges: []FileChangeAnalysis{
-			{Risk: "high"},
-			{Risk: "high"},
-			{Risk: "medium"},
+			{Risk: priorityHigh},
+			{Risk: priorityHigh},
+			{Risk: priorityMedium},
 		},
 	}
 
@@ -1008,7 +1008,7 @@ func TestGenerateRecommendations(t *testing.T) {
 		}
 	}
 	require.NotNil(t, coverageRec)
-	require.Equal(t, "high", coverageRec.Priority)
+	require.Equal(t, priorityHigh, coverageRec.Priority)
 
 	// Should have testing recommendation due to high-risk files
 	var testingRec *Recommendation
@@ -1029,7 +1029,7 @@ func TestGenerateRecommendations(t *testing.T) {
 		}
 	}
 	require.NotNil(t, processRec)
-	require.Equal(t, "high", processRec.Priority)
+	require.Equal(t, priorityHigh, processRec.Priority)
 }
 
 func TestGenerateSummary(t *testing.T) {
@@ -1056,8 +1056,8 @@ func TestGenerateSummary(t *testing.T) {
 			{IsSignificant: false, PercentageChange: 1.0},
 		},
 		Recommendations: []Recommendation{
-			{Priority: "high", Title: "Fix Critical Issue"},
-			{Priority: "medium", Title: "Minor Improvement"},
+			{Priority: priorityHigh, Title: "Fix Critical Issue"},
+			{Priority: priorityMedium, Title: "Minor Improvement"},
 		},
 	}
 

@@ -16,6 +16,9 @@ import (
 // ErrGitHubAPIFailed is returned when GitHub API returns a non-200 status
 var ErrGitHubAPIFailed = errors.New("GitHub API request failed")
 
+// devVersionString is the version string used for development builds
+const devVersionString = "dev"
+
 // GitHubRelease represents a GitHub release
 type GitHubRelease struct {
 	TagName     string    `json:"tag_name"`
@@ -47,7 +50,7 @@ func GetLatestRelease(owner, repo string) (*GitHubRelease, error) {
 	}
 
 	// Set user agent to avoid rate limiting
-	req.Header.Set("User-Agent", fmt.Sprintf("go-coverage/%s (%s/%s)", "dev", runtime.GOOS, runtime.GOARCH))
+	req.Header.Set("User-Agent", fmt.Sprintf("go-coverage/%s (%s/%s)", devVersionString, runtime.GOOS, runtime.GOARCH))
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	resp, err := client.Do(req)
@@ -182,11 +185,11 @@ func isCommitHash(s string) bool {
 
 // isDevelopmentVersion checks if a version string represents a development version
 func isDevelopmentVersion(version string) bool {
-	if version == "dev" {
+	if version == devVersionString {
 		return true
 	}
 	// Check if version starts with "dev" (e.g., "dev-dirty")
-	if strings.HasPrefix(version, "dev-") {
+	if strings.HasPrefix(version, devVersionString+"-") {
 		return true
 	}
 	return false

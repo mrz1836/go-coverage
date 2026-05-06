@@ -15,7 +15,7 @@ import (
 // createIsolatedParseCommandForIntegration creates a new parse command with isolated flags for integration testing
 func createIsolatedParseCommandForIntegration() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "parse",
+		Use:   cmdParse,
 		Short: "Parse Go coverage profile and display results",
 		Long: `Parse a Go coverage profile file and display coverage analysis results.
 
@@ -47,8 +47,8 @@ github.com/mrz1836/go-coverage/internal/badge/generator.go:44.16,46.3 1 1
 
 func TestParseCommand(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", flagBoolFalse)
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", flagBoolFalse)
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
@@ -71,10 +71,10 @@ func TestParseCommand(t *testing.T) {
 		{
 			name: "successful parse with output",
 			args: []string{
-				"parse",
+				cmdParse,
 				"--file", coverageFile,
 				"--output", filepath.Join(tempDir, "output.json"),
-				"--format", "json",
+				"--format", formatJSON,
 			},
 			expectError: false,
 			contains: []string{
@@ -88,7 +88,7 @@ func TestParseCommand(t *testing.T) {
 		{
 			name: "parse with threshold",
 			args: []string{
-				"parse",
+				cmdParse,
 				"--file", coverageFile,
 				"--threshold", "50.0",
 			},
@@ -101,7 +101,7 @@ func TestParseCommand(t *testing.T) {
 		{
 			name: "parse with high threshold (should fail)",
 			args: []string{
-				"parse",
+				cmdParse,
 				"--file", coverageFile,
 				"--threshold", "95.0",
 			},
@@ -113,7 +113,7 @@ func TestParseCommand(t *testing.T) {
 		{
 			name: "parse missing file",
 			args: []string{
-				"parse",
+				cmdParse,
 				"--file", "/nonexistent/file.txt",
 			},
 			expectError: true,
@@ -129,7 +129,7 @@ func TestParseCommand(t *testing.T) {
 			var buf bytes.Buffer
 
 			// Create a new root command for each test with isolated parse command
-			testCmd := &cobra.Command{Use: "test"}
+			testCmd := &cobra.Command{Use: testCoverageLabel}
 			testCmd.AddCommand(createIsolatedParseCommandForIntegration())
 			testCmd.SetOut(&buf)
 			testCmd.SetErr(&buf)
@@ -156,8 +156,8 @@ func TestParseCommand(t *testing.T) {
 
 func TestHistoryCommand(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", flagBoolFalse)
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", flagBoolFalse)
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
@@ -172,7 +172,7 @@ func TestHistoryCommand(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create history directory
-	historyDir := filepath.Join(tempDir, "history")
+	historyDir := filepath.Join(tempDir, cmdHistory)
 	err = os.MkdirAll(historyDir, 0o750)
 	require.NoError(t, err)
 
@@ -181,13 +181,13 @@ func TestHistoryCommand(t *testing.T) {
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_HISTORY_PATH") }()
 
 	// Add initial history entry
-	addCmd := &cobra.Command{Use: "test"}
+	addCmd := &cobra.Command{Use: testCoverageLabel}
 	// Create a fresh history command for setup
 	setupHistoryCmd := &cobra.Command{
-		Use:   "history",
+		Use:   cmdHistory,
 		Short: "Manage coverage history",
 		Long:  `Manage historical coverage data for trend analysis and tracking.`,
-		RunE:  NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).History.RunE,
+		RunE:  NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).History.RunE,
 	}
 	setupHistoryCmd.Flags().StringP("add", "a", "", "Add coverage data file to history")
 	setupHistoryCmd.Flags().StringP("branch", "b", "", "Branch name")
@@ -200,7 +200,7 @@ func TestHistoryCommand(t *testing.T) {
 	setupHistoryCmd.Flags().StringP("format", "f", "text", "Output format (text, json)")
 
 	addCmd.AddCommand(setupHistoryCmd)
-	addCmd.SetArgs([]string{"history", "--add", coverageFile, "--branch", "master", "--commit", "abc123"})
+	addCmd.SetArgs([]string{cmdHistory, "--add", coverageFile, "--branch", defaultBranch, "--commit", "abc123"})
 	var addBuf bytes.Buffer
 	addCmd.SetOut(&addBuf)
 	addCmd.SetErr(&addBuf)
@@ -217,9 +217,9 @@ func TestHistoryCommand(t *testing.T) {
 		{
 			name: "add coverage to history",
 			args: []string{
-				"history",
+				cmdHistory,
 				"--add", coverageFile,
-				"--branch", "master",
+				"--branch", defaultBranch,
 				"--commit", "abc123",
 			},
 			expectError: false,
@@ -235,7 +235,7 @@ func TestHistoryCommand(t *testing.T) {
 		{
 			name: "show history statistics",
 			args: []string{
-				"history",
+				cmdHistory,
 				"--stats",
 			},
 			expectError: false,
@@ -251,9 +251,9 @@ func TestHistoryCommand(t *testing.T) {
 		{
 			name: "show trend analysis",
 			args: []string{
-				"history",
+				cmdHistory,
 				"--trend",
-				"--branch", "master",
+				"--branch", defaultBranch,
 				"--days", "30",
 			},
 			expectError: false,
@@ -270,8 +270,8 @@ func TestHistoryCommand(t *testing.T) {
 		{
 			name: "show latest entry",
 			args: []string{
-				"history",
-				"--branch", "master",
+				cmdHistory,
+				"--branch", defaultBranch,
 			},
 			expectError: false,
 			contains: []string{
@@ -286,7 +286,7 @@ func TestHistoryCommand(t *testing.T) {
 		{
 			name: "cleanup history",
 			args: []string{
-				"history",
+				cmdHistory,
 				"--cleanup",
 			},
 			expectError: false,
@@ -320,13 +320,13 @@ func TestHistoryCommand(t *testing.T) {
 			var buf bytes.Buffer
 
 			// Create a new root command for each test
-			testCmd := &cobra.Command{Use: "test"}
+			testCmd := &cobra.Command{Use: testCoverageLabel}
 			// Create a fresh history command for each test
 			testHistoryCmd := &cobra.Command{
-				Use:   "history",
+				Use:   cmdHistory,
 				Short: "Manage coverage history",
 				Long:  `Manage historical coverage data for trend analysis and tracking.`,
-				RunE:  NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).History.RunE,
+				RunE:  NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).History.RunE,
 			}
 			testHistoryCmd.Flags().StringP("add", "a", "", "Add coverage data file to history")
 			testHistoryCmd.Flags().StringP("branch", "b", "", "Branch name")
@@ -364,8 +364,8 @@ func TestHistoryCommand(t *testing.T) {
 
 func TestCommentCommand(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", flagBoolFalse)
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", flagBoolFalse)
 	_ = os.Unsetenv("GITHUB_PR_NUMBER") // Clear any leftover PR number
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
@@ -459,13 +459,13 @@ func TestCommentCommand(t *testing.T) {
 			var buf bytes.Buffer
 
 			// Create a new root command for each test
-			testCmd := &cobra.Command{Use: "test"}
+			testCmd := &cobra.Command{Use: testCoverageLabel}
 			// Use the actual comment command with all its flags
 			testCommentCmd := &cobra.Command{
 				Use:   "comment",
 				Short: "Create PR coverage comment with analysis and templates",
 				Long:  `Create or update pull request comments with coverage information.`,
-				RunE:  NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).Comment.RunE,
+				RunE:  NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).Comment.RunE,
 			}
 			// Add all the current flags from the actual comment command
 			testCommentCmd.Flags().IntP("pr", "p", 0, "Pull request number (defaults to GITHUB_PR_NUMBER)")
@@ -529,7 +529,7 @@ func TestCompleteCommand(t *testing.T) {
 		{
 			name: "complete pipeline dry run",
 			args: []string{
-				"complete",
+				cmdComplete,
 				"--input", coverageFile,
 				"--output", outputDir,
 				"--dry-run",
@@ -548,15 +548,15 @@ func TestCompleteCommand(t *testing.T) {
 				"Mode: DRY RUN",
 			},
 			envVars: map[string]string{
-				"GO_COVERAGE_AUTO_CREATE_DIRS": "true",
-				"GO_COVERAGE_POST_COMMENTS":    "false",
-				"GO_COVERAGE_CREATE_STATUSES":  "false",
+				"GO_COVERAGE_AUTO_CREATE_DIRS": flagBoolTrue,
+				"GO_COVERAGE_POST_COMMENTS":    flagBoolFalse,
+				"GO_COVERAGE_CREATE_STATUSES":  flagBoolFalse,
 			},
 		},
 		{
 			name: "complete pipeline with file generation",
 			args: []string{
-				"complete",
+				cmdComplete,
 				"--input", coverageFile,
 				"--output", outputDir,
 				"--skip-github",
@@ -573,16 +573,16 @@ func TestCompleteCommand(t *testing.T) {
 			// The test verifies successful execution via output messages instead
 			checkFiles: []string{},
 			envVars: map[string]string{
-				"GO_COVERAGE_AUTO_CREATE_DIRS": "true",
-				"GO_COVERAGE_POST_COMMENTS":    "false",
-				"GO_COVERAGE_CREATE_STATUSES":  "false",
-				"GITHUB_REF_NAME":              "master", // Force master branch for predictable behavior
+				"GO_COVERAGE_AUTO_CREATE_DIRS": flagBoolTrue,
+				"GO_COVERAGE_POST_COMMENTS":    flagBoolFalse,
+				"GO_COVERAGE_CREATE_STATUSES":  flagBoolFalse,
+				"GITHUB_REF_NAME":              defaultBranch, // Force master branch for predictable behavior
 			},
 		},
 		{
 			name: "complete pipeline with GitHub context (dry run)",
 			args: []string{
-				"complete",
+				cmdComplete,
 				"--input", coverageFile,
 				"--output", outputDir,
 				"--dry-run",
@@ -596,20 +596,20 @@ func TestCompleteCommand(t *testing.T) {
 				"Pipeline Complete!",
 			},
 			envVars: map[string]string{
-				"GO_COVERAGE_AUTO_CREATE_DIRS": "true",
+				"GO_COVERAGE_AUTO_CREATE_DIRS": flagBoolTrue,
 				"GITHUB_TOKEN":                 "fake-token",
 				"GITHUB_REPOSITORY_OWNER":      "test-owner",
 				"GITHUB_REPOSITORY":            "test-owner/test-repo",
 				"GITHUB_SHA":                   "abc123def456",
 				"GITHUB_PR_NUMBER":             "123",
-				"GO_COVERAGE_POST_COMMENTS":    "true",
-				"GO_COVERAGE_CREATE_STATUSES":  "true",
+				"GO_COVERAGE_POST_COMMENTS":    flagBoolTrue,
+				"GO_COVERAGE_CREATE_STATUSES":  flagBoolTrue,
 			},
 		},
 		{
 			name: "missing input file",
 			args: []string{
-				"complete",
+				cmdComplete,
 				"--input", "/nonexistent/file.txt",
 				"--output", outputDir,
 			},
@@ -618,8 +618,8 @@ func TestCompleteCommand(t *testing.T) {
 				"failed to parse coverage file",
 			},
 			envVars: map[string]string{
-				"GO_COVERAGE_POST_COMMENTS":   "false",
-				"GO_COVERAGE_CREATE_STATUSES": "false",
+				"GO_COVERAGE_POST_COMMENTS":   flagBoolFalse,
+				"GO_COVERAGE_CREATE_STATUSES": flagBoolFalse,
 			},
 		},
 	}
@@ -662,14 +662,14 @@ func TestCompleteCommand(t *testing.T) {
 			var buf bytes.Buffer
 
 			// Create a new root command for each test
-			testCmd := &cobra.Command{Use: "test"}
+			testCmd := &cobra.Command{Use: testCoverageLabel}
 			// Create a fresh complete command for each test
 			testCompleteCmd := &cobra.Command{
-				Use:   "complete",
+				Use:   cmdComplete,
 				Short: "Run complete coverage pipeline",
 				Long: `Run the complete coverage pipeline: parse coverage, generate badge and report,
 update history, and create GitHub PR comment if in PR context.`,
-				RunE: NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).Complete.RunE,
+				RunE: NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).Complete.RunE,
 			}
 			testCompleteCmd.Flags().StringP("input", "i", "", "Input coverage file")
 			testCompleteCmd.Flags().StringP("output", "o", "", "Output directory")
@@ -708,8 +708,8 @@ update history, and create GitHub PR comment if in PR context.`,
 
 func TestRootCommandHelp(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", flagBoolFalse)
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", flagBoolFalse)
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
@@ -725,11 +725,11 @@ professional coverage tracking, badge generation, and reporting while maintainin
 the simplicity and performance that Go developers expect.`,
 	}
 	// Create Commands instance for testing
-	testCommands := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"})
+	testCommands := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel})
 	testCmd.AddCommand(testCommands.Complete, testCommands.History, testCommands.Comment, testCommands.Parse)
 	testCmd.SetOut(&buf)
 	testCmd.SetErr(&buf)
-	testCmd.SetArgs([]string{"--help"})
+	testCmd.SetArgs([]string{flagHelp})
 
 	// Execute command
 	err := testCmd.Execute()
@@ -737,7 +737,7 @@ the simplicity and performance that Go developers expect.`,
 
 	// Check output contains expected commands (only the ones that currently exist)
 	output := buf.String()
-	expectedCommands := []string{"complete", "history", "comment", "parse"}
+	expectedCommands := []string{cmdComplete, cmdHistory, "comment", cmdParse}
 	for _, cmd := range expectedCommands {
 		assert.Contains(t, output, cmd, "Help should contain command: %s", cmd)
 	}
@@ -749,13 +749,13 @@ the simplicity and performance that Go developers expect.`,
 
 func TestCommandFlags(t *testing.T) {
 	// Disable GitHub integration for tests
-	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", "false")
-	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", "false")
+	_ = os.Setenv("GO_COVERAGE_POST_COMMENTS", flagBoolFalse)
+	_ = os.Setenv("GO_COVERAGE_CREATE_STATUSES", flagBoolFalse)
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_POST_COMMENTS") }()
 	defer func() { _ = os.Unsetenv("GO_COVERAGE_CREATE_STATUSES") }()
 
 	// Create Commands instance for testing
-	testCommands := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"})
+	testCommands := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel})
 
 	tests := []struct {
 		name     string
@@ -766,37 +766,37 @@ func TestCommandFlags(t *testing.T) {
 		// {
 		// 	name:     "parse command flags",
 		// 	cmd:      testCommands.Parse,
-		// 	helpArgs: []string{"parse", "--help"},
+		// 	helpArgs: []string{cmdParse, flagHelp},
 		// 	contains: []string{"--file", "--output", "--format", "--exclude-tests", "--threshold"},
 		// },
 		// {
 		// 	name:     "badge command flags",
 		// 	cmd:      badgeCmd,
-		// 	helpArgs: []string{"badge", "--help"},
+		// 	helpArgs: []string{"badge", flagHelp},
 		// 	contains: []string{"--coverage", "--style", "--output", "--input", "--label", "--logo"},
 		// },
 		// {
 		// 	name:     "report command flags",
 		// 	cmd:      reportCmd,
-		// 	helpArgs: []string{"report", "--help"},
+		// 	helpArgs: []string{"report", flagHelp},
 		// 	contains: []string{"--input", "--output", "--theme", "--title", "--show-packages"},
 		// },
 		{
 			name:     "history command flags",
 			cmd:      testCommands.History,
-			helpArgs: []string{"history", "--help"},
+			helpArgs: []string{cmdHistory, flagHelp},
 			contains: []string{"--add", "--branch", "--commit", "--trend", "--stats", "--cleanup"},
 		},
 		{
 			name:     "comment command flags",
 			cmd:      testCommands.Comment,
-			helpArgs: []string{"comment", "--help"},
+			helpArgs: []string{"comment", flagHelp},
 			contains: []string{"--pr", "--coverage", "--badge-url", "--status", "--dry-run"},
 		},
 		{
 			name:     "complete command flags",
 			cmd:      testCommands.Complete,
-			helpArgs: []string{"complete", "--help"},
+			helpArgs: []string{cmdComplete, flagHelp},
 			contains: []string{"--input", "--output", "--skip-history", "--skip-github", "--dry-run"},
 		},
 	}
@@ -807,7 +807,7 @@ func TestCommandFlags(t *testing.T) {
 			var buf bytes.Buffer
 
 			// Create a new root command
-			testCmd := &cobra.Command{Use: "test"}
+			testCmd := &cobra.Command{Use: testCoverageLabel}
 			testCmd.AddCommand(tt.cmd)
 			testCmd.SetOut(&buf)
 			testCmd.SetErr(&buf)

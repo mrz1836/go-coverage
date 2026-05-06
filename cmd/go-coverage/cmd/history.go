@@ -16,7 +16,7 @@ import (
 // newHistoryCmd creates the history command
 func (c *Commands) newHistoryCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "history",
+		Use:   cmdHistoryUse,
 		Short: "Manage coverage history",
 		Long:  `Manage historical coverage data for trend analysis and tracking.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {

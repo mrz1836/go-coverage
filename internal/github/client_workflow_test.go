@@ -67,7 +67,7 @@ func TestGetWorkflowRuns_ErrorHandling(t *testing.T) {
 					assert.Contains(t, r.URL.Path, "/actions/runs")
 					assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
 					assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
-					assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+					assert.Equal(t, testAgent, r.Header.Get("User-Agent"))
 
 					if tt.limit > 0 {
 						assert.Contains(t, r.URL.RawQuery, fmt.Sprintf("per_page=%d", tt.limit))
@@ -80,7 +80,7 @@ func TestGetWorkflowRuns_ErrorHandling(t *testing.T) {
 			}
 
 			client := &Client{
-				token: "test-token",
+				token: testToken,
 				baseURL: func() string {
 					if tt.networkError {
 						return "http://nonexistent.localhost:99999"
@@ -91,7 +91,7 @@ func TestGetWorkflowRuns_ErrorHandling(t *testing.T) {
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -183,13 +183,13 @@ func TestGetWorkflowRuns_EdgeCases(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -318,7 +318,7 @@ func TestGetWorkflowRunsByWorkflow_ErrorHandling(t *testing.T) {
 			}
 
 			client := &Client{
-				token: "test-token",
+				token: testToken,
 				baseURL: func() string {
 					if tt.networkError {
 						return "http://nonexistent.localhost:99999"
@@ -329,7 +329,7 @@ func TestGetWorkflowRunsByWorkflow_ErrorHandling(t *testing.T) {
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -398,7 +398,7 @@ func TestGetWorkflowRun_ErrorHandling(t *testing.T) {
 					assert.Contains(t, r.URL.Path, fmt.Sprintf("/actions/runs/%d", tt.runID))
 					assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
 					assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
-					assert.Equal(t, "test-agent", r.Header.Get("User-Agent"))
+					assert.Equal(t, testAgent, r.Header.Get("User-Agent"))
 
 					w.WriteHeader(tt.statusCode)
 					_, _ = w.Write([]byte(tt.responseBody))
@@ -407,7 +407,7 @@ func TestGetWorkflowRun_ErrorHandling(t *testing.T) {
 			}
 
 			client := &Client{
-				token: "test-token",
+				token: testToken,
 				baseURL: func() string {
 					if tt.networkError {
 						return "http://nonexistent.localhost:99999"
@@ -418,7 +418,7 @@ func TestGetWorkflowRun_ErrorHandling(t *testing.T) {
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -472,13 +472,13 @@ func TestContextCancellationWorkflowFunctions(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -601,13 +601,13 @@ func TestGetWorkflowIDByName_EdgeCases(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 
@@ -652,7 +652,7 @@ func TestWorkflowRun_JSONUnmarshalEdgeCases(t *testing.T) {
 				Name:       "CI",
 				Status:     "in_progress",
 				Conclusion: "", // null becomes empty string
-				HeadSHA:    "abc123",
+				HeadSHA:    testSHA,
 				WorkflowID: 456,
 			},
 			expectError: false,
@@ -691,13 +691,13 @@ func TestWorkflowRun_JSONUnmarshalEdgeCases(t *testing.T) {
 			defer server.Close()
 
 			client := &Client{
-				token:   "test-token",
+				token:   testToken,
 				baseURL: server.URL,
 				httpClient: &http.Client{
 					Timeout: 30 * time.Second,
 				},
 				config: &Config{
-					UserAgent: "test-agent",
+					UserAgent: testAgent,
 				},
 			}
 

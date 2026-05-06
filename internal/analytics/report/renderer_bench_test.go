@@ -222,8 +222,8 @@ func createRenderData() interface{} {
 		"GeneratedAt": time.Now(),
 		"Summary": map[string]interface{}{
 			"TotalPercentage": 78.5,
-			"TotalLines":      15000,
-			"CoveredLines":    11775,
+			keyTotalLines:     15000,
+			keyCoveredLines:   11775,
 			"PackageCount":    len(packages),
 			"FileCount":       fileCount,
 		},
@@ -236,11 +236,11 @@ func createSmallRenderData() interface{} {
 	files := createFileList(3)
 	packages := []map[string]interface{}{
 		{
-			"Name":         "main",
-			"Percentage":   95.0,
-			"TotalLines":   500,
-			"CoveredLines": 475,
-			"Files":        files,
+			"Name":          "main",
+			"Percentage":    95.0,
+			keyTotalLines:   500,
+			keyCoveredLines: 475,
+			"Files":         files,
 		},
 	}
 
@@ -249,8 +249,8 @@ func createSmallRenderData() interface{} {
 		"GeneratedAt": time.Now(),
 		"Summary": map[string]interface{}{
 			"TotalPercentage": 95.0,
-			"TotalLines":      500,
-			"CoveredLines":    475,
+			keyTotalLines:     500,
+			keyCoveredLines:   475,
 			"PackageCount":    len(packages),
 			"FileCount":       len(files),
 		},
@@ -265,11 +265,11 @@ func createLargeRenderData() interface{} {
 		files := createFileList(20)
 		totalFiles += len(files)
 		packages[i] = map[string]interface{}{
-			"Name":         fmt.Sprintf("package%03d", i),
-			"Percentage":   float64(50 + i%50),
-			"TotalLines":   1000,
-			"CoveredLines": 500 + i%500,
-			"Files":        files,
+			"Name":          fmt.Sprintf("package%03d", i),
+			"Percentage":    float64(50 + i%50),
+			keyTotalLines:   1000,
+			keyCoveredLines: 500 + i%500,
+			"Files":         files,
 		}
 	}
 
@@ -278,8 +278,8 @@ func createLargeRenderData() interface{} {
 		"GeneratedAt": time.Now(),
 		"Summary": map[string]interface{}{
 			"TotalPercentage": 72.3,
-			"TotalLines":      500000,
-			"CoveredLines":    361500,
+			keyTotalLines:     500000,
+			keyCoveredLines:   361500,
 			"PackageCount":    len(packages),
 			"FileCount":       totalFiles,
 		},
@@ -302,8 +302,8 @@ func createComplexRenderData() interface{} {
 		"GeneratedAt": time.Now(),
 		"Summary": map[string]interface{}{
 			"TotalPercentage": 75.8,
-			"TotalLines":      20000,
-			"CoveredLines":    15160,
+			keyTotalLines:     20000,
+			keyCoveredLines:   15160,
 			"PackageCount":    len(packages),
 			"FileCount":       totalFiles,
 		},
@@ -325,11 +325,11 @@ func createPackageRenderData() ([]map[string]interface{}, int) {
 		files := createFileList(10)
 		totalFiles += len(files)
 		packages[i] = map[string]interface{}{
-			"Name":         fmt.Sprintf("package%c", 'A'+i%26),
-			"Percentage":   60.0 + float64(i)*1.3,
-			"TotalLines":   500,
-			"CoveredLines": 300 + i*6,
-			"Files":        files,
+			"Name":          fmt.Sprintf("package%c", 'A'+i%26),
+			"Percentage":    60.0 + float64(i)*1.3,
+			keyTotalLines:   500,
+			keyCoveredLines: 300 + i*6,
+			"Files":         files,
 		}
 	}
 	return packages, totalFiles
@@ -358,8 +358,8 @@ func createDataWithSpecialChars() interface{} {
 		"GeneratedAt": time.Now(),
 		"Summary": map[string]interface{}{
 			"TotalPercentage": 85.5,
-			"TotalLines":      1000,
-			"CoveredLines":    855,
+			keyTotalLines:     1000,
+			keyCoveredLines:   855,
 			"PackageCount":    0,
 			"FileCount":       0,
 		},
@@ -376,10 +376,10 @@ func createFileList(count int) []map[string]interface{} {
 		coveredLines := 60 + i*2
 		percentage := float64(coveredLines) / float64(totalLines) * 100
 		files[i] = map[string]interface{}{
-			"Name":         fmt.Sprintf("file%02d.go", i),
-			"Percentage":   percentage,
-			"TotalLines":   totalLines,
-			"CoveredLines": coveredLines,
+			"Name":          fmt.Sprintf("file%02d.go", i),
+			"Percentage":    percentage,
+			keyTotalLines:   totalLines,
+			keyCoveredLines: coveredLines,
 		}
 	}
 	return files
@@ -405,11 +405,11 @@ func createComplexPackageData() []map[string]interface{} {
 	for i := 0; i < 20; i++ {
 		files := createFileList(5)
 		packages[i] = map[string]interface{}{
-			"Name":         fmt.Sprintf("complex.package.%c", 'a'+i),
-			"Percentage":   float64(70 + i),
-			"TotalLines":   200,
-			"CoveredLines": int(float64(200) * float64(70+i) / 100),
-			"Files":        files,
+			"Name":          fmt.Sprintf("complex.package.%c", 'a'+i),
+			"Percentage":    float64(70 + i),
+			keyTotalLines:   200,
+			keyCoveredLines: int(float64(200) * float64(70+i) / 100),
+			"Files":         files,
 			"Metrics": map[string]interface{}{
 				"Complexity":      10 + i,
 				"Maintainability": 85 - i,

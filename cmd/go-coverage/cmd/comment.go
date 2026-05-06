@@ -129,7 +129,7 @@ Features:
 				// Get latest entry to compare
 				branch := cfg.GitHub.CommitSHA
 				if branch == "" {
-					branch = "master"
+					branch = defaultBranch
 				}
 
 				if latest, latestErr := tracker.GetLatestEntry(ctx, branch); latestErr == nil {
@@ -192,7 +192,7 @@ Features:
 				comparisonEngine := analysis.NewComparisonEngine(nil)
 
 				// Convert parser data to comparison snapshots
-				baseSnapshot := convertToSnapshot(baseCoverage, "master", "")
+				baseSnapshot := convertToSnapshot(baseCoverage, defaultBranch, "")
 				prSnapshot := convertToSnapshot(coverage, "current", cfg.GitHub.CommitSHA)
 
 				comparisonResult, compErr := comparisonEngine.CompareCoverage(ctx, baseSnapshot, prSnapshot)
@@ -206,7 +206,7 @@ Features:
 							TotalStatements:   baseCoverage.TotalLines,   // Actually statement count, not line count
 							CoveredStatements: baseCoverage.CoveredLines, // Actually covered statement count, not line count
 							CommitSHA:         "",
-							Branch:            "master",
+							Branch:            defaultBranch,
 							Timestamp:         time.Now(),
 						},
 						PRCoverage: github.CoverageData{
@@ -353,7 +353,7 @@ Features:
 					CommitSHA:  cfg.GitHub.CommitSHA,
 					PRNumber:   prNumber,
 					Branch:     "current",
-					BaseBranch: "master",
+					BaseBranch: defaultBranch,
 					Coverage: github.CoverageStatusData{
 						Percentage:        coverage.Percentage,
 						TotalStatements:   coverage.TotalLines,
@@ -477,14 +477,14 @@ func buildTemplateData(cfg *config.Config, prNumber int, comparison *github.Cove
 		Repository: templates.RepositoryInfo{
 			Owner:         cfg.GitHub.Owner,
 			Name:          cfg.GitHub.Repository,
-			DefaultBranch: "master",
+			DefaultBranch: defaultBranch,
 			URL:           fmt.Sprintf("https://github.com/%s/%s", cfg.GitHub.Owner, cfg.GitHub.Repository),
 		},
 		PullRequest: templates.PullRequestInfo{
 			Number:     prNumber,
 			Title:      "",
 			Branch:     "current",
-			BaseBranch: "master",
+			BaseBranch: defaultBranch,
 			Author:     "",
 			CommitSHA:  cfg.GitHub.CommitSHA,
 			URL:        fmt.Sprintf("https://github.com/%s/%s/pull/%d", cfg.GitHub.Owner, cfg.GitHub.Repository, prNumber),

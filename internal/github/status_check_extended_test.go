@@ -48,7 +48,7 @@ func TestNewStatusCheckManager(t *testing.T) {
 
 			if tt.expectDefaults {
 				assert.Equal(t, "go-coverage", manager.config.ContextPrefix)
-				assert.Equal(t, "coverage/total", manager.config.MainContext)
+				assert.Equal(t, ContextCoverage, manager.config.MainContext)
 				assert.Equal(t, []string{"coverage/trend", "coverage/quality"}, manager.config.AdditionalContexts)
 				assert.True(t, manager.config.EnableBlocking)
 				assert.True(t, manager.config.BlockOnFailure)
@@ -107,7 +107,7 @@ func TestCreateStatusChecks_DISABLED_FOR_NOW(t *testing.T) {
 			name: "successful status creation with all passing",
 			config: &StatusCheckConfig{
 				ContextPrefix:      "test",
-				MainContext:        "coverage/total",
+				MainContext:        ContextCoverage,
 				AdditionalContexts: []string{"coverage/trend"},
 				EnableBlocking:     true,
 				BlockOnFailure:     true,
@@ -123,7 +123,7 @@ func TestCreateStatusChecks_DISABLED_FOR_NOW(t *testing.T) {
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 				Coverage: CoverageStatusData{
 					Percentage: 85.0,
 					Change:     2.0,
@@ -145,7 +145,7 @@ func TestCreateStatusChecks_DISABLED_FOR_NOW(t *testing.T) {
 			name: "failed status creation with coverage below threshold",
 			config: &StatusCheckConfig{
 				ContextPrefix:      "test",
-				MainContext:        "coverage/total",
+				MainContext:        ContextCoverage,
 				AdditionalContexts: []string{},
 				EnableBlocking:     true,
 				BlockOnFailure:     true,
@@ -158,7 +158,7 @@ func TestCreateStatusChecks_DISABLED_FOR_NOW(t *testing.T) {
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 				Coverage: CoverageStatusData{
 					Percentage: 75.0, // Below threshold
 				},
@@ -259,7 +259,7 @@ func TestBuildStatusChecks(t *testing.T) {
 			name: "minimal status checks",
 			config: &StatusCheckConfig{
 				ContextPrefix:      "minimal",
-				MainContext:        "coverage/total",
+				MainContext:        ContextCoverage,
 				AdditionalContexts: []string{},
 				EnableQualityGates: false,
 			},
@@ -360,7 +360,7 @@ func TestBuildQualityStatus(t *testing.T) {
 				Quality: QualityStatusData{
 					Grade:     "A+",
 					Score:     95.0,
-					RiskLevel: "low",
+					RiskLevel: riskLow,
 				},
 			},
 			expectedState:        StatusStateSuccess,
@@ -372,7 +372,7 @@ func TestBuildQualityStatus(t *testing.T) {
 				Quality: QualityStatusData{
 					Grade:     "C",
 					Score:     75.0,
-					RiskLevel: "medium",
+					RiskLevel: riskMedium,
 				},
 			},
 			expectedState:        StatusStateSuccess,
@@ -536,12 +536,12 @@ func TestEvaluateQualityGate(t *testing.T) {
 			name: "risk level gate passes",
 			request: &StatusCheckRequest{
 				Quality: QualityStatusData{
-					RiskLevel: "low",
+					RiskLevel: riskLow,
 				},
 			},
 			gate: QualityGate{
 				Type:      GateRiskLevel,
-				Threshold: "medium",
+				Threshold: riskMedium,
 			},
 			expected: true,
 		},
@@ -606,11 +606,11 @@ func TestCompareRiskLevels(t *testing.T) {
 		risk2    string
 		expected int
 	}{
-		{"low vs medium", "low", "medium", -1},
-		{"high vs low", "high", "low", 2},
-		{"medium vs medium", "medium", "medium", 0},
-		{"critical vs high", "critical", "high", 1},
-		{"invalid vs low", "invalid", "low", 0},
+		{"low vs medium", riskLow, riskMedium, -1},
+		{"high vs low", riskLevelHigh, riskLow, 2},
+		{"medium vs medium", riskMedium, riskMedium, 0},
+		{"critical vs high", riskLevelCrit, riskLevelHigh, 1},
+		{"invalid vs low", "invalid", riskLow, 0},
 	}
 
 	for _, tt := range tests {
@@ -639,7 +639,7 @@ func TestShouldBlockPR(t *testing.T) {
 				EnableBlocking: false,
 			},
 			response: &StatusCheckResponse{
-				RequiredFailed: []string{"coverage/total"},
+				RequiredFailed: []string{ContextCoverage},
 			},
 			request:  &StatusCheckRequest{},
 			expected: false,
@@ -661,7 +661,7 @@ func TestShouldBlockPR(t *testing.T) {
 				EnableBlocking: true,
 			},
 			response: &StatusCheckResponse{
-				RequiredFailed: []string{"coverage/total"},
+				RequiredFailed: []string{ContextCoverage},
 			},
 			request:  &StatusCheckRequest{},
 			expected: true,
@@ -706,7 +706,7 @@ func TestBuildContext(t *testing.T) {
 			config: &StatusCheckConfig{
 				ContextPrefix: "go-coverage",
 			},
-			context:  "coverage/total",
+			context:  ContextCoverage,
 			expected: "go-coverage/coverage/total",
 		},
 		{
@@ -714,8 +714,8 @@ func TestBuildContext(t *testing.T) {
 			config: &StatusCheckConfig{
 				ContextPrefix: "",
 			},
-			context:  "coverage/total",
-			expected: "coverage/total",
+			context:  ContextCoverage,
+			expected: ContextCoverage,
 		},
 	}
 
@@ -737,12 +737,12 @@ func TestGetStatusCheckSummary(t *testing.T) {
 	manager := &StatusCheckManager{}
 	ctx := context.Background()
 
-	summary, err := manager.GetStatusCheckSummary(ctx, "owner", "repo", "abc123")
+	summary, err := manager.GetStatusCheckSummary(ctx, "owner", "repo", testSHA)
 
 	require.NoError(t, err)
 	require.NotNil(t, summary)
 
-	assert.Equal(t, "abc123", summary["commit_sha"])
+	assert.Equal(t, testSHA, summary["commit_sha"])
 	assert.Equal(t, 0, summary["total_checks"])
 	assert.Equal(t, 0, summary["passed_checks"])
 	assert.Equal(t, 0, summary["failed_checks"])

@@ -181,7 +181,7 @@ func TestCheckPrerequisites(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 			err := checkPrerequisites(ctx, cmd, false)
 
 			if tc.expectedError != nil {
@@ -209,7 +209,7 @@ func TestGetRepositoryFromGit(t *testing.T) {
 		t.Skip("not in a git repository")
 	}
 
-	repo, err := getRepositoryFromGit(ctx, NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages, false)
+	repo, err := getRepositoryFromGit(ctx, NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages, false)
 
 	// We should either get a valid repository or an error
 	if err != nil {
@@ -235,42 +235,42 @@ func TestSetupPagesCommand(t *testing.T) {
 		{
 			name:      "Valid repository argument",
 			args:      []string{"test-owner/test-repo"},
-			flags:     map[string]string{"dry-run": "true"},
+			flags:     map[string]string{flagDryRun: flagBoolTrue},
 			expectErr: false,
 			skipCI:    true, // Skip in CI since gh may not be available
 		},
 		{
 			name:      "Invalid repository format",
 			args:      []string{"invalid-repo-format"},
-			flags:     map[string]string{"dry-run": "true"},
+			flags:     map[string]string{flagDryRun: flagBoolTrue},
 			expectErr: true,
 			skipCI:    true,
 		},
 		{
 			name:      "Too many arguments",
 			args:      []string{"owner/repo", "extra-arg"},
-			flags:     map[string]string{"dry-run": "true"},
+			flags:     map[string]string{flagDryRun: flagBoolTrue},
 			expectErr: true,
 			skipCI:    true,
 		},
 		{
 			name:      "Verbose flag",
 			args:      []string{"test-owner/test-repo"},
-			flags:     map[string]string{"dry-run": "true", "verbose": "true"},
+			flags:     map[string]string{flagDryRun: flagBoolTrue, "verbose": flagBoolTrue},
 			expectErr: false,
 			skipCI:    true,
 		},
 		{
 			name:      "Custom domain flag",
 			args:      []string{"test-owner/test-repo"},
-			flags:     map[string]string{"dry-run": "true", "custom-domain": "example.com"},
+			flags:     map[string]string{flagDryRun: flagBoolTrue, "custom-domain": "example.com"},
 			expectErr: false,
 			skipCI:    true,
 		},
 		{
 			name:      "Protect branches flag",
 			args:      []string{"test-owner/test-repo"},
-			flags:     map[string]string{"dry-run": "true", "protect-branches": "true"},
+			flags:     map[string]string{flagDryRun: flagBoolTrue, "protect-branches": flagBoolTrue},
 			expectErr: false,
 			skipCI:    true,
 		},
@@ -278,11 +278,11 @@ func TestSetupPagesCommand(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.skipCI && (os.Getenv("CI") == "true" || os.Getenv("GITHUB_ACTIONS") == "true") {
+			if tc.skipCI && (os.Getenv("CI") == flagBoolTrue || os.Getenv("GITHUB_ACTIONS") == flagBoolTrue) {
 				t.Skip("Skipping test in CI environment")
 			}
 
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			// Set flags for this test
 			for flag, value := range tc.flags {
@@ -327,11 +327,11 @@ func TestSetupPagesCommand(t *testing.T) {
 }
 
 func TestSetupPagesCommandFlags(t *testing.T) {
-	cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+	cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 	// Test that all expected flags are present
 	expectedFlags := []string{
-		"dry-run",
+		flagDryRun,
 		"verbose",
 		"custom-domain",
 		"protect-branches",
@@ -343,21 +343,21 @@ func TestSetupPagesCommandFlags(t *testing.T) {
 	}
 
 	// Test flag defaults
-	dryRunFlag := cmd.Flags().Lookup("dry-run")
-	assert.Equal(t, "false", dryRunFlag.DefValue, "dry-run should default to false")
+	dryRunFlag := cmd.Flags().Lookup(flagDryRun)
+	assert.Equal(t, flagBoolFalse, dryRunFlag.DefValue, "dry-run should default to false")
 
 	verboseFlag := cmd.Flags().Lookup("verbose")
-	assert.Equal(t, "false", verboseFlag.DefValue, "verbose should default to false")
+	assert.Equal(t, flagBoolFalse, verboseFlag.DefValue, "verbose should default to false")
 
 	customDomainFlag := cmd.Flags().Lookup("custom-domain")
 	assert.Empty(t, customDomainFlag.DefValue, "custom-domain should default to empty string")
 
 	protectBranchesFlag := cmd.Flags().Lookup("protect-branches")
-	assert.Equal(t, "false", protectBranchesFlag.DefValue, "protect-branches should default to false")
+	assert.Equal(t, flagBoolFalse, protectBranchesFlag.DefValue, "protect-branches should default to false")
 }
 
 func TestSetupPagesCommandHelp(t *testing.T) {
-	cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+	cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 	// Test command metadata
 	assert.Equal(t, "setup-pages [repository]", cmd.Use)
@@ -432,7 +432,7 @@ func TestSetupPagesErrorHandling(t *testing.T) {
 
 // Test the command integration with the cobra framework
 func TestSetupPagesCommandIntegration(t *testing.T) {
-	cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+	cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 	// Test command is properly configured
 	assert.NotNil(t, cmd.RunE, "Command should have a RunE function")
@@ -445,7 +445,7 @@ func TestSetupPagesCommandIntegration(t *testing.T) {
 	flags := cmd.Flags()
 	assert.True(t, flags.HasFlags(), "Command should have flags")
 
-	flagNames := []string{"dry-run", "verbose", "custom-domain", "protect-branches"}
+	flagNames := []string{flagDryRun, "verbose", "custom-domain", "protect-branches"}
 	for _, name := range flagNames {
 		assert.NotNil(t, flags.Lookup(name), "Flag %s should be defined", name)
 	}
@@ -524,13 +524,13 @@ func TestSetupPagesEnvironment(t *testing.T) {
 	}{
 		{
 			name:    "ValidRepositoryDryRun",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			dryRun:  true,
 			verbose: true,
 		},
 		{
 			name:       "ValidRepositoryNoDryRun",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			dryRun:     false,
 			verbose:    false,
 			skipReason: "Requires GitHub CLI and authentication",
@@ -553,12 +553,12 @@ func TestSetupPagesEnvironment(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.skipReason != "" && (os.Getenv("CI") == "true" || os.Getenv("GITHUB_ACTIONS") == "true") {
+			if tt.skipReason != "" && (os.Getenv("CI") == flagBoolTrue || os.Getenv("GITHUB_ACTIONS") == flagBoolTrue) {
 				t.Skip(tt.skipReason)
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			err := setupPagesEnvironment(ctx, cmd, tt.repo, tt.dryRun, tt.verbose)
 
@@ -588,19 +588,19 @@ func TestCreateInitialGhPagesBranch(t *testing.T) {
 	}{
 		{
 			name:    "ValidRepositoryDryRun",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			dryRun:  true,
 			verbose: true,
 		},
 		{
 			name:    "ValidRepositoryVerbose",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			dryRun:  true,
 			verbose: false,
 		},
 		{
 			name:       "ValidRepositoryNoDryRun",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			dryRun:     false,
 			verbose:    false,
 			skipReason: "Requires GitHub CLI and git access",
@@ -614,7 +614,7 @@ func TestCreateInitialGhPagesBranch(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			err := createInitialGhPagesBranch(ctx, cmd, tt.repo, tt.dryRun, tt.verbose)
 
@@ -639,19 +639,19 @@ func TestSetupDeploymentBranches(t *testing.T) {
 	}{
 		{
 			name:    "ValidRepositoryDryRun",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			dryRun:  true,
 			verbose: true,
 		},
 		{
 			name:    "ValidRepositoryNotVerbose",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			dryRun:  true,
 			verbose: false,
 		},
 		{
 			name:       "ValidRepositoryNoDryRun",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			dryRun:     false,
 			verbose:    false,
 			skipReason: "Requires GitHub CLI and authentication",
@@ -665,7 +665,7 @@ func TestSetupDeploymentBranches(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			err := setupDeploymentBranches(ctx, cmd, tt.repo, tt.dryRun, tt.verbose)
 
@@ -691,28 +691,28 @@ func TestSetupCustomDomain(t *testing.T) {
 	}{
 		{
 			name:    "ValidDomainDryRun",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			domain:  "example.com",
 			dryRun:  true,
 			verbose: true,
 		},
 		{
 			name:    "ValidSubdomainDryRun",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			domain:  "coverage.example.com",
 			dryRun:  true,
 			verbose: false,
 		},
 		{
 			name:    "EmptyDomainDryRun",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			domain:  "",
 			dryRun:  true,
 			verbose: false,
 		},
 		{
 			name:       "ValidDomainNoDryRun",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			domain:     "example.com",
 			dryRun:     false,
 			verbose:    false,
@@ -727,7 +727,7 @@ func TestSetupCustomDomain(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			err := setupCustomDomain(ctx, cmd, tt.repo, tt.domain, tt.dryRun, tt.verbose)
 
@@ -752,19 +752,19 @@ func TestSetupBranchProtection(t *testing.T) {
 	}{
 		{
 			name:    "ValidRepositoryDryRun",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			dryRun:  true,
 			verbose: true,
 		},
 		{
 			name:    "ValidRepositoryNotVerbose",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			dryRun:  true,
 			verbose: false,
 		},
 		{
 			name:       "ValidRepositoryNoDryRun",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			dryRun:     false,
 			verbose:    false,
 			skipReason: "Requires GitHub CLI and authentication",
@@ -778,7 +778,7 @@ func TestSetupBranchProtection(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			err := setupBranchProtection(ctx, cmd, tt.repo, tt.dryRun, tt.verbose)
 
@@ -802,17 +802,17 @@ func TestVerifySetup(t *testing.T) {
 	}{
 		{
 			name:    "ValidRepositoryVerbose",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			verbose: true,
 		},
 		{
 			name:    "ValidRepositoryNotVerbose",
-			repo:    "testowner/testrepo",
+			repo:    testFullRepo,
 			verbose: false,
 		},
 		{
 			name:       "ValidRepositoryWithAuth",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			verbose:    false,
 			skipReason: "Requires GitHub CLI and authentication",
 		},
@@ -825,7 +825,7 @@ func TestVerifySetup(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			// In test environment without GitHub CLI access, this will likely fail
 			// but we test that the function doesn't panic and handles errors gracefully
@@ -849,12 +849,12 @@ func TestShowNextSteps(t *testing.T) {
 	}{
 		{
 			name:   "ShowNextStepsDryRun",
-			repo:   "testowner/testrepo",
+			repo:   testFullRepo,
 			dryRun: true,
 		},
 		{
 			name:   "ShowNextStepsNoDryRun",
-			repo:   "testowner/testrepo",
+			repo:   testFullRepo,
 			dryRun: false,
 		},
 		{
@@ -866,7 +866,7 @@ func TestShowNextSteps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			// Capture output to verify the function produces output
 			var output strings.Builder
@@ -899,13 +899,13 @@ func TestCheckRepositoryAccess(t *testing.T) {
 	}{
 		{
 			name:       "ValidRepository",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			verbose:    true,
 			skipReason: "Requires GitHub CLI and authentication",
 		},
 		{
 			name:       "ValidRepositoryNotVerbose",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			verbose:    false,
 			skipReason: "Requires GitHub CLI and authentication",
 		},
@@ -930,7 +930,7 @@ func TestCheckRepositoryAccess(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			err := checkRepositoryAccess(ctx, cmd, tt.repo, tt.verbose)
 
@@ -948,7 +948,7 @@ func TestCheckRepositoryAccess(t *testing.T) {
 func TestSetupPagesArgumentValidation(t *testing.T) {
 	t.Parallel()
 
-	cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+	cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 	tests := []struct {
 		name        string
@@ -1001,18 +1001,18 @@ func TestSetupPagesArgumentValidation(t *testing.T) {
 func TestSetupPagesIntegrationDryRun(t *testing.T) {
 	t.Parallel()
 
-	cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+	cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 	// Set dry-run flag
-	err := cmd.Flags().Set("dry-run", "true")
+	err := cmd.Flags().Set(flagDryRun, flagBoolTrue)
 	require.NoError(t, err)
 
 	// Set verbose flag
-	err = cmd.Flags().Set("verbose", "true")
+	err = cmd.Flags().Set("verbose", flagBoolTrue)
 	require.NoError(t, err)
 
 	// Test with valid repository
-	args := []string{"testowner/testrepo"}
+	args := []string{testFullRepo}
 
 	// In dry-run mode, the command should succeed without external dependencies
 	err = cmd.RunE(cmd, args)
@@ -1051,13 +1051,13 @@ func TestNewSetupPagesCmd(t *testing.T) {
 	require.NotNil(t, cmd.RunE)
 
 	// Test that flags are set up properly
-	require.NotNil(t, cmd.Flags().Lookup("dry-run"))
+	require.NotNil(t, cmd.Flags().Lookup(flagDryRun))
 	require.NotNil(t, cmd.Flags().Lookup("verbose"))
 	require.NotNil(t, cmd.Flags().Lookup("custom-domain"))
 	require.NotNil(t, cmd.Flags().Lookup("protect-branches"))
 
 	// Test flag defaults
-	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	dryRun, _ := cmd.Flags().GetBool(flagDryRun)
 	require.False(t, dryRun)
 
 	verbose, _ := cmd.Flags().GetBool("verbose")
@@ -1089,7 +1089,7 @@ func TestNewSetupPagesCmdValidation(t *testing.T) {
 			name: "invalid repository format",
 			args: []string{"invalid-repo-format"},
 			flags: map[string]interface{}{
-				"dry-run": true,
+				flagDryRun: true,
 			},
 			expectError:   true,
 			errorContains: "invalid repository format",
@@ -1098,7 +1098,7 @@ func TestNewSetupPagesCmdValidation(t *testing.T) {
 			name: "empty repository format",
 			args: []string{""},
 			flags: map[string]interface{}{
-				"dry-run": true,
+				flagDryRun: true,
 			},
 			expectError:   true,
 			errorContains: "invalid repository format",
@@ -1107,7 +1107,7 @@ func TestNewSetupPagesCmdValidation(t *testing.T) {
 			name: "repository with spaces",
 			args: []string{"owner with spaces/repo"},
 			flags: map[string]interface{}{
-				"dry-run": true,
+				flagDryRun: true,
 			},
 			expectError:   true,
 			errorContains: "invalid repository format",
@@ -1169,13 +1169,13 @@ func TestNewSetupPagesCmdFlags(t *testing.T) {
 	cmd := commands.newSetupPagesCmd()
 
 	// Test setting flags
-	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
-	require.NoError(t, cmd.Flags().Set("verbose", "true"))
+	require.NoError(t, cmd.Flags().Set(flagDryRun, flagBoolTrue))
+	require.NoError(t, cmd.Flags().Set("verbose", flagBoolTrue))
 	require.NoError(t, cmd.Flags().Set("custom-domain", "example.com"))
-	require.NoError(t, cmd.Flags().Set("protect-branches", "true"))
+	require.NoError(t, cmd.Flags().Set("protect-branches", flagBoolTrue))
 
 	// Test getting flags
-	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	dryRun, _ := cmd.Flags().GetBool(flagDryRun)
 	require.True(t, dryRun)
 
 	verbose, _ := cmd.Flags().GetBool("verbose")
@@ -1194,11 +1194,11 @@ func TestNewSetupPagesCmdDryRunSuccess(t *testing.T) {
 	cmd := commands.newSetupPagesCmd()
 
 	// Set dry-run mode to avoid external dependencies
-	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
-	require.NoError(t, cmd.Flags().Set("verbose", "true"))
+	require.NoError(t, cmd.Flags().Set(flagDryRun, flagBoolTrue))
+	require.NoError(t, cmd.Flags().Set("verbose", flagBoolTrue))
 
 	// Test with valid repository format
-	err := cmd.RunE(cmd, []string{"testowner/testrepo"})
+	err := cmd.RunE(cmd, []string{testFullRepo})
 	// In dry-run mode, should either succeed or fail with known GitHub CLI errors
 	if err != nil {
 		// Allow known errors related to missing GitHub CLI
@@ -1227,13 +1227,13 @@ func TestNewSetupPagesCmdWithAllFlags(t *testing.T) {
 	cmd := commands.newSetupPagesCmd()
 
 	// Set all flags
-	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
-	require.NoError(t, cmd.Flags().Set("verbose", "true"))
+	require.NoError(t, cmd.Flags().Set(flagDryRun, flagBoolTrue))
+	require.NoError(t, cmd.Flags().Set("verbose", flagBoolTrue))
 	require.NoError(t, cmd.Flags().Set("custom-domain", "coverage.example.com"))
-	require.NoError(t, cmd.Flags().Set("protect-branches", "true"))
+	require.NoError(t, cmd.Flags().Set("protect-branches", flagBoolTrue))
 
 	// Execute with valid repository
-	err := cmd.RunE(cmd, []string{"testowner/testrepo"})
+	err := cmd.RunE(cmd, []string{testFullRepo})
 	// Should either succeed in dry-run or fail with known GitHub CLI errors
 	if err != nil {
 		allowedErrors := []string{
@@ -1261,7 +1261,7 @@ func TestNewSetupPagesCmdAutoDetection(t *testing.T) {
 	cmd := commands.newSetupPagesCmd()
 
 	// Set dry-run mode
-	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+	require.NoError(t, cmd.Flags().Set(flagDryRun, flagBoolTrue))
 
 	// Execute without repository argument (should auto-detect)
 	err := cmd.RunE(cmd, []string{})
@@ -1324,7 +1324,7 @@ func TestCreateInitialGhPagesBranchEdgeCases(t *testing.T) {
 		},
 		{
 			name:       "NonDryRunMode",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			dryRun:     false,
 			verbose:    true,
 			skipReason: "Requires GitHub CLI, git access, and network connectivity",
@@ -1338,7 +1338,7 @@ func TestCreateInitialGhPagesBranchEdgeCases(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			err := createInitialGhPagesBranch(ctx, cmd, tt.repo, tt.dryRun, tt.verbose)
 
@@ -1381,13 +1381,13 @@ func TestVerifySetupEdgeCases(t *testing.T) {
 		},
 		{
 			name:       "ValidRepositoryVerboseMode",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			verbose:    true,
 			skipReason: "Requires GitHub CLI and network access",
 		},
 		{
 			name:       "ValidRepositoryQuietMode",
-			repo:       "testowner/testrepo",
+			repo:       testFullRepo,
 			verbose:    false,
 			skipReason: "Requires GitHub CLI and network access",
 		},
@@ -1400,7 +1400,7 @@ func TestVerifySetupEdgeCases(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			err := verifySetup(ctx, cmd, tt.repo, tt.verbose)
 
@@ -1447,7 +1447,7 @@ func TestSetupFunctionsErrorPropagation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			cmd := NewCommands(VersionInfo{Version: "test", Commit: "test", BuildDate: "test"}).SetupPages
+			cmd := NewCommands(VersionInfo{Version: testCoverageLabel, Commit: testCoverageLabel, BuildDate: testCoverageLabel}).SetupPages
 
 			var err error
 			switch tt.functionName {

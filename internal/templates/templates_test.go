@@ -300,9 +300,9 @@ func TestGitHubURLFunctions(t *testing.T) {
 			repo     string
 			expected string
 		}{
-			{"ValidRepo", "owner", "repo", "https://github.com/owner/repo"},
-			{"EmptyOwner", "", "repo", ""},
-			{"EmptyRepo", "owner", "", ""},
+			{"ValidRepo", testRepoOwner, testRepoName, "https://github.com/owner/repo"},
+			{"EmptyOwner", "", testRepoName, ""},
+			{"EmptyRepo", testRepoOwner, "", ""},
 			{"BothEmpty", "", "", ""},
 			{"WithDashes", "my-org", "my-repo", "https://github.com/my-org/my-repo"},
 		}
@@ -342,11 +342,11 @@ func TestGitHubURLFunctions(t *testing.T) {
 			branch   string
 			expected string
 		}{
-			{"ValidBranch", "owner", "repo", "main", "https://github.com/owner/repo/tree/main"},
-			{"FeatureBranch", "owner", "repo", "feature/test", "https://github.com/owner/repo/tree/feature/test"},
-			{"EmptyOwner", "", "repo", "main", ""},
-			{"EmptyRepo", "owner", "", "main", ""},
-			{"EmptyBranch", "owner", "repo", "", ""},
+			{"ValidBranch", testRepoOwner, testRepoName, testBranchMain, "https://github.com/owner/repo/tree/main"},
+			{"FeatureBranch", testRepoOwner, testRepoName, "feature/test", "https://github.com/owner/repo/tree/feature/test"},
+			{"EmptyOwner", "", testRepoName, testBranchMain, ""},
+			{"EmptyRepo", testRepoOwner, "", testBranchMain, ""},
+			{"EmptyBranch", testRepoOwner, testRepoName, "", ""},
 			{"AllEmpty", "", "", "", ""},
 		}
 
@@ -366,11 +366,11 @@ func TestGitHubURLFunctions(t *testing.T) {
 			sha      string
 			expected string
 		}{
-			{"ValidCommit", "owner", "repo", "abc123", "https://github.com/owner/repo/commit/abc123"},
-			{"LongSHA", "owner", "repo", "abc123def456789", "https://github.com/owner/repo/commit/abc123def456789"},
-			{"EmptyOwner", "", "repo", "abc123", ""},
-			{"EmptyRepo", "owner", "", "abc123", ""},
-			{"EmptySHA", "owner", "repo", "", ""},
+			{"ValidCommit", testRepoOwner, testRepoName, "abc123", "https://github.com/owner/repo/commit/abc123"},
+			{"LongSHA", testRepoOwner, testRepoName, "abc123def456789", "https://github.com/owner/repo/commit/abc123def456789"},
+			{"EmptyOwner", "", testRepoName, "abc123", ""},
+			{"EmptyRepo", testRepoOwner, "", "abc123", ""},
+			{"EmptySHA", testRepoOwner, testRepoName, "", ""},
 			{"AllEmpty", "", "", "", ""},
 		}
 
@@ -391,12 +391,12 @@ func TestGitHubURLFunctions(t *testing.T) {
 			filepath string
 			expected string
 		}{
-			{"ValidFile", "owner", "repo", "main", "file.go", "https://github.com/owner/repo/blob/main/file.go"},
-			{"NestedFile", "owner", "repo", "main", "pkg/file.go", "https://github.com/owner/repo/blob/main/pkg/file.go"},
-			{"EmptyOwner", "", "repo", "main", "file.go", ""},
-			{"EmptyRepo", "owner", "", "main", "file.go", ""},
-			{"EmptyBranch", "owner", "repo", "", "file.go", ""},
-			{"EmptyFilepath", "owner", "repo", "main", "", ""},
+			{"ValidFile", testRepoOwner, testRepoName, testBranchMain, "file.go", "https://github.com/owner/repo/blob/main/file.go"},
+			{"NestedFile", testRepoOwner, testRepoName, testBranchMain, "pkg/file.go", "https://github.com/owner/repo/blob/main/pkg/file.go"},
+			{"EmptyOwner", "", testRepoName, testBranchMain, "file.go", ""},
+			{"EmptyRepo", testRepoOwner, "", testBranchMain, "file.go", ""},
+			{"EmptyBranch", testRepoOwner, testRepoName, "", "file.go", ""},
+			{"EmptyFilepath", testRepoOwner, testRepoName, testBranchMain, "", ""},
 			{"AllEmpty", "", "", "", "", ""},
 		}
 
@@ -417,12 +417,12 @@ func TestGitHubURLFunctions(t *testing.T) {
 			dirpath  string
 			expected string
 		}{
-			{"ValidDir", "owner", "repo", "main", "pkg", "https://github.com/owner/repo/tree/main/pkg"},
-			{"NestedDir", "owner", "repo", "main", "internal/pkg", "https://github.com/owner/repo/tree/main/internal/pkg"},
-			{"EmptyOwner", "", "repo", "main", "pkg", ""},
-			{"EmptyRepo", "owner", "", "main", "pkg", ""},
-			{"EmptyBranch", "owner", "repo", "", "pkg", ""},
-			{"EmptyDirpath", "owner", "repo", "main", "", ""},
+			{"ValidDir", testRepoOwner, testRepoName, testBranchMain, "pkg", "https://github.com/owner/repo/tree/main/pkg"},
+			{"NestedDir", testRepoOwner, testRepoName, testBranchMain, "internal/pkg", "https://github.com/owner/repo/tree/main/internal/pkg"},
+			{"EmptyOwner", "", testRepoName, testBranchMain, "pkg", ""},
+			{"EmptyRepo", testRepoOwner, "", testBranchMain, "pkg", ""},
+			{"EmptyBranch", testRepoOwner, testRepoName, "", "pkg", ""},
+			{"EmptyDirpath", testRepoOwner, testRepoName, testBranchMain, "", ""},
 			{"AllEmpty", "", "", "", "", ""},
 		}
 
@@ -468,7 +468,7 @@ func TestDataStructures(t *testing.T) {
 
 	t.Run("BranchData", func(t *testing.T) {
 		data := BranchData{
-			Name:         "main",
+			Name:         testBranchMain,
 			Coverage:     85.5,
 			CoveredLines: 855,
 			TotalLines:   1000,
@@ -477,7 +477,7 @@ func TestDataStructures(t *testing.T) {
 			Trend:        2.5,
 			GitHubURL:    "https://github.com/owner/repo/tree/main",
 		}
-		assert.Equal(t, "main", data.Name)
+		assert.Equal(t, testBranchMain, data.Name)
 		assert.InEpsilon(t, 85.5, data.Coverage, 0.01)
 		assert.True(t, data.Protected)
 	})

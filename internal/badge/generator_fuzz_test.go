@@ -108,7 +108,7 @@ func FuzzGetColorForPercentage(f *testing.F) {
 			case percentage >= defaultConfig.ThresholdConfig.Excellent:
 				assert.Equal(t, "#28a745", result, "Should use bright green for >= 95%%")
 			case percentage >= defaultConfig.ThresholdConfig.Good:
-				assert.Equal(t, "#3fb950", result, "Should use green for >= 85%%")
+				assert.Equal(t, colorGoodGreen, result, "Should use green for >= 85%%")
 			case percentage >= defaultConfig.ThresholdConfig.Acceptable:
 				assert.Equal(t, "#ffc107", result, "Should use yellow for >= 75%%")
 			case percentage >= defaultConfig.ThresholdConfig.Low:
@@ -176,7 +176,7 @@ func FuzzGetColorForPercentageWithCustomConfig(f *testing.F) {
 		}
 
 		// The result should be one of the expected colors
-		expectedColors := []string{"#28a745", "#3fb950", "#ffc107", "#fd7e14", "#dc3545"}
+		expectedColors := []string{"#28a745", colorGoodGreen, "#ffc107", "#fd7e14", "#dc3545"}
 		assert.Contains(t, expectedColors, result, "Should return one of the defined colors")
 
 		// Ensure result is valid UTF-8
@@ -243,7 +243,7 @@ func FuzzGetColorByName(f *testing.F) {
 		case "excellent":
 			assert.Equal(t, "#28a745", result, "excellent should return bright green")
 		case "good":
-			assert.Equal(t, "#3fb950", result, "good should return green")
+			assert.Equal(t, colorGoodGreen, result, "good should return green")
 		case "acceptable":
 			assert.Equal(t, "#ffc107", result, "acceptable should return yellow")
 		case "low":

@@ -39,7 +39,7 @@ func BenchmarkBuildGitHubPRURL(b *testing.B) {
 // BenchmarkBuildGitHubFileURL benchmarks file URL building
 func BenchmarkBuildGitHubFileURL(b *testing.B) {
 	builder := NewURLBuilder("github.com", "test", "repo")
-	branch := "master"
+	branch := testBranch
 	filePath := "internal/parser/parser.go"
 
 	b.ResetTimer()
@@ -51,7 +51,7 @@ func BenchmarkBuildGitHubFileURL(b *testing.B) {
 // BenchmarkBuildGitHubFileURLWithLine benchmarks file URL with line number
 func BenchmarkBuildGitHubFileURLWithLine(b *testing.B) {
 	builder := NewURLBuilder("github.com", "test", "repo")
-	branch := "master"
+	branch := testBranch
 	filePath := "internal/parser/parser.go"
 	lineNumber := 42
 
@@ -101,7 +101,7 @@ func BenchmarkValidateURL(b *testing.B) {
 func BenchmarkJoinURL(b *testing.B) {
 	util := NewURLUtil()
 	base := "https://github.com"
-	segments := []string{"test", "repo", "blob", "master", "README.md"}
+	segments := []string{"test", "repo", "blob", testBranch, "README.md"}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -223,7 +223,7 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		url := builder.BuildGitHubFileURLWithLine("master", "internal/parser/parser.go", 42)
+		url := builder.BuildGitHubFileURLWithLine(testBranch, "internal/parser/parser.go", 42)
 		_ = url // Prevent optimization
 	}
 }
@@ -246,7 +246,7 @@ func BenchmarkComplexURLOperations(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Build URL
-		url := builder.BuildGitHubFileURL("master", "internal/parser/parser.go")
+		url := builder.BuildGitHubFileURL(testBranch, "internal/parser/parser.go")
 
 		// Validate it
 		if !util.ValidateURL(url) {
@@ -282,7 +282,7 @@ func BenchmarkBatchURLProcessing(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		urls := make([]string, len(files))
 		for j, file := range files {
-			urls[j] = builder.BuildGitHubFileURL("master", file)
+			urls[j] = builder.BuildGitHubFileURL(testBranch, file)
 		}
 		_ = urls // Prevent optimization
 	}

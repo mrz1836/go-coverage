@@ -46,6 +46,12 @@ const (
 	ErrorLevel
 )
 
+// Format constants for logger output formats
+const (
+	FormatText = "text"
+	FormatJSON = "json"
+)
+
 // String returns the string representation of the log level
 func (l Level) String() string {
 	switch l {
@@ -88,7 +94,7 @@ func NewLogger(config *Config) Logger {
 	if config == nil {
 		config = &Config{
 			Level:  InfoLevel,
-			Format: "text",
+			Format: FormatText,
 			Output: os.Stderr,
 		}
 	}
@@ -106,7 +112,7 @@ func NewLogger(config *Config) Logger {
 func NewFromEnv() Logger {
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: os.Stderr,
 	}
 
@@ -126,7 +132,7 @@ func NewFromEnv() Logger {
 
 	// Parse format from environment
 	if format := os.Getenv("GO_COVERAGE_LOG_FORMAT"); format != "" {
-		if format == "json" || format == "text" {
+		if format == FormatJSON || format == FormatText {
 			config.Format = format
 		}
 	}
@@ -376,7 +382,7 @@ func (l *simpleLogger) writeEntry(entry logEntry) {
 	var output string
 
 	switch l.config.Format {
-	case "json":
+	case FormatJSON:
 		data, err := json.Marshal(entry)
 		if err != nil {
 			// Fallback to simple text if JSON marshal fails

@@ -19,7 +19,7 @@ import (
 // createIsolatedParseCommand creates a new parse command with isolated flags for testing
 func createIsolatedParseCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "parse",
+		Use:   cmdParse,
 		Short: "Parse Go coverage profile and display results",
 		Long: `Parse a Go coverage profile file and display coverage analysis results.
 
@@ -40,14 +40,14 @@ check coverage thresholds, and save results to a file.`,
 func TestParseCommandMetadata(t *testing.T) {
 	// Create a Commands instance for testing
 	versionInfo := VersionInfo{
-		Version:   "test",
-		Commit:    "test-commit",
-		BuildDate: "test-date",
+		Version:   testCoverageLabel,
+		Commit:    testCommitStr,
+		BuildDate: testDateStr,
 	}
 	commands := NewCommands(versionInfo)
 
 	// Test command metadata
-	assert.Equal(t, "parse", commands.Parse.Use)
+	assert.Equal(t, cmdParse, commands.Parse.Use)
 	assert.Equal(t, "Parse Go coverage profile and display results", commands.Parse.Short)
 	assert.Contains(t, commands.Parse.Long, "Parse a Go coverage profile file")
 	assert.NotNil(t, commands.Parse.RunE)
@@ -59,9 +59,9 @@ func TestParseCommandFlags(t *testing.T) {
 		flagType     string
 		defaultValue string
 	}{
-		"file":      {"string", "coverage.txt"},
-		"output":    {"string", ""},
-		"format":    {"string", "text"},
+		"file":      {flagTypeString, "coverage.txt"},
+		"output":    {flagTypeString, ""},
+		"format":    {flagTypeString, "text"},
 		"threshold": {"float64", "0"},
 	}
 
@@ -69,9 +69,9 @@ func TestParseCommandFlags(t *testing.T) {
 		t.Run(fmt.Sprintf("flag_%s", flagName), func(t *testing.T) {
 			// Create a Commands instance for testing
 			versionInfo := VersionInfo{
-				Version:   "test",
-				Commit:    "test-commit",
-				BuildDate: "test-date",
+				Version:   testCoverageLabel,
+				Commit:    testCommitStr,
+				BuildDate: testDateStr,
 			}
 			commands := NewCommands(versionInfo)
 
@@ -122,14 +122,14 @@ func TestRunParseWithInvalidFile(t *testing.T) {
 	var buf bytes.Buffer
 	// Create a Commands instance for testing
 	versionInfo := VersionInfo{
-		Version:   "test",
-		Commit:    "test-commit",
-		BuildDate: "test-date",
+		Version:   testCoverageLabel,
+		Commit:    testCommitStr,
+		BuildDate: testDateStr,
 	}
 	commands := NewCommands(versionInfo)
 
 	testCmd := &cobra.Command{
-		Use:  "parse",
+		Use:  cmdParse,
 		RunE: commands.Parse.RunE,
 	}
 	testCmd.SetOut(&buf)
@@ -165,7 +165,7 @@ github.com/test/repo/main.go:10.2,12.16 1 1
 	testCmd.SetErr(&buf)
 	testCmd.SetArgs([]string{
 		"--file", coverageFile,
-		"--format", "json",
+		"--format", formatJSON,
 	})
 
 	// Execute command

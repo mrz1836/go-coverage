@@ -8,7 +8,7 @@ import (
 
 func TestCoverageData_JSON(t *testing.T) {
 	data := &CoverageData{
-		ProjectName:    "test-project",
+		ProjectName:    testProjectName,
 		RepositoryURL:  "https://github.com/owner/repo",
 		Branch:         "master",
 		CommitSHA:      "abc123",

@@ -91,8 +91,8 @@ func (suite *RendererTestSuite) TestRenderReportTemplateFunctions() {
 
 	// Create data to test various template functions
 	data := &Data{
-		RepositoryOwner: "test-owner",
-		RepositoryName:  "test-repo",
+		RepositoryOwner: testOwnerName,
+		RepositoryName:  testRepoName,
 		BranchName:      "feature/long-branch-name",
 		CommitSHA:       "1234567890abcdef",
 		GeneratedAt:     time.Now(),
@@ -175,8 +175,8 @@ func (suite *RendererTestSuite) TestRenderReportCoverageThresholds() {
 		suite.Run(tc.name, func() {
 			ctx := context.Background()
 			data := &Data{
-				RepositoryOwner: "test-owner",
-				RepositoryName:  "test-repo",
+				RepositoryOwner: testOwnerName,
+				RepositoryName:  testRepoName,
 				Summary: Summary{
 					TotalPercentage: tc.coverage,
 					TotalLines:      100,
@@ -228,8 +228,8 @@ func (suite *RendererTestSuite) TestRenderReportGoogleAnalytics() {
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			data := &Data{
-				RepositoryOwner:   "test-owner",
-				RepositoryName:    "test-repo",
+				RepositoryOwner:   testOwnerName,
+				RepositoryName:    testRepoName,
 				GoogleAnalyticsID: tc.googleAnalyticsID,
 			}
 
@@ -273,8 +273,8 @@ func (suite *RendererTestSuite) TestRenderReportCommitURL() {
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			data := &Data{
-				RepositoryOwner: "test-owner",
-				RepositoryName:  "test-repo",
+				RepositoryOwner: testOwnerName,
+				RepositoryName:  testRepoName,
 				CommitSHA:       "abc123def456",
 				CommitURL:       tc.commitURL,
 			}
@@ -323,8 +323,8 @@ func (suite *RendererTestSuite) TestRenderReportTrendStatus() {
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			data := &Data{
-				RepositoryOwner: "test-owner",
-				RepositoryName:  "test-repo",
+				RepositoryOwner: testOwnerName,
+				RepositoryName:  testRepoName,
 				Summary: Summary{
 					ChangeStatus:     tc.changeStatus,
 					PreviousCoverage: 80.0,
@@ -552,8 +552,8 @@ func (suite *RendererTestSuite) createSampleReportData() *Data {
 		},
 		GeneratedAt:     time.Now(),
 		ProjectName:     "Test Project",
-		RepositoryOwner: "test-owner",
-		RepositoryName:  "test-repo",
+		RepositoryOwner: testOwnerName,
+		RepositoryName:  testRepoName,
 		BranchName:      "master",
 		CommitSHA:       "abc123def456",
 		CommitURL:       "https://github.com/test-owner/test-repo/commit/abc123def456",
@@ -641,8 +641,8 @@ func (suite *RendererTestSuite) createLargeReportData() *Data {
 
 	return &Data{
 		GeneratedAt:     time.Now(),
-		RepositoryOwner: "test-owner",
-		RepositoryName:  "test-repo",
+		RepositoryOwner: testOwnerName,
+		RepositoryName:  testRepoName,
 		Summary: Summary{
 			TotalPercentage: float64(totalCovered) / float64(totalLines) * 100,
 			TotalLines:      totalLines,
@@ -671,8 +671,8 @@ func BenchmarkRenderReport(b *testing.B) {
 	ctx := context.Background()
 
 	data := &Data{
-		RepositoryOwner: "test-owner",
-		RepositoryName:  "test-repo",
+		RepositoryOwner: testOwnerName,
+		RepositoryName:  testRepoName,
 		Summary: Summary{
 			TotalPercentage: 85.0,
 			TotalLines:      1000,

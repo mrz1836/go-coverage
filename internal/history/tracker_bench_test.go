@@ -27,7 +27,7 @@ func BenchmarkRecord(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := tracker.Record(ctx, coverage, WithBranch("master"))
+		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -57,7 +57,7 @@ func BenchmarkRecordWithOptions(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		err := tracker.Record(ctx, coverage,
-			WithBranch("master"),
+			WithBranch(DefaultBranch),
 			WithCommit("abc123", "https://github.com/test/repo/commit/abc123"),
 			WithMetadata("project", "test"),
 			WithMetadata("build", "123"),
@@ -85,7 +85,7 @@ func BenchmarkGetTrend(b *testing.B) {
 	for i := 0; i < 50; i++ {
 		coverage := createBenchmarkCoverage()
 		coverage.Percentage = float64(60 + i)
-		err := tracker.Record(ctx, coverage, WithBranch("master"))
+		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -93,7 +93,7 @@ func BenchmarkGetTrend(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := tracker.GetTrend(ctx, WithTrendBranch("master"))
+		_, err := tracker.GetTrend(ctx, WithTrendBranch(DefaultBranch))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -117,7 +117,7 @@ func BenchmarkGetTrendLarge(b *testing.B) {
 		coverage := createBenchmarkCoverage()
 		coverage.Percentage = float64(50 + (i % 50))
 		err := tracker.Record(ctx, coverage,
-			WithBranch("master"),
+			WithBranch(DefaultBranch),
 			WithCommit("commit"+string(rune('0'+i%10)), ""),
 		)
 		if err != nil {
@@ -128,7 +128,7 @@ func BenchmarkGetTrendLarge(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := tracker.GetTrend(ctx,
-			WithTrendBranch("master"),
+			WithTrendBranch(DefaultBranch),
 			WithTrendDays(30),
 			WithMaxDataPoints(100),
 		)
@@ -153,7 +153,7 @@ func BenchmarkGetLatestEntry(b *testing.B) {
 	// Pre-populate with entries
 	for i := 0; i < 20; i++ {
 		coverage := createBenchmarkCoverage()
-		err := tracker.Record(ctx, coverage, WithBranch("master"))
+		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -161,7 +161,7 @@ func BenchmarkGetLatestEntry(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := tracker.GetLatestEntry(ctx, "master")
+		_, err := tracker.GetLatestEntry(ctx, DefaultBranch)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -191,7 +191,7 @@ func BenchmarkCleanup(b *testing.B) {
 		// Create many entries for cleanup
 		for j := 0; j < 150; j++ {
 			coverage := createBenchmarkCoverage()
-			recordErr := tracker.Record(ctx, coverage, WithBranch("master"))
+			recordErr := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 			if recordErr != nil {
 				b.Fatal(recordErr)
 			}
@@ -221,7 +221,7 @@ func BenchmarkGetStatistics(b *testing.B) {
 	ctx := context.Background()
 
 	// Pre-populate with entries across multiple branches and projects
-	branches := []string{"master", "develop", "feature-a", "feature-b"}
+	branches := []string{DefaultBranch, "develop", "feature-a", "feature-b"}
 	projects := []string{"project-1", "project-2", "project-3"}
 
 	for i := 0; i < 100; i++ {
@@ -273,7 +273,7 @@ func BenchmarkCalculatePackageStats(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = tracker.calculatePackageStats(coverage, "master")
+		_ = tracker.calculatePackageStats(coverage, DefaultBranch)
 	}
 }
 
@@ -358,7 +358,7 @@ func BenchmarkLoadAllEntries(b *testing.B) {
 	// Pre-populate with entries
 	for i := 0; i < 100; i++ {
 		coverage := createBenchmarkCoverage()
-		err := tracker.Record(ctx, coverage, WithBranch("master"))
+		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -390,7 +390,7 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		err := tracker.Record(ctx, coverage, WithBranch("master"))
+		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -413,7 +413,7 @@ func BenchmarkConcurrentRecord(b *testing.B) {
 		for pb.Next() {
 			coverage := createBenchmarkCoverage()
 			commit := fmt.Sprintf("bench-%d", atomic.AddInt64(&benchCounter, 1))
-			if err := tracker.Record(ctx, coverage, WithBranch("master"), WithCommit(commit, "")); err != nil {
+			if err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch), WithCommit(commit, "")); err != nil {
 				if errors.Is(err, ErrHistoryEntryExists) ||
 					errors.Is(err, ErrWrittenFileEmpty) ||
 					errors.Is(err, ErrWrittenFileSizeMismatch) {
@@ -440,7 +440,7 @@ func BenchmarkConcurrentGetTrend(b *testing.B) {
 	// Pre-populate with entries
 	for i := 0; i < 50; i++ {
 		coverage := createBenchmarkCoverage()
-		err := tracker.Record(ctx, coverage, WithBranch("master"))
+		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -448,7 +448,7 @@ func BenchmarkConcurrentGetTrend(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, err := tracker.GetTrend(ctx, WithTrendBranch("master"))
+			_, err := tracker.GetTrend(ctx, WithTrendBranch(DefaultBranch))
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -466,8 +466,8 @@ func createBenchmarkCoverage() *parser.CoverageData {
 		CoveredLines: 150,
 		Timestamp:    time.Now(),
 		Packages: map[string]*parser.PackageCoverage{
-			"master": {
-				Name:         "master",
+			DefaultBranch: {
+				Name:         DefaultBranch,
 				Percentage:   75.0,
 				TotalLines:   200,
 				CoveredLines: 150,
@@ -537,7 +537,7 @@ func createBenchmarkEntries(count int) []Entry {
 	for i := 0; i < count; i++ {
 		entries[i] = Entry{
 			Timestamp: time.Now().Add(-time.Duration(i) * time.Hour),
-			Branch:    "master",
+			Branch:    DefaultBranch,
 			CommitSHA: "commit" + string(rune('0'+i%10)),
 			Coverage: &parser.CoverageData{
 				Percentage:   float64(60 + (i % 40)), // Varying coverage

@@ -27,6 +27,14 @@ const StatusStatePending = "pending"
 // StatusStateError represents an error status state
 const StatusStateError = "error"
 
+// Risk level constants for quality assessment
+const (
+	riskLevelLow    = "low"
+	riskLevelMedium = "medium"
+	riskLevelHigh   = "high"
+	riskLevelCrit   = "critical"
+)
+
 // StatusCheckConfig holds configuration for status check management
 type StatusCheckConfig struct {
 	// Context settings
@@ -206,7 +214,7 @@ func NewStatusCheckManager(client *Client, config *StatusCheckConfig) *StatusChe
 	if config == nil {
 		config = &StatusCheckConfig{
 			ContextPrefix:          "go-coverage",
-			MainContext:            "coverage/total",
+			MainContext:            ContextCoverage,
 			AdditionalContexts:     []string{"coverage/trend", "coverage/quality"},
 			EnableBlocking:         true,
 			BlockOnFailure:         true,
@@ -496,7 +504,7 @@ func (m *StatusCheckManager) buildQualityStatus(request *StatusCheckRequest) Sta
 		description = fmt.Sprintf("📊 Quality Score: %.0f/100", score)
 	}
 
-	if riskLevel != "" && riskLevel != "low" {
+	if riskLevel != "" && riskLevel != riskLevelLow {
 		description = fmt.Sprintf("%s, %s risk", description, riskLevel)
 	}
 
@@ -696,7 +704,7 @@ func (m *StatusCheckManager) compareGrades(grade1, grade2 string) int {
 
 func (m *StatusCheckManager) compareRiskLevels(risk1, risk2 string) int {
 	riskValues := map[string]int{
-		"low": 1, "medium": 2, "high": 3, "critical": 4,
+		riskLevelLow: 1, riskLevelMedium: 2, riskLevelHigh: 3, riskLevelCrit: 4,
 	}
 
 	val1, ok1 := riskValues[risk1]

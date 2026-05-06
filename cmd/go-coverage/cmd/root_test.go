@@ -19,15 +19,15 @@ func TestExecute(t *testing.T) {
 	}{
 		{
 			name:        "help command",
-			args:        []string{"--help"},
+			args:        []string{flagHelp},
 			expectError: false,
 			contains: []string{
 				"Go Coverage is a self-contained",
 				"Available Commands:",
-				"complete",
-				"history",
+				cmdComplete,
+				cmdHistory,
 				"comment",
-				"parse",
+				cmdParse,
 			},
 		},
 		{
@@ -38,19 +38,19 @@ func TestExecute(t *testing.T) {
 		},
 		{
 			name:        "debug flag",
-			args:        []string{"--debug", "--help"},
+			args:        []string{"--debug", flagHelp},
 			expectError: false,
 			contains:    []string{"--debug", "Enable debug mode"},
 		},
 		{
 			name:        "log level flag",
-			args:        []string{"--log-level", "debug", "--help"},
+			args:        []string{"--log-level", "debug", flagHelp},
 			expectError: false,
 			contains:    []string{"--log-level", "Log level"},
 		},
 		{
 			name:        "log format flag",
-			args:        []string{"--log-format", "json", "--help"},
+			args:        []string{"--log-format", formatJSON, flagHelp},
 			expectError: false,
 			contains:    []string{"--log-format", "Log format"},
 		},
@@ -144,7 +144,7 @@ func TestRootCommandSetup(t *testing.T) {
 
 	// Test flag defaults
 	debugFlag := commands.Root.PersistentFlags().Lookup("debug")
-	assert.Equal(t, "false", debugFlag.DefValue)
+	assert.Equal(t, flagBoolFalse, debugFlag.DefValue)
 
 	logLevelFlag := commands.Root.PersistentFlags().Lookup("log-level")
 	assert.Equal(t, "info", logLevelFlag.DefValue)
@@ -163,7 +163,7 @@ func TestRootCommandSubcommands(t *testing.T) {
 	commands := NewCommands(versionInfo)
 
 	// Test that all expected subcommands are added
-	expectedCommands := []string{"complete", "history", "comment", "parse", "setup-pages", "upgrade"}
+	expectedCommands := []string{cmdComplete, cmdHistory, "comment", cmdParse, "setup-pages", "upgrade"}
 	actualCommands := make([]string, 0, len(commands.Root.Commands()))
 
 	for _, cmd := range commands.Root.Commands() {
@@ -190,7 +190,7 @@ func TestExecuteWithoutArgs(t *testing.T) {
 
 	commands.Root.SetOut(&buf)
 	commands.Root.SetErr(&buf)
-	commands.Root.SetArgs([]string{"--help"})
+	commands.Root.SetArgs([]string{flagHelp})
 
 	err := commands.Execute()
 	require.NoError(t, err)
@@ -227,27 +227,27 @@ func TestFlagParsing(t *testing.T) {
 	}{
 		{
 			name:     "debug flag true",
-			args:     []string{"--debug", "--help"},
+			args:     []string{"--debug", flagHelp},
 			flagName: "debug",
-			expected: "true",
+			expected: flagBoolTrue,
 		},
 		{
 			name:     "log level custom",
-			args:     []string{"--log-level", "debug", "--help"},
+			args:     []string{"--log-level", "debug", flagHelp},
 			flagName: "log-level",
 			expected: "debug",
 		},
 		{
 			name:     "log level short flag",
-			args:     []string{"-l", "warn", "--help"},
+			args:     []string{"-l", "warn", flagHelp},
 			flagName: "log-level",
 			expected: "warn",
 		},
 		{
 			name:     "log format json",
-			args:     []string{"--log-format", "json", "--help"},
+			args:     []string{"--log-format", formatJSON, flagHelp},
 			flagName: "log-format",
-			expected: "json",
+			expected: formatJSON,
 		},
 	}
 
@@ -271,7 +271,7 @@ func TestFlagParsing(t *testing.T) {
 			if tt.flagName == "debug" {
 				value, err := testRootCmd.PersistentFlags().GetBool(tt.flagName)
 				require.NoError(t, err)
-				assert.Equal(t, tt.expected == "true", value)
+				assert.Equal(t, tt.expected == flagBoolTrue, value)
 			} else {
 				value, err := testRootCmd.PersistentFlags().GetString(tt.flagName)
 				require.NoError(t, err)
@@ -293,7 +293,7 @@ func TestRootCommandValidation(t *testing.T) {
 	}()
 
 	// Set environment variable
-	require.NoError(t, os.Setenv("GO_COVERAGE_DEBUG", "true"))
+	require.NoError(t, os.Setenv("GO_COVERAGE_DEBUG", flagBoolTrue))
 
 	// Test that command still works with environment variables
 	var buf bytes.Buffer
@@ -303,7 +303,7 @@ func TestRootCommandValidation(t *testing.T) {
 	testCmd.PersistentFlags().Bool("debug", false, "Enable debug mode")
 	testCmd.SetOut(&buf)
 	testCmd.SetErr(&buf)
-	testCmd.SetArgs([]string{"--help"})
+	testCmd.SetArgs([]string{flagHelp})
 
 	err := testCmd.Execute()
 	require.NoError(t, err)

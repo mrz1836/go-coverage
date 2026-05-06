@@ -19,7 +19,7 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, generator)
 	assert.NotNil(t, generator.config)
 	assert.Equal(t, "flat", generator.config.Style)
-	assert.Equal(t, "coverage", generator.config.Label)
+	assert.Equal(t, defaultLabel, generator.config.Label)
 	assert.InDelta(t, 95.0, generator.config.ThresholdConfig.Excellent, 0.001)
 	assert.InDelta(t, 85.0, generator.config.ThresholdConfig.Good, 0.001)
 	assert.InDelta(t, 75.0, generator.config.ThresholdConfig.Acceptable, 0.001)
@@ -53,7 +53,7 @@ func TestGenerate(t *testing.T) {
 	svgStr := string(svg)
 	assert.Contains(t, svgStr, "<svg")
 	assert.Contains(t, svgStr, "85.5%")
-	assert.Contains(t, svgStr, "coverage")
+	assert.Contains(t, svgStr, defaultLabel)
 	assert.Contains(t, svgStr, "</svg>")
 	assert.Contains(t, svgStr, `role="img"`)
 	assert.Contains(t, svgStr, `aria-label="Code coverage: 85.5 percent"`)
@@ -132,13 +132,13 @@ func TestGetColorForPercentage(t *testing.T) {
 		percentage float64
 		expected   string
 	}{
-		{96.0, "#28a745"},  // excellent (bright green)
-		{87.0, "#3fb950"},  // good (green)
-		{77.0, "#ffc107"},  // acceptable (yellow)
-		{67.0, "#fd7e14"},  // low (orange)
-		{55.0, "#dc3545"},  // poor (red)
-		{100.0, "#28a745"}, // perfect (bright green)
-		{0.0, "#dc3545"},   // zero (red)
+		{96.0, "#28a745"},      // excellent (bright green)
+		{87.0, colorGoodGreen}, // good (green)
+		{77.0, "#ffc107"},      // acceptable (yellow)
+		{67.0, "#fd7e14"},      // low (orange)
+		{55.0, "#dc3545"},      // poor (red)
+		{100.0, "#28a745"},     // perfect (bright green)
+		{0.0, "#dc3545"},       // zero (red)
 	}
 
 	for _, tt := range tests {
@@ -157,7 +157,7 @@ func TestGetColorByName(t *testing.T) {
 		expected string
 	}{
 		{"excellent", "#28a745"},
-		{"good", "#3fb950"},
+		{"good", colorGoodGreen},
 		{"acceptable", "#ffc107"},
 		{"low", "#fd7e14"},
 		{"poor", "#dc3545"},
@@ -177,9 +177,9 @@ func TestRenderSVGStyles(t *testing.T) {
 	ctx := context.Background()
 
 	badgeData := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		AriaLabel: "Code coverage: 85.5 percent",
 	}
 
@@ -212,9 +212,9 @@ func TestCalculateTextWidth(t *testing.T) {
 		expected int
 	}{
 		{"", 0},
-		{"a", 7},         // ceil(1 * 6.5) = 7
-		{"abc", 20},      // ceil(3 * 6.5) = 20
-		{"coverage", 52}, // ceil(8 * 6.5) = 52
+		{"a", 7},           // ceil(1 * 6.5) = 7
+		{"abc", 20},        // ceil(3 * 6.5) = 20
+		{defaultLabel, 52}, // ceil(8 * 6.5) = 52
 	}
 
 	for _, tt := range tests {
@@ -245,9 +245,9 @@ func TestRenderFlatBadge(t *testing.T) {
 	generator := New()
 
 	data := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		Style:     "flat",
 		AriaLabel: "Code coverage: 85.5 percent",
 	}
@@ -258,9 +258,9 @@ func TestRenderFlatBadge(t *testing.T) {
 	assert.Contains(t, svgStr, `xmlns="http://www.w3.org/2000/svg"`)
 	assert.Contains(t, svgStr, `width="100"`)
 	assert.Contains(t, svgStr, `height="20"`)
-	assert.Contains(t, svgStr, "coverage")
+	assert.Contains(t, svgStr, defaultLabel)
 	assert.Contains(t, svgStr, "85.5%")
-	assert.Contains(t, svgStr, "#3fb950")
+	assert.Contains(t, svgStr, colorGoodGreen)
 	assert.Contains(t, svgStr, `rx="3"`)         // rounded corners
 	assert.Contains(t, svgStr, `linearGradient`) // gradient effect
 }
@@ -269,9 +269,9 @@ func TestRenderFlatSquareBadge(t *testing.T) {
 	generator := New()
 
 	data := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		Style:     "flat-square",
 		AriaLabel: "Code coverage: 85.5 percent",
 	}
@@ -281,9 +281,9 @@ func TestRenderFlatSquareBadge(t *testing.T) {
 
 	assert.Contains(t, svgStr, `xmlns="http://www.w3.org/2000/svg"`)
 	assert.Contains(t, svgStr, `shape-rendering="crispEdges"`)
-	assert.Contains(t, svgStr, "coverage")
+	assert.Contains(t, svgStr, defaultLabel)
 	assert.Contains(t, svgStr, "85.5%")
-	assert.Contains(t, svgStr, "#3fb950")
+	assert.Contains(t, svgStr, colorGoodGreen)
 	assert.NotContains(t, svgStr, `rx="3"`) // no rounded corners
 }
 
@@ -291,9 +291,9 @@ func TestRenderForTheBadge(t *testing.T) {
 	generator := New()
 
 	data := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		Style:     "for-the-badge",
 		AriaLabel: "Code coverage: 85.5 percent",
 	}
@@ -305,16 +305,16 @@ func TestRenderForTheBadge(t *testing.T) {
 	assert.Contains(t, svgStr, `font-weight="bold"`)
 	assert.Contains(t, svgStr, "COVERAGE") // uppercase
 	assert.Contains(t, svgStr, "85.5%")
-	assert.Contains(t, svgStr, "#3fb950")
+	assert.Contains(t, svgStr, colorGoodGreen)
 }
 
 func TestRenderWithLogo(t *testing.T) {
 	generator := New()
 
 	data := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		Style:     "flat",
 		Logo:      "https://example.com/logo.svg",
 		AriaLabel: "Code coverage: 85.5 percent",
@@ -370,7 +370,7 @@ func TestGenerateValidSVG(t *testing.T) {
 func TestGenerateCustomThresholds(t *testing.T) {
 	config := &Config{
 		Style: "flat",
-		Label: "coverage",
+		Label: defaultLabel,
 		ThresholdConfig: ThresholdConfig{
 			Excellent:  95.0,
 			Good:       85.0,
@@ -386,11 +386,11 @@ func TestGenerateCustomThresholds(t *testing.T) {
 		percentage float64
 		expected   string
 	}{
-		{96.0, "#28a745"}, // excellent
-		{87.0, "#3fb950"}, // good
-		{77.0, "#ffc107"}, // acceptable
-		{67.0, "#fd7e14"}, // low
-		{55.0, "#dc3545"}, // poor
+		{96.0, "#28a745"},      // excellent
+		{87.0, colorGoodGreen}, // good
+		{77.0, "#ffc107"},      // acceptable
+		{67.0, "#fd7e14"},      // low
+		{55.0, "#dc3545"},      // poor
 	}
 
 	for _, tt := range tests {
@@ -515,9 +515,9 @@ func TestGenerateWithResolvedLogos(t *testing.T) {
 	// Create generator with injected HTTP client
 	generator := NewWithConfig(&Config{
 		Style:     "flat",
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Logo:      "",
-		LogoColor: "white",
+		LogoColor: defaultLogoColor,
 		ThresholdConfig: ThresholdConfig{
 			Excellent:  95.0,
 			Good:       85.0,
@@ -598,7 +598,7 @@ func TestProcessLogoColor(t *testing.T) {
 		{
 			name:         "white color replaces currentColor",
 			logoURL:      "data:image/svg+xml;base64,PHN2ZyBmaWxsPSJjdXJyZW50Q29sb3IiPjwvc3ZnPg==",
-			color:        "white",
+			color:        defaultLogoColor,
 			expectedSVG:  `<svg fill="white"></svg>`,
 			shouldModify: true,
 		},
@@ -660,25 +660,25 @@ func TestApplySVGColor(t *testing.T) {
 		{
 			name:        "replace currentColor",
 			svgContent:  `<svg fill="currentColor"><path d="M0 0"/></svg>`,
-			color:       "white",
+			color:       defaultLogoColor,
 			expectedSVG: `<svg fill="white"><path d="M0 0"/></svg>`,
 		},
 		{
 			name:        "replace 2FAS default red color",
 			svgContent:  `<svg fill="#EC1C24"><path d="M0 0"/></svg>`,
-			color:       "white",
+			color:       defaultLogoColor,
 			expectedSVG: `<svg fill="white"><path d="M0 0"/></svg>`,
 		},
 		{
 			name:        "add fill attribute when missing",
 			svgContent:  `<svg role="img" viewBox="0 0 24 24"><path d="M0 0"/></svg>`,
-			color:       "white",
+			color:       defaultLogoColor,
 			expectedSVG: `<svg role="img" viewBox="0 0 24 24" fill="white"><path d="M0 0"/></svg>`,
 		},
 		{
 			name:        "handle real 2FAS SVG without fill",
 			svgContent:  `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>2FAS</title><path d="M12 0c-.918 0"/></svg>`,
-			color:       "white",
+			color:       defaultLogoColor,
 			expectedSVG: `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="white"><title>2FAS</title><path d="M12 0c-.918 0"/></svg>`,
 		},
 	}
@@ -702,13 +702,13 @@ func TestApplySVGColorStatic(t *testing.T) {
 		{
 			name:        "replace currentColor",
 			svgContent:  `<svg fill="currentColor"><path d="M0 0"/></svg>`,
-			color:       "white",
+			color:       defaultLogoColor,
 			expectedSVG: `<svg fill="white"><path d="M0 0"/></svg>`,
 		},
 		{
 			name:        "add fill attribute when missing",
 			svgContent:  `<svg role="img" viewBox="0 0 24 24"><path d="M0 0"/></svg>`,
-			color:       "white",
+			color:       defaultLogoColor,
 			expectedSVG: `<svg role="img" viewBox="0 0 24 24" fill="white"><path d="M0 0"/></svg>`,
 		},
 		{
@@ -741,14 +741,14 @@ func TestProcessLogoColorWithNewFunctions(t *testing.T) {
 		{
 			name:         "process SVG without fill attribute",
 			logoURL:      "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(`<svg viewBox="0 0 24 24"><path d="M0 0"/></svg>`)),
-			color:        "white",
+			color:        defaultLogoColor,
 			expectedSVG:  `<svg viewBox="0 0 24 24" fill="white"><path d="M0 0"/></svg>`,
 			shouldModify: true,
 		},
 		{
 			name:         "process SVG with 2FAS red fill",
 			logoURL:      "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(`<svg fill="#EC1C24"><path d="M0 0"/></svg>`)),
-			color:        "white",
+			color:        defaultLogoColor,
 			expectedSVG:  `<svg fill="white"><path d="M0 0"/></svg>`,
 			shouldModify: true,
 		},

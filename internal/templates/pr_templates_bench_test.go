@@ -239,7 +239,7 @@ func createBenchmarkTemplateData() *TemplateData {
 				Percentage: 82.3,
 			},
 			Summary: CoverageSummary{
-				Direction:     "improved",
+				Direction:     directionImproved,
 				Magnitude:     "significant",
 				OverallImpact: "positive",
 			},
@@ -248,7 +248,7 @@ func createBenchmarkTemplateData() *TemplateData {
 			BasePercentage:    75.5,
 			CurrentPercentage: 82.3,
 			Change:            6.8,
-			Direction:         "improved",
+			Direction:         directionImproved,
 			Magnitude:         "significant",
 			IsSignificant:     true,
 		},
@@ -273,7 +273,7 @@ func createSmallTemplateData() *TemplateData {
 				Percentage: 91.0,
 			},
 			Summary: CoverageSummary{
-				Direction:     "improved",
+				Direction:     directionImproved,
 				Magnitude:     "minor",
 				OverallImpact: "positive",
 			},
@@ -282,7 +282,7 @@ func createSmallTemplateData() *TemplateData {
 			BasePercentage:    90.0,
 			CurrentPercentage: 91.0,
 			Change:            1.0,
-			Direction:         "improved",
+			Direction:         directionImproved,
 			Magnitude:         "minor",
 			IsSignificant:     false,
 		},
@@ -294,7 +294,7 @@ func createLargeTemplateData() *TemplateData {
 	// Add more complex data structures for large template testing
 	data.Coverage.Overall.TotalStatements = 50000
 	data.Coverage.Overall.CoveredStatements = 40000
-	data.Coverage.Summary.Direction = "improved"
+	data.Coverage.Summary.Direction = directionImproved
 	data.Coverage.Summary.Magnitude = "significant"
 	return data
 }

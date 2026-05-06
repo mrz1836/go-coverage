@@ -21,7 +21,7 @@ func TestGetMainBranches(t *testing.T) {
 		{
 			name:     "default branches",
 			envValue: "",
-			expected: []string{"master", "main"},
+			expected: []string{defaultBranch, "main"},
 		},
 		{
 			name:     "single custom branch",
@@ -31,12 +31,12 @@ func TestGetMainBranches(t *testing.T) {
 		{
 			name:     "multiple custom branches",
 			envValue: "master,main,develop",
-			expected: []string{"master", "main", "develop"},
+			expected: []string{defaultBranch, "main", "develop"},
 		},
 		{
 			name:     "branches with spaces",
 			envValue: "master, main , develop ",
-			expected: []string{"master", "main", "develop"},
+			expected: []string{defaultBranch, "main", "develop"},
 		},
 	}
 
@@ -87,7 +87,7 @@ func TestGetPrimaryMainBranch(t *testing.T) {
 			name:              "fallback to master",
 			defaultMainBranch: "",
 			mainBranches:      "",
-			expected:          "master",
+			expected:          defaultBranch,
 		},
 	}
 
@@ -141,7 +141,7 @@ func TestGetDefaultBranch(t *testing.T) {
 		{
 			name:     "no env variable set",
 			envValue: "",
-			expected: "master", // history.DefaultBranch
+			expected: defaultBranch, // history.DefaultBranch
 		},
 	}
 
@@ -219,9 +219,9 @@ func TestGetStatusIcon(t *testing.T) {
 func TestCompleteCommandFlags(t *testing.T) {
 	// Create a Commands instance for testing
 	versionInfo := VersionInfo{
-		Version:   "test",
-		Commit:    "test-commit",
-		BuildDate: "test-date",
+		Version:   testCoverageLabel,
+		Commit:    testCommitStr,
+		BuildDate: testDateStr,
 	}
 	commands := NewCommands(versionInfo)
 
@@ -230,11 +230,11 @@ func TestCompleteCommandFlags(t *testing.T) {
 		flagType     string
 		defaultValue string
 	}{
-		"input":        {"string", ""},
-		"output":       {"string", ""},
-		"skip-history": {"bool", "false"},
-		"skip-github":  {"bool", "false"},
-		"dry-run":      {"bool", "false"},
+		"input":        {flagTypeString, ""},
+		"output":       {flagTypeString, ""},
+		"skip-history": {"bool", flagBoolFalse},
+		"skip-github":  {"bool", flagBoolFalse},
+		flagDryRun:     {"bool", flagBoolFalse},
 	}
 
 	for flagName, expected := range expectedFlags {
@@ -251,13 +251,13 @@ func TestCompleteCommandMetadata(t *testing.T) {
 	// Test command metadata
 	// Create a Commands instance for testing
 	versionInfo := VersionInfo{
-		Version:   "test",
-		Commit:    "test-commit",
-		BuildDate: "test-date",
+		Version:   testCoverageLabel,
+		Commit:    testCommitStr,
+		BuildDate: testDateStr,
 	}
 	commands := NewCommands(versionInfo)
 
-	assert.Equal(t, "complete", commands.Complete.Use)
+	assert.Equal(t, cmdComplete, commands.Complete.Use)
 	assert.Equal(t, "Run complete coverage pipeline", commands.Complete.Short)
 	assert.Contains(t, commands.Complete.Long, "Run the complete coverage pipeline")
 	assert.NotNil(t, commands.Complete.RunE)
@@ -282,14 +282,14 @@ github.com/test/repo/utils.go:8.1,10.2 2 2
 	var buf bytes.Buffer
 	// Create a Commands instance for testing
 	versionInfo := VersionInfo{
-		Version:   "test",
-		Commit:    "test-commit",
-		BuildDate: "test-date",
+		Version:   testCoverageLabel,
+		Commit:    testCommitStr,
+		BuildDate: testDateStr,
 	}
 	commands := NewCommands(versionInfo)
 
 	testCmd := &cobra.Command{
-		Use:  "complete",
+		Use:  cmdComplete,
 		RunE: commands.Complete.RunE,
 	}
 	testCmd.SetOut(&buf)
@@ -327,7 +327,7 @@ github.com/test/repo/utils.go:8.1,10.2 2 2
 
 	require.NoError(t, os.Setenv("GO_COVERAGE_TEST_CONFIG_DIR", "/nonexistent-test-isolation-dir"))
 	require.NoError(t, os.Setenv("GITHUB_REPOSITORY", "test/repo"))
-	require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", "test"))
+	require.NoError(t, os.Setenv("GITHUB_REPOSITORY_OWNER", testCoverageLabel))
 	require.NoError(t, os.Setenv("GITHUB_SHA", "abc123"))
 	require.NoError(t, os.Setenv("GITHUB_TOKEN", "test-token"))
 	require.NoError(t, os.Setenv("GO_COVERAGE_THRESHOLD", "0.0")) // Disable threshold for test

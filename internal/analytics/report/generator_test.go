@@ -28,8 +28,8 @@ func (suite *GeneratorTestSuite) SetupTest() {
 
 	suite.config = &Config{
 		OutputDir:         suite.tempDir,
-		RepositoryOwner:   "test-owner",
-		RepositoryName:    "test-repo",
+		RepositoryOwner:   testOwnerName,
+		RepositoryName:    testRepoName,
 		BranchName:        "master",
 		CommitSHA:         "abc123def456",
 		GoogleAnalyticsID: "GA-123456789",
@@ -142,8 +142,8 @@ func (suite *GeneratorTestSuite) TestGenerateInvalidOutputDir() {
 
 	invalidConfig := &Config{
 		OutputDir:       invalidFile,
-		RepositoryOwner: "test-owner",
-		RepositoryName:  "test-repo",
+		RepositoryOwner: testOwnerName,
+		RepositoryName:  testRepoName,
 	}
 
 	generator := NewGenerator(invalidConfig)
@@ -169,8 +169,8 @@ func (suite *GeneratorTestSuite) TestGeneratePermissionDenied() {
 
 	restrictedConfig := &Config{
 		OutputDir:       restrictedDir,
-		RepositoryOwner: "test-owner",
-		RepositoryName:  "test-repo",
+		RepositoryOwner: testOwnerName,
+		RepositoryName:  testRepoName,
 	}
 
 	generator := NewGenerator(restrictedConfig)
@@ -385,8 +385,8 @@ func (suite *GeneratorTestSuite) TestConcurrentGeneration() {
 
 			config := &Config{
 				OutputDir:       tempDir,
-				RepositoryOwner: "test-owner",
-				RepositoryName:  "test-repo",
+				RepositoryOwner: testOwnerName,
+				RepositoryName:  testRepoName,
 				BranchName:      "master",
 				CommitSHA:       "abc123def456",
 			}
@@ -515,8 +515,8 @@ func TestGeneratorTestSuite(t *testing.T) {
 func BenchmarkNewGenerator(b *testing.B) {
 	config := &Config{
 		OutputDir:       "/tmp",
-		RepositoryOwner: "test-owner",
-		RepositoryName:  "test-repo",
+		RepositoryOwner: testOwnerName,
+		RepositoryName:  testRepoName,
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -528,8 +528,8 @@ func BenchmarkNewGenerator(b *testing.B) {
 func BenchmarkBuildReportData(b *testing.B) {
 	config := &Config{
 		OutputDir:       "/tmp",
-		RepositoryOwner: "test-owner",
-		RepositoryName:  "test-repo",
+		RepositoryOwner: testOwnerName,
+		RepositoryName:  testRepoName,
 		BranchName:      "master",
 		CommitSHA:       "abc123def456",
 	}

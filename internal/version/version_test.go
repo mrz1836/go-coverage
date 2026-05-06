@@ -10,6 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Test constants for version testing
+const (
+	testVersion123 = "1.2.3"
+)
+
 // TestGetLatestRelease tests the GetLatestRelease function with HTTP integration
 // Since the function has a hardcoded GitHub API URL, this is effectively an integration test
 // that will make real HTTP requests to GitHub. In a production environment, this would be refactored
@@ -105,20 +110,20 @@ func TestCompareVersions(t *testing.T) {
 		// Basic version comparisons
 		{
 			name:     "V1GreaterThanV2",
-			v1:       "1.2.3",
+			v1:       testVersion123,
 			v2:       "1.2.2",
 			expected: 1,
 		},
 		{
 			name:     "V1LessThanV2",
 			v1:       "1.2.2",
-			v2:       "1.2.3",
+			v2:       testVersion123,
 			expected: -1,
 		},
 		{
 			name:     "V1EqualsV2",
-			v1:       "1.2.3",
-			v2:       "1.2.3",
+			v1:       testVersion123,
+			v2:       testVersion123,
 			expected: 0,
 		},
 		// Version with 'v' prefix
@@ -131,7 +136,7 @@ func TestCompareVersions(t *testing.T) {
 		{
 			name:     "MixedVPrefix",
 			v1:       "v1.2.3",
-			v2:       "1.2.3",
+			v2:       testVersion123,
 			expected: 0,
 		},
 		// Major version differences
@@ -157,56 +162,56 @@ func TestCompareVersions(t *testing.T) {
 		// Development versions and commit hashes
 		{
 			name:     "DevVersionVsRelease",
-			v1:       "dev",
-			v2:       "1.2.3",
+			v1:       devVersionString,
+			v2:       testVersion123,
 			expected: -1,
 		},
 		{
 			name:     "ReleaseVsDevVersion",
-			v1:       "1.2.3",
-			v2:       "dev",
+			v1:       testVersion123,
+			v2:       devVersionString,
 			expected: 1,
 		},
 		{
 			name:     "BothDevVersions",
-			v1:       "dev",
-			v2:       "dev",
+			v1:       devVersionString,
+			v2:       devVersionString,
 			expected: 0,
 		},
 		{
 			name:     "DevDirtyVsRelease",
 			v1:       "dev-dirty",
-			v2:       "1.2.3",
+			v2:       testVersion123,
 			expected: -1,
 		},
 		{
 			name:     "ReleaseVsDevDirty",
-			v1:       "1.2.3",
+			v1:       testVersion123,
 			v2:       "dev-dirty",
 			expected: 1,
 		},
 		{
 			name:     "DevVsDevDirty",
-			v1:       "dev",
+			v1:       devVersionString,
 			v2:       "dev-dirty",
 			expected: 0,
 		},
 		{
 			name:     "DevDirtyVsDev",
 			v1:       "dev-dirty",
-			v2:       "dev",
+			v2:       devVersionString,
 			expected: 0,
 		},
 		{
 			name:     "EmptyVersionVsRelease",
 			v1:       "",
-			v2:       "1.2.3",
+			v2:       testVersion123,
 			expected: -1,
 		},
 		{
 			name:     "CommitHashVsRelease",
 			v1:       "abc123def456",
-			v2:       "1.2.3",
+			v2:       testVersion123,
 			expected: -1,
 		},
 		{
@@ -219,7 +224,7 @@ func TestCompareVersions(t *testing.T) {
 		{
 			name:     "DifferentVersionLengths",
 			v1:       "1.2.3.4",
-			v2:       "1.2.3",
+			v2:       testVersion123,
 			expected: 0, // Only compares first 3 parts
 		},
 		{
@@ -244,7 +249,7 @@ func TestCompareVersions(t *testing.T) {
 		{
 			name:     "VersionWithSuffix",
 			v1:       "1.2.3-rc1",
-			v2:       "1.2.3",
+			v2:       testVersion123,
 			expected: 0, // Suffixes are ignored in comparison
 		},
 	}
@@ -269,7 +274,7 @@ func TestParseVersion(t *testing.T) {
 	}{
 		{
 			name:     "StandardVersion",
-			version:  "1.2.3",
+			version:  testVersion123,
 			expected: []int{1, 2, 3},
 		},
 		{
@@ -341,37 +346,37 @@ func TestIsNewerVersion(t *testing.T) {
 		{
 			name:           "NewerVersionAvailable",
 			currentVersion: "1.2.2",
-			latestVersion:  "1.2.3",
+			latestVersion:  testVersion123,
 			expected:       true,
 		},
 		{
 			name:           "SameVersion",
-			currentVersion: "1.2.3",
-			latestVersion:  "1.2.3",
+			currentVersion: testVersion123,
+			latestVersion:  testVersion123,
 			expected:       false,
 		},
 		{
 			name:           "OlderVersionProvided",
-			currentVersion: "1.2.3",
+			currentVersion: testVersion123,
 			latestVersion:  "1.2.2",
 			expected:       false,
 		},
 		{
 			name:           "DevVersionCurrent",
-			currentVersion: "dev",
-			latestVersion:  "1.2.3",
+			currentVersion: devVersionString,
+			latestVersion:  testVersion123,
 			expected:       true,
 		},
 		{
 			name:           "DevDirtyVersionCurrent",
 			currentVersion: "dev-dirty",
-			latestVersion:  "1.2.3",
+			latestVersion:  testVersion123,
 			expected:       true,
 		},
 		{
 			name:           "DevVersionLatest",
-			currentVersion: "1.2.3",
-			latestVersion:  "dev",
+			currentVersion: testVersion123,
+			latestVersion:  devVersionString,
 			expected:       false,
 		},
 		{
@@ -402,28 +407,28 @@ func TestNormalizeVersion(t *testing.T) {
 	}{
 		{
 			name:     "StandardVersion",
-			version:  "1.2.3",
-			expected: "1.2.3",
+			version:  testVersion123,
+			expected: testVersion123,
 		},
 		{
 			name:     "VersionWithVPrefix",
 			version:  "v1.2.3",
-			expected: "1.2.3",
+			expected: testVersion123,
 		},
 		{
 			name:     "VersionWithSuffix",
 			version:  "1.2.3-rc1",
-			expected: "1.2.3",
+			expected: testVersion123,
 		},
 		{
 			name:     "VersionWithWhitespace",
 			version:  "  1.2.3  ",
-			expected: "1.2.3",
+			expected: testVersion123,
 		},
 		{
 			name:     "VersionWithVPrefixAndSuffix",
 			version:  "v1.2.3-dirty",
-			expected: "1.2.3",
+			expected: testVersion123,
 		},
 		{
 			name:     "EmptyVersion",
@@ -443,7 +448,7 @@ func TestNormalizeVersion(t *testing.T) {
 		{
 			name:     "VersionWithMultipleDashes",
 			version:  "1.2.3-rc1-dirty",
-			expected: "1.2.3",
+			expected: testVersion123,
 		},
 	}
 
@@ -517,12 +522,12 @@ func TestIsCommitHash(t *testing.T) {
 		},
 		{
 			name:     "VersionString",
-			input:    "1.2.3",
+			input:    testVersion123,
 			expected: false,
 		},
 		{
 			name:     "DevString",
-			input:    "dev",
+			input:    devVersionString,
 			expected: false,
 		},
 		{
@@ -579,12 +584,12 @@ func TestInfoStruct(t *testing.T) {
 
 	info := Info{
 		Current: "1.2.2",
-		Latest:  "1.2.3",
+		Latest:  testVersion123,
 		IsNewer: true,
 	}
 
 	assert.Equal(t, "1.2.2", info.Current)
-	assert.Equal(t, "1.2.3", info.Latest)
+	assert.Equal(t, testVersion123, info.Latest)
 	assert.True(t, info.IsNewer)
 }
 
@@ -600,7 +605,7 @@ func TestVersionComparisonWorkflow(t *testing.T) {
 
 	// Test typical version comparison workflow
 	currentVersion := "1.2.2"
-	latestVersion := "1.2.3"
+	latestVersion := testVersion123
 
 	// Normalize versions
 	normalizedCurrent := NormalizeVersion(currentVersion)
@@ -614,7 +619,7 @@ func TestVersionComparisonWorkflow(t *testing.T) {
 	assert.True(t, isNewer)
 
 	// Test with development version
-	devVersion := "dev"
+	devVersion := devVersionString
 	normalizedDev := NormalizeVersion(devVersion)
 	isDevNewer := IsNewerVersion(normalizedDev, normalizedLatest)
 
@@ -631,7 +636,7 @@ func TestIsDevelopmentVersion(t *testing.T) {
 	}{
 		{
 			name:     "ExactDevVersion",
-			version:  "dev",
+			version:  devVersionString,
 			expected: true,
 		},
 		{
@@ -651,7 +656,7 @@ func TestIsDevelopmentVersion(t *testing.T) {
 		},
 		{
 			name:     "StandardVersion",
-			version:  "1.2.3",
+			version:  testVersion123,
 			expected: false,
 		},
 		{

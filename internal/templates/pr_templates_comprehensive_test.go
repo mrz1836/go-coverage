@@ -121,13 +121,13 @@ func TestTrendEmoji(t *testing.T) {
 		{
 			name:          "emojis disabled",
 			includeEmojis: false,
-			direction:     "improved",
+			direction:     directionImproved,
 			expected:      "",
 		},
 		{
 			name:          "improved direction",
 			includeEmojis: true,
-			direction:     "improved",
+			direction:     directionImproved,
 			expected:      "📈",
 		},
 		{
@@ -163,7 +163,7 @@ func TestTrendEmoji(t *testing.T) {
 		{
 			name:          "stable direction",
 			includeEmojis: true,
-			direction:     "stable",
+			direction:     directionStable,
 			expected:      "📊",
 		},
 		{
@@ -201,13 +201,13 @@ func TestRiskEmoji(t *testing.T) {
 		{
 			name:          "emojis disabled",
 			includeEmojis: false,
-			risk:          "high",
+			risk:          priorityHigh,
 			expected:      "",
 		},
 		{
 			name:          "high risk",
 			includeEmojis: true,
-			risk:          "high",
+			risk:          priorityHigh,
 			expected:      "🚨",
 		},
 		{
@@ -219,13 +219,13 @@ func TestRiskEmoji(t *testing.T) {
 		{
 			name:          "medium risk",
 			includeEmojis: true,
-			risk:          "medium",
+			risk:          priorityMedium,
 			expected:      "⚠️",
 		},
 		{
 			name:          "low risk",
 			includeEmojis: true,
-			risk:          "low",
+			risk:          priorityLow,
 			expected:      "✅",
 		},
 		{
@@ -331,25 +331,25 @@ func TestPriorityEmoji(t *testing.T) {
 		{
 			name:          "emojis disabled",
 			includeEmojis: false,
-			priority:      "high",
+			priority:      priorityHigh,
 			expected:      "",
 		},
 		{
 			name:          "high priority",
 			includeEmojis: true,
-			priority:      "high",
+			priority:      priorityHigh,
 			expected:      "🔥",
 		},
 		{
 			name:          "medium priority",
 			includeEmojis: true,
-			priority:      "medium",
+			priority:      priorityMedium,
 			expected:      "📌",
 		},
 		{
 			name:          "low priority",
 			includeEmojis: true,
-			priority:      "low",
+			priority:      priorityLow,
 			expected:      "💡",
 		},
 		{
@@ -546,49 +546,49 @@ func TestFilterFiles(t *testing.T) {
 			hideStableFiles: false,
 			maxFileChanges:  10,
 			files: []FileCoverageData{
-				{Filename: "file1.go", Status: "changed", Change: 5.0},
-				{Filename: "file2.go", Status: "stable", Change: 0.5},
+				{Filename: testFile1, Status: "changed", Change: 5.0},
+				{Filename: testFile2, Status: directionStable, Change: 0.5},
 				{Filename: "file3.go", Status: "new", Change: 10.0},
 			},
 			expectedLen:   3,
-			expectedFiles: []string{"file1.go", "file2.go", "file3.go"},
+			expectedFiles: []string{testFile1, testFile2, "file3.go"},
 		},
 		{
 			name:            "hide stable files",
 			hideStableFiles: true,
 			maxFileChanges:  10,
 			files: []FileCoverageData{
-				{Filename: "file1.go", Status: "changed", Change: 5.0},
-				{Filename: "file2.go", Status: "stable", Change: 0.5},
-				{Filename: "file3.go", Status: "stable", Change: 2.0},
+				{Filename: testFile1, Status: "changed", Change: 5.0},
+				{Filename: testFile2, Status: directionStable, Change: 0.5},
+				{Filename: "file3.go", Status: directionStable, Change: 2.0},
 				{Filename: "file4.go", Status: "new", Change: 10.0},
 			},
 			expectedLen:   3,
-			expectedFiles: []string{"file1.go", "file3.go", "file4.go"},
+			expectedFiles: []string{testFile1, "file3.go", "file4.go"},
 		},
 		{
 			name:            "limit max files",
 			hideStableFiles: false,
 			maxFileChanges:  2,
 			files: []FileCoverageData{
-				{Filename: "file1.go", Status: "changed", Change: 5.0},
-				{Filename: "file2.go", Status: "stable", Change: 0.5},
+				{Filename: testFile1, Status: "changed", Change: 5.0},
+				{Filename: testFile2, Status: directionStable, Change: 0.5},
 				{Filename: "file3.go", Status: "new", Change: 10.0},
 			},
 			expectedLen:   2,
-			expectedFiles: []string{"file1.go", "file2.go"},
+			expectedFiles: []string{testFile1, testFile2},
 		},
 		{
 			name:            "hide stable and limit",
 			hideStableFiles: true,
 			maxFileChanges:  1,
 			files: []FileCoverageData{
-				{Filename: "file1.go", Status: "changed", Change: 5.0},
-				{Filename: "file2.go", Status: "stable", Change: 0.5},
+				{Filename: testFile1, Status: "changed", Change: 5.0},
+				{Filename: testFile2, Status: directionStable, Change: 0.5},
 				{Filename: "file3.go", Status: "new", Change: 10.0},
 			},
 			expectedLen:   1,
-			expectedFiles: []string{"file1.go"},
+			expectedFiles: []string{testFile1},
 		},
 	}
 
@@ -626,7 +626,7 @@ func TestFilterPackages(t *testing.T) {
 			maxPackageChanges: 10,
 			packages: []PackageCoverageData{
 				{Package: "pkg1", Status: "changed", Change: 5.0},
-				{Package: "pkg2", Status: "stable", Change: 0.5},
+				{Package: "pkg2", Status: directionStable, Change: 0.5},
 				{Package: "pkg3", Status: "new", Change: 10.0},
 			},
 			expectedLen:      3,
@@ -638,8 +638,8 @@ func TestFilterPackages(t *testing.T) {
 			maxPackageChanges: 10,
 			packages: []PackageCoverageData{
 				{Package: "pkg1", Status: "changed", Change: 5.0},
-				{Package: "pkg2", Status: "stable", Change: 0.5},
-				{Package: "pkg3", Status: "stable", Change: 2.0},
+				{Package: "pkg2", Status: directionStable, Change: 0.5},
+				{Package: "pkg3", Status: directionStable, Change: 2.0},
 				{Package: "pkg4", Status: "new", Change: 10.0},
 			},
 			expectedLen:      3,
@@ -651,7 +651,7 @@ func TestFilterPackages(t *testing.T) {
 			maxPackageChanges: 2,
 			packages: []PackageCoverageData{
 				{Package: "pkg1", Status: "changed", Change: 5.0},
-				{Package: "pkg2", Status: "stable", Change: 0.5},
+				{Package: "pkg2", Status: directionStable, Change: 0.5},
 				{Package: "pkg3", Status: "new", Change: 10.0},
 			},
 			expectedLen:      2,
@@ -691,23 +691,23 @@ func TestFilterRecommendations(t *testing.T) {
 			name:               "sort by priority",
 			maxRecommendations: 10,
 			recommendations: []RecommendationData{
-				{Title: "Low Priority", Priority: "low"},
-				{Title: "High Priority", Priority: "high"},
-				{Title: "Medium Priority", Priority: "medium"},
+				{Title: "Low Priority", Priority: priorityLow},
+				{Title: "High Priority", Priority: priorityHigh},
+				{Title: "Medium Priority", Priority: priorityMedium},
 			},
 			expectedLen:        3,
-			expectedPriorities: []string{"high", "medium", "low"},
+			expectedPriorities: []string{priorityHigh, priorityMedium, priorityLow},
 		},
 		{
 			name:               "limit recommendations",
 			maxRecommendations: 2,
 			recommendations: []RecommendationData{
-				{Title: "Low Priority", Priority: "low"},
-				{Title: "High Priority", Priority: "high"},
-				{Title: "Medium Priority", Priority: "medium"},
+				{Title: "Low Priority", Priority: priorityLow},
+				{Title: "High Priority", Priority: priorityHigh},
+				{Title: "Medium Priority", Priority: priorityMedium},
 			},
 			expectedLen:        2,
-			expectedPriorities: []string{"high", "medium"},
+			expectedPriorities: []string{priorityHigh, priorityMedium},
 		},
 	}
 
@@ -731,10 +731,10 @@ func TestFilterRecommendations(t *testing.T) {
 
 func TestSortFilesByRisk(t *testing.T) {
 	files := []FileCoverageData{
-		{Filename: "low.go", Risk: "low", Change: 1.0},
+		{Filename: "low.go", Risk: priorityLow, Change: 1.0},
 		{Filename: "critical.go", Risk: "critical", Change: 5.0},
-		{Filename: "medium.go", Risk: "medium", Change: 3.0},
-		{Filename: "high.go", Risk: "high", Change: 2.0},
+		{Filename: "medium.go", Risk: priorityMedium, Change: 3.0},
+		{Filename: "high.go", Risk: priorityHigh, Change: 2.0},
 		{Filename: "critical2.go", Risk: "critical", Change: 10.0}, // Higher change
 	}
 
@@ -799,9 +799,9 @@ func TestConditionalLogicFunctions(t *testing.T) {
 			{"degraded", true},
 			{"down", true},
 			{"downward", true},
-			{"improved", false},
+			{directionImproved, false},
 			{"up", false},
-			{"stable", false},
+			{directionStable, false},
 		}
 
 		for _, tt := range tests {
@@ -815,8 +815,8 @@ func TestConditionalLogicFunctions(t *testing.T) {
 			direction string
 			expected  bool
 		}{
-			{"stable", true},
-			{"improved", false},
+			{directionStable, true},
+			{directionImproved, false},
 			{"degraded", false},
 			{"up", false},
 			{"down", false},
@@ -918,8 +918,8 @@ func TestSliceFunction(t *testing.T) {
 
 	t.Run("FileCoverageData", func(t *testing.T) {
 		files := []FileCoverageData{
-			{Filename: "file1.go"},
-			{Filename: "file2.go"},
+			{Filename: testFile1},
+			{Filename: testFile2},
 			{Filename: "file3.go"},
 			{Filename: "file4.go"},
 		}
@@ -930,10 +930,10 @@ func TestSliceFunction(t *testing.T) {
 			end      int
 			expected []string
 		}{
-			{"Normal", 1, 3, []string{"file2.go", "file3.go"}},
-			{"StartFromBeginning", 0, 2, []string{"file1.go", "file2.go"}},
+			{"Normal", 1, 3, []string{testFile2, "file3.go"}},
+			{"StartFromBeginning", 0, 2, []string{testFile1, testFile2}},
 			{"EndBeyondLength", 2, 10, []string{"file3.go", "file4.go"}},
-			{"NegativeStart", -1, 2, []string{"file1.go", "file2.go"}},
+			{"NegativeStart", -1, 2, []string{testFile1, testFile2}},
 			{"StartAfterEnd", 3, 1, []string{}},
 		}
 

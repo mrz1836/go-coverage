@@ -56,6 +56,13 @@ type Data struct {
 	AriaLabel string
 }
 
+// Badge label and color constants
+const (
+	defaultLabel     = "coverage"
+	defaultLogoColor = "white"
+	colorGoodGreen   = "#3fb950"
+)
+
 // TrendDirection represents coverage trend
 type TrendDirection int
 
@@ -73,9 +80,9 @@ func New() *Generator {
 	return &Generator{
 		config: &Config{
 			Style:     "flat",
-			Label:     "coverage",
+			Label:     defaultLabel,
 			Logo:      "",
-			LogoColor: "white",
+			LogoColor: defaultLogoColor,
 			ThresholdConfig: ThresholdConfig{
 				Excellent:  95.0,
 				Good:       85.0,
@@ -181,7 +188,7 @@ func (g *Generator) getColorForPercentage(percentage float64) string {
 	case percentage >= g.config.ThresholdConfig.Excellent:
 		return "#28a745" // Bright green (excellent coverage 95%+)
 	case percentage >= g.config.ThresholdConfig.Good:
-		return "#3fb950" // Green (good coverage 85-94%)
+		return colorGoodGreen // Green (good coverage 85-94%)
 	case percentage >= g.config.ThresholdConfig.Acceptable:
 		return "#ffc107" // Yellow (acceptable coverage 75-84%)
 	case percentage >= g.config.ThresholdConfig.Low:
@@ -197,7 +204,7 @@ func (g *Generator) getColorByName(name string) string {
 	case "excellent":
 		return "#28a745" // Bright green
 	case "good":
-		return "#3fb950" // Green
+		return colorGoodGreen // Green
 	case "acceptable":
 		return "#ffc107" // Yellow
 	case "low":

@@ -30,7 +30,7 @@ func TestStatusCheckManager_CreateStatusChecks(t *testing.T) {
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 				Coverage: CoverageStatusData{
 					Percentage: 85.0,
 				},
@@ -48,7 +48,7 @@ func TestStatusCheckManager_CreateStatusChecks(t *testing.T) {
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 			},
 			mockClient: func() *Client {
 				return &Client{}
@@ -114,7 +114,7 @@ func TestStatusCheckManager_createSingleStatus(t *testing.T) {
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 			},
 			context: "go-coverage/test",
 			statusInfo: StatusInfo{
@@ -148,7 +148,7 @@ func TestStatusCheckManager_createSingleStatus(t *testing.T) {
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 			},
 			context: "go-coverage/test",
 			statusInfo: StatusInfo{
@@ -256,13 +256,13 @@ func TestStatusCheckManager_buildMainCoverageStatus_withoutPR(t *testing.T) {
 				CoverageThreshold:  80.0,
 				AllowLabelOverride: false,
 				BlockOnFailure:     true,
-				MainContext:        "coverage/total",
+				MainContext:        ContextCoverage,
 				IncludeTargetURLs:  false,
 			},
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 				Coverage: CoverageStatusData{
 					Percentage: 85.0,
 					Change:     2.5,
@@ -278,13 +278,13 @@ func TestStatusCheckManager_buildMainCoverageStatus_withoutPR(t *testing.T) {
 				CoverageThreshold:  80.0,
 				AllowLabelOverride: false,
 				BlockOnFailure:     true,
-				MainContext:        "coverage/total",
+				MainContext:        ContextCoverage,
 				IncludeTargetURLs:  false,
 			},
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 				Coverage: CoverageStatusData{
 					Percentage: 75.0,
 					Change:     -1.2,
@@ -300,13 +300,13 @@ func TestStatusCheckManager_buildMainCoverageStatus_withoutPR(t *testing.T) {
 				CoverageThreshold:  80.0,
 				AllowLabelOverride: false,
 				BlockOnFailure:     false,
-				MainContext:        "coverage/total",
+				MainContext:        ContextCoverage,
 				IncludeTargetURLs:  false,
 			},
 			request: &StatusCheckRequest{
 				Owner:      "test-owner",
 				Repository: "test-repo",
-				CommitSHA:  "abc123",
+				CommitSHA:  testSHA,
 				Coverage: CoverageStatusData{
 					Percentage: 75.0,
 					Change:     -2.5,
@@ -430,14 +430,14 @@ func TestStatusCheckManager_compareRiskLevels(t *testing.T) {
 		risk2    string
 		expected int
 	}{
-		{"low better than medium", "low", "medium", -1}, // low=1, medium=2, so 1-2=-1
-		{"medium worse than low", "medium", "low", 1},   // medium=2, low=1, so 2-1=1
-		{"high worse than medium", "high", "medium", 1}, // high=3, medium=2, so 3-2=1
-		{"critical worst", "critical", "high", 1},       // critical=4, high=3, so 4-3=1
-		{"same risk level", "medium", "medium", 0},      // medium=2, medium=2, so 2-2=0
-		{"invalid risk1", "unknown", "low", 0},          // Invalid risk returns 0
-		{"invalid risk2", "low", "unknown", 0},          // Invalid risk returns 0
-		{"both invalid", "unknown", "invalid", 0},       // Both invalid returns 0
+		{"low better than medium", riskLow, riskMedium, -1},      // low=1, medium=2, so 1-2=-1
+		{"medium worse than low", riskMedium, riskLow, 1},        // medium=2, low=1, so 2-1=1
+		{"high worse than medium", riskLevelHigh, riskMedium, 1}, // high=3, medium=2, so 3-2=1
+		{"critical worst", riskLevelCrit, riskLevelHigh, 1},      // critical=4, high=3, so 4-3=1
+		{"same risk level", riskMedium, riskMedium, 0},           // medium=2, medium=2, so 2-2=0
+		{"invalid risk1", "unknown", riskLow, 0},                 // Invalid risk returns 0
+		{"invalid risk2", riskLow, "unknown", 0},                 // Invalid risk returns 0
+		{"both invalid", "unknown", "invalid", 0},                // Both invalid returns 0
 	}
 
 	for _, tt := range tests {
@@ -713,7 +713,7 @@ func TestStatusCheckManager_buildStatusChecks(t *testing.T) {
 			name: "with custom contexts",
 			config: &StatusCheckConfig{
 				ContextPrefix:      "custom",
-				MainContext:        "coverage/total",
+				MainContext:        ContextCoverage,
 				AdditionalContexts: []string{},
 				EnableQualityGates: false,
 			},
@@ -763,7 +763,7 @@ func TestStatusCheckManager_shouldBlockPRMethod(t *testing.T) {
 				EnableBlocking: false,
 			},
 			response: &StatusCheckResponse{
-				RequiredFailed: []string{"coverage/total"},
+				RequiredFailed: []string{ContextCoverage},
 			},
 			request:  &StatusCheckRequest{},
 			expected: false,
@@ -774,7 +774,7 @@ func TestStatusCheckManager_shouldBlockPRMethod(t *testing.T) {
 				EnableBlocking: true,
 			},
 			response: &StatusCheckResponse{
-				RequiredFailed: []string{"coverage/total"},
+				RequiredFailed: []string{ContextCoverage},
 			},
 			request:  &StatusCheckRequest{},
 			expected: true,

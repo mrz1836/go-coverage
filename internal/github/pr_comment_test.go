@@ -14,7 +14,7 @@ import (
 )
 
 func TestNewPRCommentManager(t *testing.T) {
-	client := New("test-token")
+	client := New(testToken)
 
 	tests := []struct {
 		name     string
@@ -160,11 +160,11 @@ func TestCreateOrUpdatePRComment(t *testing.T) {
 			defer server.Close()
 
 			client := NewWithConfig(&Config{
-				Token:      "test-token",
+				Token:      testToken,
 				BaseURL:    server.URL,
 				Timeout:    5 * time.Second,
 				RetryCount: 1,
-				UserAgent:  "test-agent",
+				UserAgent:  testAgent,
 			})
 
 			manager := NewPRCommentManager(client, nil)
@@ -253,11 +253,11 @@ func TestFindExistingCoverageComments(t *testing.T) {
 			defer server.Close()
 
 			client := NewWithConfig(&Config{
-				Token:      "test-token",
+				Token:      testToken,
 				BaseURL:    server.URL,
 				Timeout:    5 * time.Second,
 				RetryCount: 1,
-				UserAgent:  "test-agent",
+				UserAgent:  testAgent,
 			})
 
 			manager := NewPRCommentManager(client, nil)
@@ -277,7 +277,7 @@ func TestFindExistingCoverageComments(t *testing.T) {
 }
 
 func TestIsCoverageComment(t *testing.T) {
-	manager := NewPRCommentManager(New("test-token"), nil)
+	manager := NewPRCommentManager(New(testToken), nil)
 
 	tests := []struct {
 		name     string
@@ -320,7 +320,7 @@ func TestIsCoverageComment(t *testing.T) {
 }
 
 func TestDetermineCommentAction(t *testing.T) {
-	manager := NewPRCommentManager(New("test-token"), &PRCommentConfig{
+	manager := NewPRCommentManager(New(testToken), &PRCommentConfig{
 		MinUpdateIntervalMinutes: 5,
 		MaxCommentsPerPR:         1,
 	})
@@ -387,7 +387,7 @@ func TestDetermineCommentAction(t *testing.T) {
 }
 
 func TestHasSignificantCoverageChange(t *testing.T) {
-	manager := NewPRCommentManager(New("test-token"), nil)
+	manager := NewPRCommentManager(New(testToken), nil)
 
 	tests := []struct {
 		name        string
@@ -489,11 +489,11 @@ func TestCreateCoverageStatusCheck(t *testing.T) {
 			defer server.Close()
 
 			client := NewWithConfig(&Config{
-				Token:      "test-token",
+				Token:      testToken,
 				BaseURL:    server.URL,
 				Timeout:    5 * time.Second,
 				RetryCount: 1,
-				UserAgent:  "test-agent",
+				UserAgent:  testAgent,
 			})
 
 			manager := NewPRCommentManager(client, &PRCommentConfig{
@@ -513,7 +513,7 @@ func TestCreateCoverageStatusCheck(t *testing.T) {
 }
 
 func TestExtractCommentMetadata(t *testing.T) {
-	manager := NewPRCommentManager(New("test-token"), nil)
+	manager := NewPRCommentManager(New(testToken), nil)
 
 	tests := []struct {
 		name     string
@@ -604,11 +604,11 @@ func TestDeletePRComments(t *testing.T) {
 			defer server.Close()
 
 			client := NewWithConfig(&Config{
-				Token:      "test-token",
+				Token:      testToken,
 				BaseURL:    server.URL,
 				Timeout:    5 * time.Second,
 				RetryCount: 1,
-				UserAgent:  "test-agent",
+				UserAgent:  testAgent,
 			})
 
 			manager := NewPRCommentManager(client, nil)
@@ -667,11 +667,11 @@ func TestGetPRCommentStats(t *testing.T) {
 			defer server.Close()
 
 			client := NewWithConfig(&Config{
-				Token:      "test-token",
+				Token:      testToken,
 				BaseURL:    server.URL,
 				Timeout:    5 * time.Second,
 				RetryCount: 1,
-				UserAgent:  "test-agent",
+				UserAgent:  testAgent,
 			})
 
 			manager := NewPRCommentManager(client, nil)

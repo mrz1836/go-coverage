@@ -116,9 +116,9 @@ func BenchmarkRenderSVG(b *testing.B) {
 	ctx := context.Background()
 
 	data := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		Style:     "flat",
 		AriaLabel: "Code coverage: 85.5 percent",
 	}
@@ -137,9 +137,9 @@ func BenchmarkRenderFlatBadge(b *testing.B) {
 	generator := New()
 
 	data := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		Style:     "flat",
 		AriaLabel: "Code coverage: 85.5 percent",
 	}
@@ -155,9 +155,9 @@ func BenchmarkRenderFlatSquareBadge(b *testing.B) {
 	generator := New()
 
 	data := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		Style:     "flat-square",
 		AriaLabel: "Code coverage: 85.5 percent",
 	}
@@ -173,9 +173,9 @@ func BenchmarkRenderForTheBadge(b *testing.B) {
 	generator := New()
 
 	data := Data{
-		Label:     "coverage",
+		Label:     defaultLabel,
 		Message:   "85.5%",
-		Color:     "#3fb950",
+		Color:     colorGoodGreen,
 		Style:     "for-the-badge",
 		AriaLabel: "Code coverage: 85.5 percent",
 	}

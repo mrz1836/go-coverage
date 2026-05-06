@@ -152,8 +152,8 @@ func (c *Commands) runUpgradeWithConfig(cmd *cobra.Command, config UpgradeConfig
 }
 
 func formatVersion(v string) string {
-	if v == "dev" || v == "" {
-		return "dev"
+	if v == devVersion || v == "" {
+		return devVersion
 	}
 	if !strings.HasPrefix(v, "v") {
 		return "v" + v
@@ -253,10 +253,10 @@ func isLikelyCommitHash(version string) bool {
 
 // isDevelopmentVersion checks if a version string represents a development version
 func isDevelopmentVersion(version string) bool {
-	if version == "dev" {
+	if version == devVersion {
 		return true
 	}
-	// Check if version starts with "dev" (e.g., "dev-dirty")
+	// Check if version starts with devVersion (e.g., "dev-dirty")
 	if strings.HasPrefix(version, "dev-") {
 		return true
 	}

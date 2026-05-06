@@ -12,7 +12,7 @@ import (
 // BenchmarkGenerate benchmarks dashboard generation
 func BenchmarkGenerate(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName: "BenchmarkProject",
+		ProjectName: benchProjectName,
 		OutputDir:   b.TempDir(),
 	})
 	ctx := context.Background()
@@ -30,7 +30,7 @@ func BenchmarkGenerate(b *testing.B) {
 // BenchmarkGenerateSmall benchmarks dashboard generation with small dataset
 func BenchmarkGenerateSmall(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName: "BenchmarkProject",
+		ProjectName: benchProjectName,
 		OutputDir:   b.TempDir(),
 	})
 	ctx := context.Background()
@@ -48,7 +48,7 @@ func BenchmarkGenerateSmall(b *testing.B) {
 // BenchmarkGenerateLarge benchmarks dashboard generation with large dataset
 func BenchmarkGenerateLarge(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName: "BenchmarkProject",
+		ProjectName: benchProjectName,
 		OutputDir:   b.TempDir(),
 	})
 	ctx := context.Background()
@@ -96,10 +96,10 @@ func BenchmarkRenderWithHistory(b *testing.B) {
 // BenchmarkGenerateWithOptions benchmarks generation with various options
 func BenchmarkGenerateWithOptions(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName:     "BenchmarkProject",
+		ProjectName:     benchProjectName,
 		OutputDir:       b.TempDir(),
 		RepositoryOwner: "test",
-		RepositoryName:  "repo",
+		RepositoryName:  testRepoName,
 		TemplateDir:     "",
 		AssetsDir:       "",
 	})
@@ -118,7 +118,7 @@ func BenchmarkGenerateWithOptions(b *testing.B) {
 // BenchmarkPrepareTemplateData benchmarks template data preparation
 func BenchmarkPrepareTemplateData(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName: "BenchmarkProject",
+		ProjectName: benchProjectName,
 		OutputDir:   b.TempDir(),
 	})
 	ctx := context.Background()
@@ -136,7 +136,7 @@ func BenchmarkPrepareTemplateData(b *testing.B) {
 // BenchmarkProcessPackageData benchmarks package data processing
 func BenchmarkProcessPackageData(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName: "BenchmarkProject",
+		ProjectName: benchProjectName,
 		OutputDir:   b.TempDir(),
 	})
 	ctx := context.Background()
@@ -154,7 +154,7 @@ func BenchmarkProcessPackageData(b *testing.B) {
 // BenchmarkGenerateChartData benchmarks chart data generation
 func BenchmarkGenerateChartData(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName: "BenchmarkProject",
+		ProjectName: benchProjectName,
 		OutputDir:   b.TempDir(),
 	})
 	ctx := context.Background()
@@ -172,7 +172,7 @@ func BenchmarkGenerateChartData(b *testing.B) {
 // BenchmarkMemoryAllocation benchmarks memory allocation during generation
 func BenchmarkMemoryAllocation(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName: "BenchmarkProject",
+		ProjectName: benchProjectName,
 		OutputDir:   b.TempDir(),
 	})
 	ctx := context.Background()
@@ -196,7 +196,7 @@ func BenchmarkConcurrentGeneration(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		generator := NewGenerator(&GeneratorConfig{
-			ProjectName: "BenchmarkProject",
+			ProjectName: benchProjectName,
 			OutputDir:   b.TempDir(),
 		})
 
@@ -224,7 +224,7 @@ func BenchmarkTemplateExecution(b *testing.B) {
 // BenchmarkStaticAssetHandling benchmarks static asset processing
 func BenchmarkStaticAssetHandling(b *testing.B) {
 	generator := NewGenerator(&GeneratorConfig{
-		ProjectName: "BenchmarkProject",
+		ProjectName: benchProjectName,
 		OutputDir:   b.TempDir(),
 	})
 	ctx := context.Background()
@@ -290,7 +290,7 @@ func createSmallCoverageData() *CoverageData {
 		Timestamp:     time.Now(),
 		Packages: []PackageCoverage{
 			{
-				Name:         "main",
+				Name:         testBranchMain,
 				Coverage:     80.0,
 				TotalLines:   100,
 				CoveredLines: 80,
@@ -354,7 +354,7 @@ func createLargeCoverageData() *CoverageData {
 
 func createBenchmarkTemplateData() map[string]interface{} {
 	return map[string]interface{}{
-		"ProjectName":     "BenchmarkProject",
+		"ProjectName":     benchProjectName,
 		"RepositoryOwner": "test",
 		"RepositoryName":  "benchmark-repo",
 		"Coverage":        75.5,
@@ -366,7 +366,7 @@ func createBenchmarkTemplateData() map[string]interface{} {
 		"PackagesTracked": 5,
 		"Timestamp":       time.Now(),
 		"RepositoryURL":   "https://github.com/test/benchmark-repo",
-		"Branch":          "main",
+		"Branch":          testBranchMain,
 		"CommitSHA":       "abc123d",
 		"CoverageTrend":   "2.5",
 		"HasHistory":      false,

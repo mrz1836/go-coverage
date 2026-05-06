@@ -67,8 +67,8 @@ func TestSaveRecord(t *testing.T) {
 	t.Run("Save single record", func(t *testing.T) {
 		record := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.5,
 			TotalLines:   1000,
 			CoveredLines: 855,
@@ -99,8 +99,8 @@ func TestSaveRecord(t *testing.T) {
 		records := []*CoverageRecord{
 			{
 				Timestamp:    time.Now().Add(-2 * time.Hour),
-				CommitSHA:    "abc123",
-				Branch:       "main",
+				CommitSHA:    testCommitSHA,
+				Branch:       testMainBranch,
 				Percentage:   80.0,
 				TotalLines:   1000,
 				CoveredLines: 800,
@@ -108,7 +108,7 @@ func TestSaveRecord(t *testing.T) {
 			{
 				Timestamp:    time.Now().Add(-1 * time.Hour),
 				CommitSHA:    "def456",
-				Branch:       "main",
+				Branch:       testMainBranch,
 				Percentage:   85.0,
 				TotalLines:   1000,
 				CoveredLines: 850,
@@ -116,7 +116,7 @@ func TestSaveRecord(t *testing.T) {
 			{
 				Timestamp:    time.Now(),
 				CommitSHA:    "ghi789",
-				Branch:       "main",
+				Branch:       testMainBranch,
 				Percentage:   90.0,
 				TotalLines:   1000,
 				CoveredLines: 900,
@@ -148,7 +148,7 @@ func TestSaveRecord(t *testing.T) {
 			record := &CoverageRecord{
 				Timestamp:    time.Now().Add(time.Duration(i) * time.Minute),
 				CommitSHA:    fmt.Sprintf("commit%d", i),
-				Branch:       "main",
+				Branch:       testMainBranch,
 				Percentage:   float64(80 + i%20),
 				TotalLines:   1000,
 				CoveredLines: 800 + i%200,
@@ -177,8 +177,8 @@ func TestSaveRecord(t *testing.T) {
 
 		record := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.5,
 			TotalLines:   1000,
 			CoveredLines: 855,
@@ -196,8 +196,8 @@ func TestSaveRecord(t *testing.T) {
 
 		record := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.5,
 			TotalLines:   1000,
 			CoveredLines: 855,
@@ -256,8 +256,8 @@ func TestGetLastRecord(t *testing.T) {
 	t.Run("Get last record with single record", func(t *testing.T) {
 		expectedRecord := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.5,
 			TotalLines:   1000,
 			CoveredLines: 855,
@@ -283,8 +283,8 @@ func TestGetLastRecord(t *testing.T) {
 		records := []*CoverageRecord{
 			{
 				Timestamp:    time.Now().Add(-2 * time.Hour),
-				CommitSHA:    "abc123",
-				Branch:       "main",
+				CommitSHA:    testCommitSHA,
+				Branch:       testMainBranch,
 				Percentage:   80.0,
 				TotalLines:   1000,
 				CoveredLines: 800,
@@ -292,7 +292,7 @@ func TestGetLastRecord(t *testing.T) {
 			{
 				Timestamp:    time.Now().Add(-1 * time.Hour),
 				CommitSHA:    "def456",
-				Branch:       "main",
+				Branch:       testMainBranch,
 				Percentage:   85.0,
 				TotalLines:   1000,
 				CoveredLines: 850,
@@ -360,8 +360,8 @@ func TestGetChangeStatus(t *testing.T) {
 		// Save a record with lower coverage
 		prevRecord := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   80.0,
 			TotalLines:   1000,
 			CoveredLines: 800,
@@ -383,8 +383,8 @@ func TestGetChangeStatus(t *testing.T) {
 		// Save a record with higher coverage
 		prevRecord := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   90.0,
 			TotalLines:   1000,
 			CoveredLines: 900,
@@ -406,8 +406,8 @@ func TestGetChangeStatus(t *testing.T) {
 		// Save a record
 		prevRecord := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.0,
 			TotalLines:   1000,
 			CoveredLines: 850,
@@ -429,8 +429,8 @@ func TestGetChangeStatus(t *testing.T) {
 		// Save a record
 		prevRecord := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.0,
 			TotalLines:   1000,
 			CoveredLines: 850,
@@ -505,8 +505,8 @@ func TestLoadHistory(t *testing.T) {
 		expectedRecords := []CoverageRecord{
 			{
 				Timestamp:    time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-				CommitSHA:    "abc123",
-				Branch:       "main",
+				CommitSHA:    testCommitSHA,
+				Branch:       testMainBranch,
 				Percentage:   80.0,
 				TotalLines:   1000,
 				CoveredLines: 800,
@@ -609,8 +609,8 @@ func TestSaveHistory(t *testing.T) {
 		history := []CoverageRecord{
 			{
 				Timestamp:    time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-				CommitSHA:    "abc123",
-				Branch:       "main",
+				CommitSHA:    testCommitSHA,
+				Branch:       testMainBranch,
 				Percentage:   80.0,
 				TotalLines:   1000,
 				CoveredLines: 800,
@@ -686,8 +686,8 @@ func TestSaveHistory(t *testing.T) {
 		history := []CoverageRecord{
 			{
 				Timestamp:    time.Now(),
-				CommitSHA:    "abc123",
-				Branch:       "main",
+				CommitSHA:    testCommitSHA,
+				Branch:       testMainBranch,
 				Percentage:   80.0,
 				TotalLines:   1000,
 				CoveredLines: 800,
@@ -716,8 +716,8 @@ func TestSaveHistory(t *testing.T) {
 		history := []CoverageRecord{
 			{
 				Timestamp:    time.Now(),
-				CommitSHA:    "abc123",
-				Branch:       "main",
+				CommitSHA:    testCommitSHA,
+				Branch:       testMainBranch,
 				Percentage:   80.0,
 				TotalLines:   1000,
 				CoveredLines: 800,
@@ -753,8 +753,8 @@ func TestSaveHistory(t *testing.T) {
 		history := []CoverageRecord{
 			{
 				Timestamp:    time.Now(),
-				CommitSHA:    "abc123",
-				Branch:       "main",
+				CommitSHA:    testCommitSHA,
+				Branch:       testMainBranch,
 				Percentage:   80.0,
 				TotalLines:   1000,
 				CoveredLines: 800,
@@ -789,7 +789,7 @@ func TestConcurrentAccess(t *testing.T) {
 					record := &CoverageRecord{
 						Timestamp:    time.Now(),
 						CommitSHA:    fmt.Sprintf("commit-%d-%d", goroutineID, j),
-						Branch:       "main",
+						Branch:       testMainBranch,
 						Percentage:   float64(80 + goroutineID + j),
 						TotalLines:   1000,
 						CoveredLines: 800 + goroutineID + j,
@@ -830,8 +830,8 @@ func TestConcurrentAccess(t *testing.T) {
 		// First, save a record
 		record := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.0,
 			TotalLines:   1000,
 			CoveredLines: 850,
@@ -854,7 +854,7 @@ func TestConcurrentAccess(t *testing.T) {
 					done <- errExpectedRecordButGotNil
 					return
 				}
-				if lastRecord.CommitSHA != "abc123" {
+				if lastRecord.CommitSHA != testCommitSHA {
 					done <- fmt.Errorf("%w: expected 'abc123' but got '%s'", errCommitSHAMismatch, lastRecord.CommitSHA)
 					return
 				}
@@ -890,8 +890,8 @@ func TestErrorHandlingEdgeCases(t *testing.T) {
 		manager := NewManager(readOnlyDir)
 		record := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.0,
 			TotalLines:   1000,
 			CoveredLines: 850,
@@ -911,8 +911,8 @@ func TestErrorHandlingEdgeCases(t *testing.T) {
 		// Create a record with data that should be serializable
 		record := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.0,
 			TotalLines:   1000,
 			CoveredLines: 850,
@@ -944,8 +944,8 @@ func TestErrorHandlingEdgeCases(t *testing.T) {
 		manager := NewManager(longPath)
 		record := &CoverageRecord{
 			Timestamp:    time.Now(),
-			CommitSHA:    "abc123",
-			Branch:       "main",
+			CommitSHA:    testCommitSHA,
+			Branch:       testMainBranch,
 			Percentage:   85.0,
 			TotalLines:   1000,
 			CoveredLines: 850,

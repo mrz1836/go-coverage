@@ -10,6 +10,12 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// Test constants for analyzer testing
+const (
+	testCommitSHA    = "abc123"
+	testMasterBranch = "master"
+)
+
 // AnalyzerTestSuite provides test suite for trend analyzer
 type AnalyzerTestSuite struct {
 	suite.Suite
@@ -128,13 +134,13 @@ func (suite *AnalyzerTestSuite) TestLoadHistoryDataDirectMapping() {
 		{
 			Timestamp: time.Now().Add(-2 * time.Hour),
 			Coverage:  struct{ Percentage float64 }{Percentage: 75.0},
-			Branch:    "master",
-			CommitSHA: "abc123",
+			Branch:    testMasterBranch,
+			CommitSHA: testCommitSHA,
 		},
 		{
 			Timestamp: time.Now().Add(-1 * time.Hour),
 			Coverage:  struct{ Percentage float64 }{Percentage: 80.0},
-			Branch:    "master",
+			Branch:    testMasterBranch,
 			CommitSHA: "def456",
 		},
 	}
@@ -157,7 +163,7 @@ func (suite *AnalyzerTestSuite) TestLoadHistoryDataDirectMapping() {
 	unsortedPoint := AnalysisDataPoint{
 		Timestamp: time.Now().Add(-3 * time.Hour),
 		Coverage:  70.0,
-		Branch:    "master",
+		Branch:    testMasterBranch,
 		CommitSHA: "xyz789",
 	}
 	analyzer.data = append(analyzer.data, unsortedPoint)
@@ -180,7 +186,7 @@ func (suite *AnalyzerTestSuite) TestLoadHistoryDataDirectMapping() {
 		suite.NotZero(point.Timestamp, "Point %d should have timestamp", i)
 		suite.GreaterOrEqual(point.Coverage, 0.0, "Point %d should have valid coverage", i)
 		suite.LessOrEqual(point.Coverage, 100.0, "Point %d should have valid coverage", i)
-		suite.Equal("master", point.Branch, "Point %d should have correct branch", i)
+		suite.Equal(testMasterBranch, point.Branch, "Point %d should have correct branch", i)
 		suite.NotEmpty(point.CommitSHA, "Point %d should have commit SHA", i)
 	}
 }
@@ -191,17 +197,17 @@ func (suite *AnalyzerTestSuite) TestLoadCustomDataUnsorted() {
 		{
 			Timestamp: time.Now().Add(-2 * time.Hour),
 			Coverage:  75.0,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 		},
 		{
 			Timestamp: time.Now().Add(-4 * time.Hour),
 			Coverage:  70.0,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 		},
 		{
 			Timestamp: time.Now().Add(-1 * time.Hour),
 			Coverage:  80.0,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 		},
 	}
 
@@ -265,7 +271,7 @@ func (suite *AnalyzerTestSuite) TestAnalyzeTrendsInsufficientData() {
 		{
 			Timestamp: time.Now(),
 			Coverage:  75.0,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 		},
 	}
 	suite.analyzer.LoadCustomData(dataPoints)
@@ -801,37 +807,37 @@ func (suite *AnalyzerTestSuite) createSampleDataPoints() []AnalysisDataPoint {
 		{
 			Timestamp: now.Add(-10 * time.Hour),
 			Coverage:  70.0,
-			Branch:    "master",
-			CommitSHA: "abc123",
+			Branch:    testMasterBranch,
+			CommitSHA: testCommitSHA,
 		},
 		{
 			Timestamp: now.Add(-8 * time.Hour),
 			Coverage:  72.5,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 			CommitSHA: "def456",
 		},
 		{
 			Timestamp: now.Add(-6 * time.Hour),
 			Coverage:  75.0,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 			CommitSHA: "ghi789",
 		},
 		{
 			Timestamp: now.Add(-4 * time.Hour),
 			Coverage:  77.5,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 			CommitSHA: "jkl012",
 		},
 		{
 			Timestamp: now.Add(-2 * time.Hour),
 			Coverage:  80.0,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 			CommitSHA: "mno345",
 		},
 		{
 			Timestamp: now.Add(-1 * time.Hour),
 			Coverage:  82.5,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 			CommitSHA: "pqr678",
 		},
 	}
@@ -891,7 +897,7 @@ func BenchmarkAnalyzeTrends(b *testing.B) {
 		dataPoints[i] = AnalysisDataPoint{
 			Timestamp: now.Add(-time.Duration(i) * time.Hour),
 			Coverage:  70.0 + float64(i)*0.5,
-			Branch:    "master",
+			Branch:    testMasterBranch,
 		}
 	}
 

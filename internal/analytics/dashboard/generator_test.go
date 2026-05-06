@@ -10,9 +10,9 @@ import (
 
 func TestNewGenerator(t *testing.T) {
 	config := &GeneratorConfig{
-		ProjectName:      "test-project",
-		RepositoryOwner:  "owner",
-		RepositoryName:   "repo",
+		ProjectName:      testProjectName,
+		RepositoryOwner:  testRepoOwner,
+		RepositoryName:   testRepoName,
 		TemplateDir:      "/tmp/templates",
 		OutputDir:        "/tmp/output",
 		AssetsDir:        "/tmp/assets",
@@ -34,9 +34,9 @@ func TestNewGenerator(t *testing.T) {
 
 func TestNewGeneratorWithGitHubToken(t *testing.T) {
 	config := &GeneratorConfig{ //nolint:gosec // G101: test struct with a fake token, not a real credential
-		ProjectName:      "test-project",
-		RepositoryOwner:  "owner",
-		RepositoryName:   "repo",
+		ProjectName:      testProjectName,
+		RepositoryOwner:  testRepoOwner,
+		RepositoryName:   testRepoName,
 		TemplateDir:      "/tmp/templates",
 		OutputDir:        "/tmp/output",
 		AssetsDir:        "/tmp/assets",
@@ -65,9 +65,9 @@ func TestGenerator_Generate(t *testing.T) {
 	tempDir := t.TempDir()
 
 	config := &GeneratorConfig{
-		ProjectName:      "test-project",
-		RepositoryOwner:  "owner",
-		RepositoryName:   "repo",
+		ProjectName:      testProjectName,
+		RepositoryOwner:  testRepoOwner,
+		RepositoryName:   testRepoName,
 		TemplateDir:      tempDir,
 		OutputDir:        filepath.Join(tempDir, "output"),
 		AssetsDir:        filepath.Join(tempDir, "assets"),
@@ -78,7 +78,7 @@ func TestGenerator_Generate(t *testing.T) {
 	ctx := context.Background()
 
 	data := &CoverageData{
-		ProjectName:    "test-project",
+		ProjectName:    testProjectName,
 		RepositoryURL:  "https://github.com/owner/repo",
 		Branch:         "master",
 		CommitSHA:      "abc123def456",
@@ -185,14 +185,14 @@ func TestGenerator_formatCommitSHA(t *testing.T) {
 
 func TestGenerator_prepareTemplateData(t *testing.T) {
 	config := &GeneratorConfig{
-		ProjectName:     "test-project",
-		RepositoryOwner: "owner",
-		RepositoryName:  "repo",
+		ProjectName:     testProjectName,
+		RepositoryOwner: testRepoOwner,
+		RepositoryName:  testRepoName,
 	}
 	gen := NewGenerator(config)
 
 	data := &CoverageData{
-		ProjectName:    "test-project",
+		ProjectName:    testProjectName,
 		RepositoryURL:  "https://github.com/owner/repo.git",
 		Branch:         "master",
 		CommitSHA:      "abc123def456789",
@@ -232,7 +232,7 @@ func TestGenerator_prepareTemplateData(t *testing.T) {
 	result := gen.prepareTemplateData(context.Background(), data)
 
 	// Check key fields
-	if result["ProjectName"] != "test-project" {
+	if result["ProjectName"] != testProjectName {
 		t.Errorf("ProjectName = %v, want test-project", result["ProjectName"])
 	}
 	if result["Branch"] != "master" {
@@ -270,9 +270,9 @@ func TestRenderer_RenderDashboard(t *testing.T) {
 
 	testBranch := "master" // Use master as test case since that's what you use
 	data := map[string]interface{}{
-		"ProjectName":     "test-project",
-		"RepositoryOwner": "owner",
-		"RepositoryName":  "repo",
+		"ProjectName":     testProjectName,
+		"RepositoryOwner": testRepoOwner,
+		"RepositoryName":  testRepoName,
 		"Branch":          testBranch,
 		"CommitSHA":       "abc123d",
 		"TotalCoverage":   85.5,
@@ -339,7 +339,7 @@ func TestIsMainBranch(t *testing.T) {
 		},
 		{
 			name:       "main branch is main",
-			branchName: "main",
+			branchName: testBranchMain,
 			expected:   true,
 		},
 		{
@@ -396,8 +396,8 @@ func TestParseRepositoryURL(t *testing.T) {
 			name:      "SSH GitHub URL",
 			remoteURL: "git@github.com:owner/repo.git",
 			expected: &RepositoryInfo{
-				Name:     "repo",
-				Owner:    "owner",
+				Name:     testRepoName,
+				Owner:    testRepoOwner,
 				FullName: "owner/repo",
 				URL:      "git@github.com:owner/repo.git",
 				IsGitHub: true,
@@ -407,8 +407,8 @@ func TestParseRepositoryURL(t *testing.T) {
 			name:      "SSH GitHub URL without .git",
 			remoteURL: "git@github.com:owner/repo",
 			expected: &RepositoryInfo{
-				Name:     "repo",
-				Owner:    "owner",
+				Name:     testRepoName,
+				Owner:    testRepoOwner,
 				FullName: "owner/repo",
 				URL:      "git@github.com:owner/repo",
 				IsGitHub: true,
@@ -418,8 +418,8 @@ func TestParseRepositoryURL(t *testing.T) {
 			name:      "SSH non-GitHub URL",
 			remoteURL: "git@gitlab.com:owner/repo.git",
 			expected: &RepositoryInfo{
-				Name:     "repo",
-				Owner:    "owner",
+				Name:     testRepoName,
+				Owner:    testRepoOwner,
 				FullName: "owner/repo",
 				URL:      "git@gitlab.com:owner/repo.git",
 				IsGitHub: false,
@@ -429,8 +429,8 @@ func TestParseRepositoryURL(t *testing.T) {
 			name:      "HTTPS GitHub URL",
 			remoteURL: "https://github.com/owner/repo.git",
 			expected: &RepositoryInfo{
-				Name:     "repo",
-				Owner:    "owner",
+				Name:     testRepoName,
+				Owner:    testRepoOwner,
 				FullName: "owner/repo",
 				URL:      "https://github.com/owner/repo.git",
 				IsGitHub: true,
@@ -440,8 +440,8 @@ func TestParseRepositoryURL(t *testing.T) {
 			name:      "HTTPS GitHub URL without .git",
 			remoteURL: "https://github.com/owner/repo",
 			expected: &RepositoryInfo{
-				Name:     "repo",
-				Owner:    "owner",
+				Name:     testRepoName,
+				Owner:    testRepoOwner,
 				FullName: "owner/repo",
 				URL:      "https://github.com/owner/repo",
 				IsGitHub: true,
@@ -451,8 +451,8 @@ func TestParseRepositoryURL(t *testing.T) {
 			name:      "HTTPS non-GitHub URL",
 			remoteURL: "https://gitlab.com/owner/repo.git",
 			expected: &RepositoryInfo{
-				Name:     "repo",
-				Owner:    "owner",
+				Name:     testRepoName,
+				Owner:    testRepoOwner,
 				FullName: "owner/repo",
 				URL:      "https://gitlab.com/owner/repo.git",
 				IsGitHub: false,
@@ -517,7 +517,7 @@ func TestGenerator_GenerateErrorCases(t *testing.T) {
 	gen := NewGenerator(config)
 
 	data := &CoverageData{
-		ProjectName:   "test-project",
+		ProjectName:   testProjectName,
 		TotalCoverage: 85.5,
 		Timestamp:     time.Now(),
 	}
@@ -539,7 +539,7 @@ func TestGenerator_GenerateDataJSONErrors(t *testing.T) {
 	gen := NewGenerator(config)
 
 	data := &CoverageData{
-		ProjectName:   "test-project",
+		ProjectName:   testProjectName,
 		TotalCoverage: 85.5,
 		Timestamp:     time.Now(),
 	}
@@ -613,7 +613,7 @@ func TestPrepareTemplateDataBranchFallbacks(t *testing.T) {
 			},
 			data: &CoverageData{
 				RepositoryURL: "https://github.com/owner/repo.git",
-				Branch:        "main",
+				Branch:        testBranchMain,
 				CommitSHA:     "abc123",
 				TotalCoverage: 85.5,
 				Timestamp:     time.Now(),
@@ -802,7 +802,7 @@ func TestPrepareTemplateDataEdgeCases(t *testing.T) {
 		{
 			name: "minimal data with PR",
 			data: &CoverageData{
-				ProjectName:   "test-project",
+				ProjectName:   testProjectName,
 				PRNumber:      "123",
 				PRTitle:       "Test PR",
 				TotalCoverage: 85.5,
@@ -815,7 +815,7 @@ func TestPrepareTemplateDataEdgeCases(t *testing.T) {
 		{
 			name: "data without trend info",
 			data: &CoverageData{
-				ProjectName:   "test-project",
+				ProjectName:   testProjectName,
 				Branch:        "feature/test",
 				TotalCoverage: 75.0,
 				Timestamp:     time.Now(),
@@ -827,8 +827,8 @@ func TestPrepareTemplateDataEdgeCases(t *testing.T) {
 		{
 			name: "data with baseline coverage",
 			data: &CoverageData{
-				ProjectName:      "test-project",
-				Branch:           "main",
+				ProjectName:      testProjectName,
+				Branch:           testBranchMain,
 				BaselineCoverage: 80.0,
 				TotalCoverage:    85.5,
 				Timestamp:        time.Now(),
@@ -960,7 +960,7 @@ func TestGenerator_GenerateMarshalingErrors(t *testing.T) {
 	// We can't easily trigger JSON marshaling errors with normal data,
 	// but we can test the code paths
 	data := &CoverageData{
-		ProjectName:   "test-project",
+		ProjectName:   testProjectName,
 		TotalCoverage: 85.5,
 		Timestamp:     time.Now(),
 		History: []HistoricalPoint{
@@ -991,10 +991,10 @@ func TestGenerateDashboardHTMLError(t *testing.T) {
 	gen := NewGenerator(config)
 
 	data := &CoverageData{
-		ProjectName:   "test-project",
+		ProjectName:   testProjectName,
 		TotalCoverage: 85.5,
 		Timestamp:     time.Now(),
-		Branch:        "main",
+		Branch:        testBranchMain,
 		CommitSHA:     "abc123",
 	}
 
@@ -1046,7 +1046,7 @@ func TestGenerator_GenerateCompleteWorkflow(t *testing.T) {
 		{
 			name: "complete data with PR context",
 			config: &GeneratorConfig{
-				ProjectName:      "test-project",
+				ProjectName:      testProjectName,
 				RepositoryOwner:  "testowner",
 				RepositoryName:   "testrepo",
 				TemplateDir:      tempDir,
@@ -1055,7 +1055,7 @@ func TestGenerator_GenerateCompleteWorkflow(t *testing.T) {
 				GeneratorVersion: "1.0.0",
 			},
 			data: &CoverageData{
-				ProjectName:   "test-project",
+				ProjectName:   testProjectName,
 				RepositoryURL: "https://github.com/testowner/testrepo.git",
 				Branch:        "feature/test",
 				CommitSHA:     "abc123def456789",
@@ -1090,7 +1090,7 @@ func TestGenerator_GenerateCompleteWorkflow(t *testing.T) {
 					ChangePercent:   3.2,
 					ChangeLines:     48,
 					ComparedTo:      "branch",
-					ComparedToValue: "main",
+					ComparedToValue: testBranchMain,
 				},
 				History: []HistoricalPoint{
 					{
@@ -1116,7 +1116,7 @@ func TestGenerator_GenerateCompleteWorkflow(t *testing.T) {
 			},
 			data: &CoverageData{
 				ProjectName:   "minimal-project",
-				Branch:        "main",
+				Branch:        testBranchMain,
 				Timestamp:     time.Now(),
 				TotalCoverage: 75.0,
 				TotalLines:    100,
@@ -1181,7 +1181,7 @@ func TestGenerator_GenerateFileWriteErrors(t *testing.T) {
 	gen := NewGenerator(config)
 
 	data := &CoverageData{
-		ProjectName:   "test-project",
+		ProjectName:   testProjectName,
 		TotalCoverage: 85.5,
 		Timestamp:     time.Now(),
 	}
@@ -1216,7 +1216,7 @@ func TestRenderDashboardTemplateErrors(t *testing.T) {
 		"ProjectName":     nil, // Nil value might cause issues in templates
 		"TotalCoverage":   85.5,
 		"Timestamp":       time.Now(),
-		"Branch":          "main",
+		"Branch":          testBranchMain,
 		"CoveredFiles":    8,
 		"TotalFiles":      10,
 		"PackagesTracked": 2,
@@ -1259,10 +1259,10 @@ func TestGenerator_GenerateHTMLWriteError(t *testing.T) {
 	gen := NewGenerator(config)
 
 	data := &CoverageData{
-		ProjectName:   "test-project",
+		ProjectName:   testProjectName,
 		TotalCoverage: 85.5,
 		Timestamp:     time.Now(),
-		Branch:        "main",
+		Branch:        testBranchMain,
 		CommitSHA:     "abc123",
 	}
 
@@ -1323,7 +1323,7 @@ func TestPrepareBranchDataWithDynamicInfo(t *testing.T) {
 				RepositoryName:  "testrepo",
 			},
 			data: &CoverageData{
-				Branch:        "main",
+				Branch:        testBranchMain,
 				TotalCoverage: 90.0,
 				CoveredLines:  900,
 				TotalLines:    1000,
@@ -1356,9 +1356,9 @@ func TestPrepareBranchDataWithDynamicInfo(t *testing.T) {
 // TestPrepareTemplateDataWithBaselineCoverage tests baseline coverage scenarios
 func TestPrepareTemplateDataWithBaselineCoverage(t *testing.T) {
 	config := &GeneratorConfig{
-		ProjectName:     "test-project",
-		RepositoryOwner: "owner",
-		RepositoryName:  "repo",
+		ProjectName:     testProjectName,
+		RepositoryOwner: testRepoOwner,
+		RepositoryName:  testRepoName,
 	}
 	gen := NewGenerator(config)
 
@@ -1370,7 +1370,7 @@ func TestPrepareTemplateDataWithBaselineCoverage(t *testing.T) {
 		{
 			name: "with baseline coverage",
 			data: &CoverageData{
-				ProjectName:      "test-project",
+				ProjectName:      testProjectName,
 				Branch:           "feature",
 				BaselineCoverage: 80.0,
 				TotalCoverage:    85.5,
@@ -1383,8 +1383,8 @@ func TestPrepareTemplateDataWithBaselineCoverage(t *testing.T) {
 		{
 			name: "without baseline coverage",
 			data: &CoverageData{
-				ProjectName:   "test-project",
-				Branch:        "main",
+				ProjectName:   testProjectName,
+				Branch:        testBranchMain,
 				TotalCoverage: 85.5,
 				Timestamp:     time.Now(),
 				CoveredFiles:  8,
@@ -1420,7 +1420,7 @@ func TestGenerateDataJSONFileWriteError(t *testing.T) {
 	gen := NewGenerator(config)
 
 	data := &CoverageData{
-		ProjectName:   "test-project",
+		ProjectName:   testProjectName,
 		TotalCoverage: 85.5,
 		Timestamp:     time.Now(),
 	}
@@ -1444,9 +1444,9 @@ func TestGenerateDataJSONFileWriteError(t *testing.T) {
 // TestPrepareTemplateDataTrendBranches tests trend data branches
 func TestPrepareTemplateDataTrendBranches(t *testing.T) {
 	config := &GeneratorConfig{
-		ProjectName:     "test-project",
-		RepositoryOwner: "owner",
-		RepositoryName:  "repo",
+		ProjectName:     testProjectName,
+		RepositoryOwner: testRepoOwner,
+		RepositoryName:  testRepoName,
 	}
 	gen := NewGenerator(config)
 
@@ -1478,7 +1478,7 @@ func TestPrepareTemplateDataTrendBranches(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			data := &CoverageData{
-				ProjectName:   "test-project",
+				ProjectName:   testProjectName,
 				Branch:        "feature",
 				TotalCoverage: 85.5,
 				Timestamp:     time.Now(),
@@ -1519,8 +1519,8 @@ func TestPrepareTemplateDataURLFallbacks(t *testing.T) {
 		{
 			name: "commit URL fallback without repository URL",
 			data: &CoverageData{
-				ProjectName:   "test-project",
-				Branch:        "main",
+				ProjectName:   testProjectName,
+				Branch:        testBranchMain,
 				CommitSHA:     "abc123def456",
 				RepositoryURL: "", // Empty repository URL to trigger fallback
 				TotalCoverage: 85.5,
@@ -1533,7 +1533,7 @@ func TestPrepareTemplateDataURLFallbacks(t *testing.T) {
 		{
 			name: "branch URL fallback without repository URL",
 			data: &CoverageData{
-				ProjectName:   "test-project",
+				ProjectName:   testProjectName,
 				Branch:        "feature/test",
 				CommitSHA:     "abc123",
 				RepositoryURL: "", // Empty repository URL to trigger fallback
@@ -1718,10 +1718,10 @@ func TestRenderDashboardWithSubFunction(t *testing.T) {
 
 	// Data that will exercise the "sub" template function
 	data := map[string]interface{}{
-		"ProjectName":      "test-project",
-		"RepositoryOwner":  "owner",
-		"RepositoryName":   "repo",
-		"Branch":           "main",
+		"ProjectName":      testProjectName,
+		"RepositoryOwner":  testRepoOwner,
+		"RepositoryName":   testRepoName,
+		"Branch":           testBranchMain,
 		"CommitSHA":        "abc123d",
 		"TotalCoverage":    85.5,
 		"BaselineCoverage": 80.0, // This should trigger sub function usage

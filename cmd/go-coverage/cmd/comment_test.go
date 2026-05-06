@@ -231,12 +231,12 @@ func TestBuildTemplateData(t *testing.T) {
 	require.NotNil(t, result)
 	require.Equal(t, "testowner", result.Repository.Owner)
 	require.Equal(t, "testrepo", result.Repository.Name)
-	require.Equal(t, "master", result.Repository.DefaultBranch)
+	require.Equal(t, defaultBranch, result.Repository.DefaultBranch)
 	require.Equal(t, "https://github.com/testowner/testrepo", result.Repository.URL)
 
 	require.Equal(t, prNumber, result.PullRequest.Number)
 	require.Equal(t, "current", result.PullRequest.Branch)
-	require.Equal(t, "master", result.PullRequest.BaseBranch)
+	require.Equal(t, defaultBranch, result.PullRequest.BaseBranch)
 	require.Equal(t, cfg.GitHub.CommitSHA, result.PullRequest.CommitSHA)
 	require.Equal(t, "https://github.com/testowner/testrepo/pull/123", result.PullRequest.URL)
 
@@ -644,7 +644,7 @@ func TestNewCommentCmd(t *testing.T) {
 	require.NotNil(t, cmd.Flags().Lookup("generate-badges"))
 	require.NotNil(t, cmd.Flags().Lookup("enable-analysis"))
 	require.NotNil(t, cmd.Flags().Lookup("anti-spam"))
-	require.NotNil(t, cmd.Flags().Lookup("dry-run"))
+	require.NotNil(t, cmd.Flags().Lookup(flagDryRun))
 }
 
 // TestNewCommentCmdValidationErrors tests error scenarios in the comment command
@@ -941,7 +941,7 @@ github.com/test/repo/main.go:1.1,5.10 2 1
 
 	require.NoError(t, cmd.Flags().Set("pr", "123"))
 	require.NoError(t, cmd.Flags().Set("coverage", tempFile.Name()))
-	require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+	require.NoError(t, cmd.Flags().Set(flagDryRun, flagBoolTrue))
 
 	// Execute command
 	err = cmd.RunE(cmd, []string{})
@@ -1007,7 +1007,7 @@ func TestNewCommentCmdWithInvalidCoverageFile(t *testing.T) {
 
 			require.NoError(t, cmd.Flags().Set("pr", "123"))
 			require.NoError(t, cmd.Flags().Set("coverage", tt.coverageFile))
-			require.NoError(t, cmd.Flags().Set("dry-run", "true"))
+			require.NoError(t, cmd.Flags().Set(flagDryRun, flagBoolTrue))
 
 			err := cmd.RunE(cmd, []string{})
 			require.Error(t, err)
@@ -1071,12 +1071,12 @@ github.com/test/repo/main.go:1.1,5.10 2 1
 			flags: map[string]string{
 				"pr":              "123",
 				"coverage":        coverageFile.Name(),
-				"dry-run":         "true",
-				"status":          "true",
-				"block-merge":     "true",
-				"generate-badges": "true",
-				"enable-analysis": "true",
-				"anti-spam":       "true",
+				flagDryRun:        flagBoolTrue,
+				"status":          flagBoolTrue,
+				"block-merge":     flagBoolTrue,
+				"generate-badges": flagBoolTrue,
+				"enable-analysis": flagBoolTrue,
+				"anti-spam":       flagBoolTrue,
 				"badge-url":       "https://example.com/badge.svg",
 				"report-url":      "https://example.com/report",
 			},
@@ -1086,7 +1086,7 @@ github.com/test/repo/main.go:1.1,5.10 2 1
 			flags: map[string]string{
 				"pr":       "456",
 				"coverage": coverageFile.Name(),
-				"dry-run":  "true",
+				flagDryRun: flagBoolTrue,
 			},
 		},
 		{
@@ -1094,7 +1094,7 @@ github.com/test/repo/main.go:1.1,5.10 2 1
 			flags: map[string]string{
 				"pr":              "789",
 				"coverage":        coverageFile.Name(),
-				"dry-run":         "true",
+				flagDryRun:        flagBoolTrue,
 				"status":          "false",
 				"enable-analysis": "false",
 				"anti-spam":       "false",

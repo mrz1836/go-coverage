@@ -18,6 +18,19 @@ var (
 	ErrTemplateNotFound = errors.New("template not found")
 )
 
+// Coverage direction constants for template rendering
+const (
+	directionImproved = "improved"
+	directionStable   = "stable"
+)
+
+// Priority and risk level constants for template rendering
+const (
+	priorityHigh   = "high"
+	priorityMedium = "medium"
+	priorityLow    = "low"
+)
+
 // PRTemplateEngine handles advanced PR comment template rendering
 type PRTemplateEngine struct {
 	templates map[string]*template.Template
@@ -465,11 +478,11 @@ func (e *PRTemplateEngine) trendEmoji(direction string) string {
 	}
 
 	switch direction {
-	case "improved", "up", "upward":
+	case directionImproved, "up", "upward":
 		return "📈"
 	case "degraded", "down", "downward":
 		return "📉"
-	case "stable":
+	case directionStable:
 		return "📊"
 	case "volatile":
 		return "📊"
@@ -484,11 +497,11 @@ func (e *PRTemplateEngine) riskEmoji(risk string) string {
 	}
 
 	switch risk {
-	case "high", "critical":
+	case priorityHigh, "critical":
 		return "🚨"
-	case "medium":
+	case priorityMedium:
 		return "⚠️"
-	case "low":
+	case priorityLow:
 		return "✅"
 	default:
 		return "ℹ️"
@@ -524,11 +537,11 @@ func (e *PRTemplateEngine) priorityEmoji(priority string) string {
 	}
 
 	switch priority {
-	case "high":
+	case priorityHigh:
 		return "🔥"
-	case "medium":
+	case priorityMedium:
 		return "📌"
-	case "low":
+	case priorityLow:
 		return "💡"
 	default:
 		return "ℹ️"
@@ -629,7 +642,7 @@ func (e *PRTemplateEngine) filterFiles(files []FileCoverageData) []FileCoverageD
 
 	for _, file := range files {
 		// Skip stable files if configured
-		if e.config.HideStableFiles && file.Status == "stable" && math.Abs(file.Change) < 1.0 {
+		if e.config.HideStableFiles && file.Status == directionStable && math.Abs(file.Change) < 1.0 {
 			continue
 		}
 
@@ -649,7 +662,7 @@ func (e *PRTemplateEngine) filterPackages(packages []PackageCoverageData) []Pack
 
 	for _, pkg := range packages {
 		// Skip stable packages if configured
-		if e.config.HideStableFiles && pkg.Status == "stable" && math.Abs(pkg.Change) < 1.0 {
+		if e.config.HideStableFiles && pkg.Status == directionStable && math.Abs(pkg.Change) < 1.0 {
 			continue
 		}
 
@@ -667,7 +680,7 @@ func (e *PRTemplateEngine) filterPackages(packages []PackageCoverageData) []Pack
 func (e *PRTemplateEngine) filterRecommendations(recommendations []RecommendationData) []RecommendationData {
 	// Sort by priority
 	sort.Slice(recommendations, func(i, j int) bool {
-		priorities := map[string]int{"high": 3, "medium": 2, "low": 1}
+		priorities := map[string]int{priorityHigh: 3, priorityMedium: 2, priorityLow: 1}
 		return priorities[recommendations[i].Priority] > priorities[recommendations[j].Priority]
 	})
 
@@ -684,7 +697,7 @@ func (e *PRTemplateEngine) sortFilesByRisk(files []FileCoverageData) []FileCover
 	copy(sorted, files)
 
 	sort.Slice(sorted, func(i, j int) bool {
-		risks := map[string]int{"critical": 4, "high": 3, "medium": 2, "low": 1}
+		risks := map[string]int{"critical": 4, priorityHigh: 3, priorityMedium: 2, priorityLow: 1}
 		if risks[sorted[i].Risk] != risks[sorted[j].Risk] {
 			return risks[sorted[i].Risk] > risks[sorted[j].Risk]
 		}
@@ -710,7 +723,7 @@ func (e *PRTemplateEngine) isSignificant(change float64) bool {
 }
 
 func (e *PRTemplateEngine) isImproved(direction string) bool {
-	return direction == "improved" || direction == "up" || direction == "upward"
+	return direction == directionImproved || direction == "up" || direction == "upward"
 }
 
 func (e *PRTemplateEngine) isDegraded(direction string) bool {
@@ -718,7 +731,7 @@ func (e *PRTemplateEngine) isDegraded(direction string) bool {
 }
 
 func (e *PRTemplateEngine) isStable(direction string) bool {
-	return direction == "stable"
+	return direction == directionStable
 }
 
 func (e *PRTemplateEngine) needsAttention(percentage float64) bool {

@@ -21,7 +21,7 @@ func TestNewUpgradeCmd(t *testing.T) {
 
 	commands := &Commands{
 		Version: VersionInfo{
-			Version: "1.2.3",
+			Version: testVersionStr,
 		},
 	}
 
@@ -139,7 +139,7 @@ func TestRunUpgradeWithConfig(t *testing.T) {
 		},
 		{
 			name:           "DevVersionWithoutForce",
-			currentVersion: "dev",
+			currentVersion: devVersion,
 			config: UpgradeConfig{
 				Force:     false,
 				CheckOnly: false,
@@ -154,7 +154,7 @@ func TestRunUpgradeWithConfig(t *testing.T) {
 		},
 		{
 			name:           "DevVersionWithForce",
-			currentVersion: "dev",
+			currentVersion: devVersion,
 			config: UpgradeConfig{
 				Force:     true,
 				CheckOnly: false,
@@ -295,7 +295,7 @@ func TestFormatVersion(t *testing.T) {
 	}{
 		{
 			name:     "StandardVersion",
-			version:  "1.2.3",
+			version:  testVersionStr,
 			expected: "v1.2.3",
 		},
 		{
@@ -305,13 +305,13 @@ func TestFormatVersion(t *testing.T) {
 		},
 		{
 			name:     "DevVersion",
-			version:  "dev",
-			expected: "dev",
+			version:  devVersion,
+			expected: devVersion,
 		},
 		{
 			name:     "EmptyVersion",
 			version:  "",
-			expected: "dev",
+			expected: devVersion,
 		},
 		{
 			name:     "VersionWithoutV",
@@ -344,12 +344,12 @@ func TestGetInstalledVersion(t *testing.T) {
 		{
 			name:       "ValidVersionOutput",
 			mockOutput: "go-coverage version v1.2.3",
-			expected:   "1.2.3",
+			expected:   testVersionStr,
 		},
 		{
 			name:       "VersionWithoutV",
 			mockOutput: "go-coverage version 1.2.3",
-			expected:   "1.2.3",
+			expected:   testVersionStr,
 		},
 		{
 			name:       "MultiWordVersionOutput",
@@ -541,12 +541,12 @@ func TestIsLikelyCommitHash(t *testing.T) {
 		},
 		{
 			name:     "StandardVersion",
-			version:  "1.2.3",
+			version:  testVersionStr,
 			expected: false,
 		},
 		{
 			name:     "DevVersion",
-			version:  "dev",
+			version:  devVersion,
 			expected: false,
 		},
 		{
@@ -601,7 +601,7 @@ func TestUpgradeCommandIntegration(t *testing.T) {
 
 	commands := &Commands{
 		Version: VersionInfo{
-			Version: "1.2.3",
+			Version: testVersionStr,
 		},
 	}
 
@@ -639,31 +639,31 @@ func TestVersionComparisonIntegration(t *testing.T) {
 		{
 			name:           "NeedUpgrade",
 			currentVersion: "1.2.2",
-			latestVersion:  "1.2.3",
+			latestVersion:  testVersionStr,
 			expectUpgrade:  true,
 		},
 		{
 			name:           "NoUpgradeNeeded",
-			currentVersion: "1.2.3",
-			latestVersion:  "1.2.3",
+			currentVersion: testVersionStr,
+			latestVersion:  testVersionStr,
 			expectUpgrade:  false,
 		},
 		{
 			name:           "DevVersionNeedsUpgrade",
-			currentVersion: "dev",
-			latestVersion:  "1.2.3",
+			currentVersion: devVersion,
+			latestVersion:  testVersionStr,
 			expectUpgrade:  true,
 		},
 		{
 			name:           "DevDirtyVersionNeedsUpgrade",
 			currentVersion: "dev-dirty",
-			latestVersion:  "1.2.3",
+			latestVersion:  testVersionStr,
 			expectUpgrade:  true,
 		},
 		{
 			name:           "NewerThanLatest",
 			currentVersion: "1.2.4",
-			latestVersion:  "1.2.3",
+			latestVersion:  testVersionStr,
 			expectUpgrade:  false,
 		},
 	}
@@ -707,7 +707,7 @@ func TestNewUpgradeCmdExecutionErrors(t *testing.T) {
 			// Create command with dev version
 			commands := &Commands{
 				Version: VersionInfo{
-					Version: "dev", // This will trigger the dev version error
+					Version: devVersion, // This will trigger the dev version error
 				},
 			}
 			cmd := commands.newUpgradeCmd()
@@ -737,7 +737,7 @@ func TestNewUpgradeCmdFlagParsing(t *testing.T) {
 
 	commands := &Commands{
 		Version: VersionInfo{
-			Version: "1.2.3",
+			Version: testVersionStr,
 		},
 	}
 	cmd := commands.newUpgradeCmd()
@@ -771,7 +771,7 @@ func TestIsDevelopmentVersion(t *testing.T) {
 	}{
 		{
 			name:     "ExactDevVersion",
-			version:  "dev",
+			version:  devVersion,
 			expected: true,
 		},
 		{
@@ -791,7 +791,7 @@ func TestIsDevelopmentVersion(t *testing.T) {
 		},
 		{
 			name:     "StandardVersion",
-			version:  "1.2.3",
+			version:  testVersionStr,
 			expected: false,
 		},
 		{

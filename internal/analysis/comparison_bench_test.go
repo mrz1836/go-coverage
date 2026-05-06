@@ -241,7 +241,7 @@ func createBenchmarkSnapshot() *CoverageSnapshot {
 		FileCoverage:    createBenchmarkFileMetrics(),
 		PackageCoverage: createBenchmarkPackageMetrics(),
 		Timestamp:       time.Now(),
-		Branch:          "master",
+		Branch:          testBranch,
 		CommitSHA:       "abc123",
 	}
 }
@@ -277,8 +277,8 @@ func createSmallSnapshot() *CoverageSnapshot {
 			CoveredFunctions:  23,
 		},
 		FileCoverage: map[string]FileMetrics{
-			"main.go": {
-				Filename:          "main.go",
+			testMainFile: {
+				Filename:          testMainFile,
 				Package:           "main",
 				Percentage:        90.0,
 				TotalStatements:   500,
@@ -294,7 +294,7 @@ func createSmallSnapshot() *CoverageSnapshot {
 			},
 		},
 		Timestamp: time.Now(),
-		Branch:    "master",
+		Branch:    testBranch,
 		CommitSHA: "small123",
 	}
 }
@@ -346,7 +346,7 @@ func createLargeSnapshot() *CoverageSnapshot {
 		FileCoverage:    fileCoverage,
 		PackageCoverage: packageCoverage,
 		Timestamp:       time.Now(),
-		Branch:          "master",
+		Branch:          testBranch,
 		CommitSHA:       "large123",
 	}
 }
@@ -430,7 +430,7 @@ func createComparisonResult() *ComparisonResult {
 		},
 		FileChanges: []FileChangeAnalysis{
 			{
-				Filename:         "main.go",
+				Filename:         testMainFile,
 				BasePercentage:   70.0,
 				PRPercentage:     75.5,
 				PercentageChange: 5.5,

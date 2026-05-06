@@ -43,7 +43,7 @@ func TestNewLogger(t *testing.T) {
 		var buf bytes.Buffer
 		config := &Config{
 			Level:  DebugLevel,
-			Format: "json",
+			Format: FormatJSON,
 			Output: &buf,
 		}
 
@@ -79,13 +79,13 @@ func TestNewFromEnv(t *testing.T) {
 		expectedLevel  Level
 		expectedFormat string
 	}{
-		{"default", "", "", InfoLevel, "text"},
-		{"debug level", "DEBUG", "", DebugLevel, "text"},
-		{"warn level", "WARN", "", WarnLevel, "text"},
-		{"json format", "", "json", InfoLevel, "json"},
-		{"debug json", "DEBUG", "json", DebugLevel, "json"},
-		{"invalid level", "INVALID", "", InfoLevel, "text"},
-		{"invalid format", "", "invalid", InfoLevel, "text"},
+		{"default", "", "", InfoLevel, FormatText},
+		{"debug level", "DEBUG", "", DebugLevel, FormatText},
+		{"warn level", "WARN", "", WarnLevel, FormatText},
+		{"json format", "", FormatJSON, InfoLevel, FormatJSON},
+		{"debug json", "DEBUG", FormatJSON, DebugLevel, FormatJSON},
+		{"invalid level", "INVALID", "", InfoLevel, FormatText},
+		{"invalid format", "", "invalid", InfoLevel, FormatText},
 	}
 
 	for _, tt := range tests {
@@ -121,7 +121,7 @@ func TestLoggerLevels(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -155,7 +155,7 @@ func TestLoggerFormattedMessages(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -173,7 +173,7 @@ func TestWithField(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -194,7 +194,7 @@ func TestWithFields(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -220,7 +220,7 @@ func TestWithError(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -238,7 +238,7 @@ func TestWithContext(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -270,7 +270,7 @@ func TestChaining(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -301,7 +301,7 @@ func TestJSONFormat(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "json",
+		Format: FormatJSON,
 		Output: &buf,
 	}
 
@@ -339,7 +339,7 @@ func TestTextFormat(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -381,7 +381,7 @@ func TestLoggerFormattedMethods(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  DebugLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -427,7 +427,7 @@ func TestLoggerEntryFormattedMethods(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  DebugLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 
@@ -486,7 +486,7 @@ func TestLoggerEntryWithContext(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "json",
+		Format: FormatJSON,
 		Output: &buf,
 	}
 
@@ -522,7 +522,7 @@ func TestEntryImmutability(t *testing.T) {
 	var buf bytes.Buffer
 	config := &Config{
 		Level:  InfoLevel,
-		Format: "text",
+		Format: FormatText,
 		Output: &buf,
 	}
 

@@ -22,14 +22,14 @@ import (
 func TestHistoryCommandMetadata(t *testing.T) {
 	// Create a Commands instance for testing
 	versionInfo := VersionInfo{
-		Version:   "test",
-		Commit:    "test-commit",
-		BuildDate: "test-date",
+		Version:   testCoverageLabel,
+		Commit:    testCommitStr,
+		BuildDate: testDateStr,
 	}
 	commands := NewCommands(versionInfo)
 
 	// Test command metadata
-	assert.Equal(t, "history", commands.History.Use)
+	assert.Equal(t, cmdHistory, commands.History.Use)
 	assert.Equal(t, "Manage coverage history", commands.History.Short)
 	assert.Contains(t, commands.History.Long, "Manage historical coverage data")
 	assert.NotNil(t, commands.History.RunE)
@@ -41,24 +41,24 @@ func TestHistoryCommandFlags(t *testing.T) {
 		flagType     string
 		defaultValue string
 	}{
-		"add":        {"string", ""},
-		"branch":     {"string", ""},
-		"commit":     {"string", ""},
-		"commit-url": {"string", ""},
-		"trend":      {"bool", "false"},
-		"stats":      {"bool", "false"},
-		"cleanup":    {"bool", "false"},
+		"add":        {flagTypeString, ""},
+		"branch":     {flagTypeString, ""},
+		"commit":     {flagTypeString, ""},
+		"commit-url": {flagTypeString, ""},
+		"trend":      {"bool", flagBoolFalse},
+		"stats":      {"bool", flagBoolFalse},
+		"cleanup":    {"bool", flagBoolFalse},
 		"days":       {"int", "30"},
-		"format":     {"string", "text"},
+		"format":     {flagTypeString, "text"},
 	}
 
 	for flagName, expected := range expectedFlags {
 		t.Run(fmt.Sprintf("flag_%s", flagName), func(t *testing.T) {
 			// Create a Commands instance for testing
 			versionInfo := VersionInfo{
-				Version:   "test",
-				Commit:    "test-commit",
-				BuildDate: "test-date",
+				Version:   testCoverageLabel,
+				Commit:    testCommitStr,
+				BuildDate: testDateStr,
 			}
 			commands := NewCommands(versionInfo)
 
@@ -91,7 +91,7 @@ github.com/test/repo/main.go:15.2,17.16 1 0
 			MaxEntries:    100,
 		},
 		GitHub: config.GitHubConfig{
-			Owner:      "test",
+			Owner:      testCoverageLabel,
 			Repository: "repo",
 			CommitSHA:  "abc123",
 		},

@@ -21,6 +21,13 @@ const (
 	DirectionStable   = "stable"
 )
 
+// Priority and risk level constants
+const (
+	priorityHigh   = "high"
+	priorityMedium = "medium"
+	priorityLow    = "low"
+)
+
 // ComparisonEngine handles coverage comparison between base and PR branches
 type ComparisonEngine struct {
 	config *ComparisonConfig
@@ -545,7 +552,7 @@ func (e *ComparisonEngine) generateRecommendations(result *ComparisonResult) []R
 	if coverage < e.config.AcceptableCoverageThreshold {
 		recommendations = append(recommendations, Recommendation{
 			Type:        "coverage",
-			Priority:    "high",
+			Priority:    priorityHigh,
 			Title:       "Improve Overall Coverage",
 			Description: fmt.Sprintf("Current coverage %.1f%% is below acceptable threshold of %.1f%%", coverage, e.config.AcceptableCoverageThreshold),
 			ActionItems: []string{
@@ -553,15 +560,15 @@ func (e *ComparisonEngine) generateRecommendations(result *ComparisonResult) []R
 				"Focus on files with lowest coverage first",
 				"Consider integration tests for complex scenarios",
 			},
-			EstimatedEffort: "high",
-			ExpectedImpact:  "high",
+			EstimatedEffort: priorityHigh,
+			ExpectedImpact:  priorityHigh,
 		})
 	}
 
 	// File-specific recommendations
 	highRiskFiles := 0
 	for _, fileChange := range result.FileChanges {
-		if fileChange.Risk == "high" {
+		if fileChange.Risk == priorityHigh {
 			highRiskFiles++
 		}
 	}
@@ -569,7 +576,7 @@ func (e *ComparisonEngine) generateRecommendations(result *ComparisonResult) []R
 	if highRiskFiles > 0 {
 		recommendations = append(recommendations, Recommendation{
 			Type:        "testing",
-			Priority:    "medium",
+			Priority:    priorityMedium,
 			Title:       "Address High-Risk Files",
 			Description: fmt.Sprintf("%d files have high risk due to low coverage or significant changes", highRiskFiles),
 			ActionItems: []string{
@@ -577,8 +584,8 @@ func (e *ComparisonEngine) generateRecommendations(result *ComparisonResult) []R
 				"Add tests for recently modified files",
 				"Consider refactoring complex files",
 			},
-			EstimatedEffort: "medium",
-			ExpectedImpact:  "medium",
+			EstimatedEffort: priorityMedium,
+			ExpectedImpact:  priorityMedium,
 		})
 	}
 
@@ -586,7 +593,7 @@ func (e *ComparisonEngine) generateRecommendations(result *ComparisonResult) []R
 	if result.OverallChange.Direction == DirectionDegraded && result.OverallChange.IsSignificant {
 		recommendations = append(recommendations, Recommendation{
 			Type:        "process",
-			Priority:    "high",
+			Priority:    priorityHigh,
 			Title:       "Prevent Coverage Regression",
 			Description: "Coverage has significantly decreased in this PR",
 			ActionItems: []string{
@@ -594,8 +601,8 @@ func (e *ComparisonEngine) generateRecommendations(result *ComparisonResult) []R
 				"Require coverage review for significant changes",
 				"Add coverage gates to prevent merging low-coverage PRs",
 			},
-			EstimatedEffort: "low",
-			ExpectedImpact:  "high",
+			EstimatedEffort: priorityLow,
+			ExpectedImpact:  priorityHigh,
 		})
 	}
 
@@ -658,7 +665,7 @@ func (e *ComparisonEngine) generateSummary(result *ComparisonResult) ComparisonS
 
 	// Next steps
 	for _, rec := range result.Recommendations {
-		if rec.Priority == "high" {
+		if rec.Priority == priorityHigh {
 			nextSteps = append(nextSteps, rec.Title)
 		}
 	}
@@ -728,11 +735,11 @@ func (e *ComparisonEngine) calculateMagnitude(change float64) string {
 
 func (e *ComparisonEngine) calculateRisk(change FileChangeAnalysis) string {
 	if change.PRPercentage < 50 && change.Direction == DirectionDegraded {
-		return "high"
+		return priorityHigh
 	} else if change.PRPercentage < 70 || math.Abs(change.PercentageChange) > 10 {
-		return "medium"
+		return priorityMedium
 	}
-	return "low"
+	return priorityLow
 }
 
 func (e *ComparisonEngine) calculateCoverageGrade(coverage float64) string {
@@ -788,7 +795,7 @@ func (e *ComparisonEngine) calculateRiskLevel(coverage float64, change *OverallC
 
 	highRiskFiles := 0
 	for _, fileChange := range fileChanges {
-		if fileChange.Risk == "high" {
+		if fileChange.Risk == priorityHigh {
 			highRiskFiles++
 		}
 	}
@@ -802,11 +809,11 @@ func (e *ComparisonEngine) calculateRiskLevel(coverage float64, change *OverallC
 	if riskScore >= 5 {
 		return "critical"
 	} else if riskScore >= 3 {
-		return "high"
+		return priorityHigh
 	} else if riskScore >= 1 {
-		return "medium"
+		return priorityMedium
 	}
-	return "low"
+	return priorityLow
 }
 
 func (e *ComparisonEngine) calculateQualityScore(coverage float64, change *OverallChangeAnalysis) float64 {

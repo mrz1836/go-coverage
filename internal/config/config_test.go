@@ -23,7 +23,7 @@ func TestLoad(t *testing.T) {
 	assert.NotNil(t, config)
 
 	// Test default values
-	assert.Equal(t, "coverage.txt", config.Coverage.InputFile)
+	assert.Equal(t, testInputFile, config.Coverage.InputFile)
 	assert.Equal(t, "coverage", config.Coverage.OutputDir)
 	assert.InDelta(t, 80.0, config.Coverage.Threshold, 0.001)
 	assert.Equal(t, []string{"vendor/", "test/", "testdata/"}, config.Coverage.ExcludePaths)
@@ -86,7 +86,7 @@ func TestLoadWithEnvironmentVariables(t *testing.T) {
 	_ = os.Setenv("GO_COVERAGE_EXCLUDE_GENERATED", "false")
 
 	_ = os.Setenv("GITHUB_TOKEN", "test-token")
-	_ = os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner")
+	_ = os.Setenv("GITHUB_REPOSITORY_OWNER", testOwner)
 	_ = os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo")
 	_ = os.Setenv("GITHUB_PR_NUMBER", "123")
 	_ = os.Setenv("GITHUB_SHA", "abc123def456")
@@ -134,8 +134,8 @@ func TestLoadWithEnvironmentVariables(t *testing.T) {
 
 	// Test GitHub settings
 	assert.Equal(t, "test-token", config.GitHub.Token)
-	assert.Equal(t, "test-owner", config.GitHub.Owner)
-	assert.Equal(t, "test-repo", config.GitHub.Repository)
+	assert.Equal(t, testOwner, config.GitHub.Owner)
+	assert.Equal(t, testRepoName, config.GitHub.Repository)
 	assert.Equal(t, 123, config.GitHub.PullRequest)
 	assert.Equal(t, "abc123def456", config.GitHub.CommitSHA)
 	assert.False(t, config.GitHub.PostComments)
@@ -184,7 +184,7 @@ func TestValidate(t *testing.T) {
 			name: "valid default config",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				Badge: BadgeConfig{
@@ -205,7 +205,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid coverage threshold - too low",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: -1.0,
 				},
 			},
@@ -216,7 +216,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid coverage threshold - too high",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 101.0,
 				},
 			},
@@ -238,14 +238,14 @@ func TestValidate(t *testing.T) {
 			name: "GitHub integration missing token",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				GitHub: GitHubConfig{
 					PostComments: true,
 					Token:        "",
-					Owner:        "test-owner",
-					Repository:   "test-repo",
+					Owner:        testOwner,
+					Repository:   testRepoName,
 				},
 			},
 			expectError: true,
@@ -255,14 +255,14 @@ func TestValidate(t *testing.T) {
 			name: "GitHub integration missing owner",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				GitHub: GitHubConfig{
 					PostComments: true,
 					Token:        "test-token",
 					Owner:        "",
-					Repository:   "test-repo",
+					Repository:   testRepoName,
 				},
 			},
 			expectError: true,
@@ -272,13 +272,13 @@ func TestValidate(t *testing.T) {
 			name: "GitHub integration missing repository",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				GitHub: GitHubConfig{
 					PostComments: true,
 					Token:        "test-token",
-					Owner:        "test-owner",
+					Owner:        testOwner,
 					Repository:   "",
 				},
 			},
@@ -289,7 +289,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid badge style",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				Badge: BadgeConfig{
@@ -306,7 +306,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid report theme",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				Badge: BadgeConfig{
@@ -323,7 +323,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid history retention days",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				Badge: BadgeConfig{
@@ -345,7 +345,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid history max entries",
 			config: &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				Badge: BadgeConfig{
@@ -391,8 +391,8 @@ func TestIsGitHubContext(t *testing.T) {
 			name: "complete GitHub context",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:      "test-owner",
-					Repository: "test-repo",
+					Owner:      testOwner,
+					Repository: testRepoName,
 					CommitSHA:  "abc123",
 				},
 			},
@@ -403,7 +403,7 @@ func TestIsGitHubContext(t *testing.T) {
 			config: &Config{
 				GitHub: GitHubConfig{
 					Owner:      "",
-					Repository: "test-repo",
+					Repository: testRepoName,
 					CommitSHA:  "abc123",
 				},
 			},
@@ -413,7 +413,7 @@ func TestIsGitHubContext(t *testing.T) {
 			name: "missing repository",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:      "test-owner",
+					Owner:      testOwner,
 					Repository: "",
 					CommitSHA:  "abc123",
 				},
@@ -424,8 +424,8 @@ func TestIsGitHubContext(t *testing.T) {
 			name: "missing commit SHA",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:      "test-owner",
-					Repository: "test-repo",
+					Owner:      testOwner,
+					Repository: testRepoName,
 					CommitSHA:  "",
 				},
 			},
@@ -451,8 +451,8 @@ func TestIsPullRequestContext(t *testing.T) {
 			name: "complete PR context",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:       "test-owner",
-					Repository:  "test-repo",
+					Owner:       testOwner,
+					Repository:  testRepoName,
 					CommitSHA:   "abc123",
 					PullRequest: 123,
 				},
@@ -463,8 +463,8 @@ func TestIsPullRequestContext(t *testing.T) {
 			name: "GitHub context but no PR",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:       "test-owner",
-					Repository:  "test-repo",
+					Owner:       testOwner,
+					Repository:  testRepoName,
 					CommitSHA:   "abc123",
 					PullRequest: 0,
 				},
@@ -476,7 +476,7 @@ func TestIsPullRequestContext(t *testing.T) {
 			config: &Config{
 				GitHub: GitHubConfig{
 					Owner:       "",
-					Repository:  "test-repo",
+					Repository:  testRepoName,
 					CommitSHA:   "abc123",
 					PullRequest: 123,
 				},
@@ -503,8 +503,8 @@ func TestGetBadgeURL(t *testing.T) {
 			name: "complete configuration",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:      "test-owner",
-					Repository: "test-repo",
+					Owner:      testOwner,
+					Repository: testRepoName,
 				},
 				Storage: StorageConfig{
 					BaseDir: "coverage",
@@ -520,7 +520,7 @@ func TestGetBadgeURL(t *testing.T) {
 			config: &Config{
 				GitHub: GitHubConfig{
 					Owner:      "",
-					Repository: "test-repo",
+					Repository: testRepoName,
 				},
 			},
 			expected: "",
@@ -529,7 +529,7 @@ func TestGetBadgeURL(t *testing.T) {
 			name: "missing repository",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:      "test-owner",
+					Owner:      testOwner,
 					Repository: "",
 				},
 			},
@@ -581,8 +581,8 @@ func TestGetReportURL(t *testing.T) {
 			name: "complete configuration",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:      "test-owner",
-					Repository: "test-repo",
+					Owner:      testOwner,
+					Repository: testRepoName,
 				},
 				Storage: StorageConfig{
 					BaseDir: "coverage",
@@ -598,7 +598,7 @@ func TestGetReportURL(t *testing.T) {
 			config: &Config{
 				GitHub: GitHubConfig{
 					Owner:      "",
-					Repository: "test-repo",
+					Repository: testRepoName,
 				},
 			},
 			expected: "",
@@ -607,7 +607,7 @@ func TestGetReportURL(t *testing.T) {
 			name: "missing repository",
 			config: &Config{
 				GitHub: GitHubConfig{
-					Owner:      "test-owner",
+					Owner:      testOwner,
 					Repository: "",
 				},
 			},
@@ -810,9 +810,9 @@ func TestConfigErrorHandling(t *testing.T) {
 		require.NoError(t, err)
 
 		// Config loads environment values as-is without trimming whitespace
-		assert.Equal(t, "coverage.txt", config.Coverage.InputFile) // Empty string uses default
-		assert.Equal(t, "   ", config.Coverage.OutputDir)          // Whitespace is preserved
-		assert.Equal(t, "\t\n", config.Badge.Label)                // Whitespace is preserved
+		assert.Equal(t, testInputFile, config.Coverage.InputFile) // Empty string uses default
+		assert.Equal(t, "   ", config.Coverage.OutputDir)         // Whitespace is preserved
+		assert.Equal(t, "\t\n", config.Badge.Label)               // Whitespace is preserved
 	})
 
 	t.Run("malformed repository information", func(t *testing.T) {
@@ -1134,7 +1134,7 @@ func TestGitHubActionsIntegration(t *testing.T) {
 	// Set GitHub Actions environment variables
 	_ = os.Setenv("GITHUB_TOKEN", "test-token")
 	_ = os.Setenv("GITHUB_REPOSITORY", "test-owner/test-repo")
-	_ = os.Setenv("GITHUB_REPOSITORY_OWNER", "test-owner")
+	_ = os.Setenv("GITHUB_REPOSITORY_OWNER", testOwner)
 	_ = os.Setenv("GITHUB_SHA", "abc123def456")
 	_ = os.Setenv("GITHUB_PR_NUMBER", "456")
 
@@ -1142,8 +1142,8 @@ func TestGitHubActionsIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "test-token", config.GitHub.Token)
-	assert.Equal(t, "test-owner", config.GitHub.Owner)
-	assert.Equal(t, "test-repo", config.GitHub.Repository)
+	assert.Equal(t, testOwner, config.GitHub.Owner)
+	assert.Equal(t, testRepoName, config.GitHub.Repository)
 	assert.Equal(t, "abc123def456", config.GitHub.CommitSHA)
 	assert.Equal(t, 456, config.GitHub.PullRequest)
 
@@ -1162,7 +1162,7 @@ func TestConfigurationEdgeCases(t *testing.T) {
 	t.Run("all GitHub integration disabled", func(t *testing.T) {
 		config := &Config{
 			Coverage: CoverageConfig{
-				InputFile: "coverage.txt",
+				InputFile: testInputFile,
 				Threshold: 80.0,
 			},
 			Badge: BadgeConfig{
@@ -1184,7 +1184,7 @@ func TestConfigurationEdgeCases(t *testing.T) {
 	t.Run("history disabled", func(t *testing.T) {
 		config := &Config{
 			Coverage: CoverageConfig{
-				InputFile: "coverage.txt",
+				InputFile: testInputFile,
 				Threshold: 80.0,
 			},
 			Badge: BadgeConfig{
@@ -1210,7 +1210,7 @@ func TestConfigurationEdgeCases(t *testing.T) {
 		for _, style := range validStyles {
 			config := &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				Badge: BadgeConfig{
@@ -1232,7 +1232,7 @@ func TestConfigurationEdgeCases(t *testing.T) {
 		for _, theme := range validThemes {
 			config := &Config{
 				Coverage: CoverageConfig{
-					InputFile: "coverage.txt",
+					InputFile: testInputFile,
 					Threshold: 80.0,
 				},
 				Badge: BadgeConfig{
@@ -1538,9 +1538,8 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 				expectedClean := filepath.Clean(expectedAbs)
 				resultClean := filepath.Clean(result)
 
-				// On macOS, /var is symlinked to /private/var, so normalize these paths
-				expectedClean = strings.Replace(expectedClean, "/private/var", "/var", 1)
-				resultClean = strings.Replace(resultClean, "/private/var", "/var", 1)
+				expectedClean = normalizeMacOSPath(expectedClean)
+				resultClean = normalizeMacOSPath(resultClean)
 
 				assert.Equal(t, expectedClean, resultClean)
 			},
@@ -1575,9 +1574,8 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 				expectedClean := filepath.Clean(expectedAbs)
 				resultClean := filepath.Clean(result)
 
-				// On macOS, /var is symlinked to /private/var, so normalize these paths
-				expectedClean = strings.Replace(expectedClean, "/private/var", "/var", 1)
-				resultClean = strings.Replace(resultClean, "/private/var", "/var", 1)
+				expectedClean = normalizeMacOSPath(expectedClean)
+				resultClean = normalizeMacOSPath(resultClean)
 
 				assert.Equal(t, expectedClean, resultClean)
 			},
@@ -1611,9 +1609,8 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 				expectedClean := filepath.Clean(expectedAbs)
 				resultClean := filepath.Clean(result)
 
-				// On macOS, /var is symlinked to /private/var, so normalize these paths
-				expectedClean = strings.Replace(expectedClean, "/private/var", "/var", 1)
-				resultClean = strings.Replace(resultClean, "/private/var", "/var", 1)
+				expectedClean = normalizeMacOSPath(expectedClean)
+				resultClean = normalizeMacOSPath(resultClean)
 
 				assert.Equal(t, expectedClean, resultClean)
 			},
@@ -1652,9 +1649,8 @@ func TestResolveHistoryStoragePath(t *testing.T) {
 				expectedClean := filepath.Clean(expectedAbs)
 				resultClean := filepath.Clean(result)
 
-				// On macOS, /var is symlinked to /private/var, so normalize these paths
-				expectedClean = strings.Replace(expectedClean, "/private/var", "/var", 1)
-				resultClean = strings.Replace(resultClean, "/private/var", "/var", 1)
+				expectedClean = normalizeMacOSPath(expectedClean)
+				resultClean = normalizeMacOSPath(resultClean)
 
 				assert.Equal(t, expectedClean, resultClean)
 			},
@@ -1786,6 +1782,14 @@ func TestResolveHistoryStoragePathErrorCases(t *testing.T) {
 // Helper function to clear environment variables.
 // It also sets GO_COVERAGE_TEST_CONFIG_DIR to a non-existent path so that
 // Load() does not pick up the real .github/env/ from the repo working directory.
+// normalizeMacOSPath strips /private prefixes added when macOS resolves symlinks
+// (/tmp -> /private/tmp, /var -> /private/var) so path comparisons are portable.
+func normalizeMacOSPath(p string) string {
+	p = strings.Replace(p, "/private/tmp", "/tmp", 1)
+	p = strings.Replace(p, "/private/var", "/var", 1)
+	return p
+}
+
 func clearEnvironment() {
 	envVars := []string{
 		"GO_COVERAGE_INPUT_FILE", "GO_COVERAGE_OUTPUT_DIR", "GO_COVERAGE_THRESHOLD",
@@ -2023,10 +2027,7 @@ func TestFindEnvDirInParentDirectory(t *testing.T) {
 
 	// Without test override, findEnvDir walks up from cwd
 	result := findEnvDir()
-	// Normalize paths for macOS symlink (/var -> /private/var)
-	resultClean := strings.Replace(result, "/private/var", "/var", 1)
-	envDirClean := strings.Replace(envDir, "/private/var", "/var", 1)
-	assert.Equal(t, envDirClean, resultClean)
+	assert.Equal(t, normalizeMacOSPath(envDir), normalizeMacOSPath(result))
 }
 
 // TestLoadModularModeSkipsLocalInCI tests that 99-local.env is skipped in CI
