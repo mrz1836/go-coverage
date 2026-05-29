@@ -70,6 +70,9 @@ func TestGetLatestRelease(t *testing.T) {
 				"no such host",
 				"temporary failure",
 				"rate limit",
+				"certificate", // TLS verification failures (TLS-intercepting proxies / sandboxes)
+				"tls",
+				"x509",
 			}
 
 			hasNetworkError := false
