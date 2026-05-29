@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -308,14 +309,10 @@ func (e *ComparisonEngine) analyzeFileChanges(base, pr *CoverageSnapshot) []File
 
 	// Create maps for efficient lookup
 	baseFiles := make(map[string]FileMetrics)
-	for filename, metrics := range base.FileCoverage {
-		baseFiles[filename] = metrics
-	}
+	maps.Copy(baseFiles, base.FileCoverage)
 
 	prFiles := make(map[string]FileMetrics)
-	for filename, metrics := range pr.FileCoverage {
-		prFiles[filename] = metrics
-	}
+	maps.Copy(prFiles, pr.FileCoverage)
 
 	// Analyze all files present in either snapshot
 	allFiles := make(map[string]bool)
@@ -404,14 +401,10 @@ func (e *ComparisonEngine) analyzePackageChanges(base, pr *CoverageSnapshot) []P
 
 	// Create maps for efficient lookup
 	basePackages := make(map[string]PackageMetrics)
-	for packageName, metrics := range base.PackageCoverage {
-		basePackages[packageName] = metrics
-	}
+	maps.Copy(basePackages, base.PackageCoverage)
 
 	prPackages := make(map[string]PackageMetrics)
-	for packageName, metrics := range pr.PackageCoverage {
-		prPackages[packageName] = metrics
-	}
+	maps.Copy(prPackages, pr.PackageCoverage)
 
 	// Analyze all packages
 	allPackages := make(map[string]bool)

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -199,10 +200,8 @@ func categorizeFile(filename string) FileType {
 func isConfigFile(basename, ext, dir string) bool {
 	// Common config file extensions
 	configExts := []string{".yml", ".yaml", ".json", ".toml", ".xml", ".ini", ".cfg", ".conf"}
-	for _, configExt := range configExts {
-		if ext == configExt {
-			return true
-		}
+	if slices.Contains(configExts, ext) {
+		return true
 	}
 
 	// Common config file names
@@ -212,10 +211,8 @@ func isConfigFile(basename, ext, dir string) bool {
 		"go.mod", "go.sum", "package.json", "package-lock.json",
 		".eslintrc", ".prettierrc", ".golangci.json", ".golangci.yml",
 	}
-	for _, configName := range configNames {
-		if basename == configName {
-			return true
-		}
+	if slices.Contains(configNames, basename) {
+		return true
 	}
 
 	// Files in config directories
@@ -233,10 +230,8 @@ func isConfigFile(basename, ext, dir string) bool {
 func isDocumentationFile(basename, ext, dir string) bool {
 	// Documentation extensions
 	docExts := []string{".md", ".rst", ".txt", ".adoc", ".asciidoc"}
-	for _, docExt := range docExts {
-		if ext == docExt {
-			return true
-		}
+	if slices.Contains(docExts, ext) {
+		return true
 	}
 
 	// Documentation directories

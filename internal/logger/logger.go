@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"strings"
 	"time"
@@ -153,9 +154,7 @@ func (l *simpleLogger) WithField(key string, value any) Logger {
 func (l *simpleLogger) WithFields(fields map[string]any) Logger {
 	// Copy fields to avoid mutation
 	fieldsCopy := make(map[string]any)
-	for k, v := range fields {
-		fieldsCopy[k] = v
-	}
+	maps.Copy(fieldsCopy, fields)
 
 	return &entry{
 		logger: l,
@@ -228,9 +227,7 @@ func (l *simpleLogger) Errorf(format string, args ...any) {
 // WithField returns a new entry with the specified field
 func (e *entry) WithField(key string, value any) Logger {
 	newFields := make(map[string]any)
-	for k, v := range e.fields {
-		newFields[k] = v
-	}
+	maps.Copy(newFields, e.fields)
 	newFields[key] = value
 
 	return &entry{
@@ -244,12 +241,8 @@ func (e *entry) WithField(key string, value any) Logger {
 // WithFields returns a new entry with additional fields
 func (e *entry) WithFields(fields map[string]any) Logger {
 	newFields := make(map[string]any)
-	for k, v := range e.fields {
-		newFields[k] = v
-	}
-	for k, v := range fields {
-		newFields[k] = v
-	}
+	maps.Copy(newFields, e.fields)
+	maps.Copy(newFields, fields)
 
 	return &entry{
 		logger: e.logger,
@@ -357,9 +350,7 @@ func (e *entry) logWithFields(level Level, message string) {
 	}
 
 	// Add accumulated fields
-	for k, v := range e.fields {
-		entry.Fields[k] = v
-	}
+	maps.Copy(entry.Fields, e.fields)
 
 	// Add error if present
 	if e.err != nil {
