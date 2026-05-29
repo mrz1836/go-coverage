@@ -477,10 +477,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			}
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -493,10 +490,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, url, attempt+1, maxRetries)
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -510,10 +504,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -569,10 +560,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 				return "", ctx.Err()
 			}
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -583,10 +571,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			_ = resp.Body.Close()
 			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, fallbackURL, attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -598,10 +583,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 		if err != nil {
 			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
