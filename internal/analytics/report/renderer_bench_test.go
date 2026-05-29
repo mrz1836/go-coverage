@@ -215,12 +215,12 @@ func BenchmarkRenderJSON(b *testing.B) {
 
 // Helper functions
 
-func createRenderData() interface{} {
+func createRenderData() any {
 	packages, fileCount := createPackageRenderData()
-	return map[string]interface{}{
+	return map[string]any{
 		"ProjectName": "BenchmarkProject",
 		"GeneratedAt": time.Now(),
-		"Summary": map[string]interface{}{
+		"Summary": map[string]any{
 			"TotalPercentage": 78.5,
 			keyTotalLines:     15000,
 			keyCoveredLines:   11775,
@@ -232,9 +232,9 @@ func createRenderData() interface{} {
 	}
 }
 
-func createSmallRenderData() interface{} {
+func createSmallRenderData() any {
 	files := createFileList(3)
-	packages := []map[string]interface{}{
+	packages := []map[string]any{
 		{
 			"Name":          "main",
 			"Percentage":    95.0,
@@ -244,10 +244,10 @@ func createSmallRenderData() interface{} {
 		},
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"ProjectName": "SmallProject",
 		"GeneratedAt": time.Now(),
-		"Summary": map[string]interface{}{
+		"Summary": map[string]any{
 			"TotalPercentage": 95.0,
 			keyTotalLines:     500,
 			keyCoveredLines:   475,
@@ -258,13 +258,13 @@ func createSmallRenderData() interface{} {
 	}
 }
 
-func createLargeRenderData() interface{} {
-	packages := make([]map[string]interface{}, 500)
+func createLargeRenderData() any {
+	packages := make([]map[string]any, 500)
 	totalFiles := 0
 	for i := 0; i < 500; i++ {
 		files := createFileList(20)
 		totalFiles += len(files)
-		packages[i] = map[string]interface{}{
+		packages[i] = map[string]any{
 			"Name":          fmt.Sprintf("package%03d", i),
 			"Percentage":    float64(50 + i%50),
 			keyTotalLines:   1000,
@@ -273,10 +273,10 @@ func createLargeRenderData() interface{} {
 		}
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"ProjectName": "LargeProject",
 		"GeneratedAt": time.Now(),
-		"Summary": map[string]interface{}{
+		"Summary": map[string]any{
 			"TotalPercentage": 72.3,
 			keyTotalLines:     500000,
 			keyCoveredLines:   361500,
@@ -288,19 +288,19 @@ func createLargeRenderData() interface{} {
 	}
 }
 
-func createComplexRenderData() interface{} {
+func createComplexRenderData() any {
 	packages := createComplexPackageData()
 	totalFiles := 0
 	for _, pkg := range packages {
-		if files, ok := pkg["Files"].([]map[string]interface{}); ok {
+		if files, ok := pkg["Files"].([]map[string]any); ok {
 			totalFiles += len(files)
 		}
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"ProjectName": "ComplexProject",
 		"GeneratedAt": time.Now(),
-		"Summary": map[string]interface{}{
+		"Summary": map[string]any{
 			"TotalPercentage": 75.8,
 			keyTotalLines:     20000,
 			keyCoveredLines:   15160,
@@ -308,7 +308,7 @@ func createComplexRenderData() interface{} {
 			"FileCount":       totalFiles,
 		},
 		"Packages": packages,
-		"Metadata": map[string]interface{}{
+		"Metadata": map[string]any{
 			"Repository": "github.com/test/repo",
 			"Branch":     "master",
 			"Commit":     "abc123def456",
@@ -318,13 +318,13 @@ func createComplexRenderData() interface{} {
 	}
 }
 
-func createPackageRenderData() ([]map[string]interface{}, int) {
-	packages := make([]map[string]interface{}, 30)
+func createPackageRenderData() ([]map[string]any, int) {
+	packages := make([]map[string]any, 30)
 	totalFiles := 0
 	for i := 0; i < 30; i++ {
 		files := createFileList(10)
 		totalFiles += len(files)
-		packages[i] = map[string]interface{}{
+		packages[i] = map[string]any{
 			"Name":          fmt.Sprintf("package%c", 'A'+i%26),
 			"Percentage":    60.0 + float64(i)*1.3,
 			keyTotalLines:   500,
@@ -335,8 +335,8 @@ func createPackageRenderData() ([]map[string]interface{}, int) {
 	return packages, totalFiles
 }
 
-func createStatisticsData() map[string]interface{} {
-	return map[string]interface{}{
+func createStatisticsData() map[string]any {
+	return map[string]any{
 		"TotalPackages":   30,
 		"TotalFiles":      450,
 		"AverageCoverage": 78.5,
@@ -352,11 +352,11 @@ func createStatisticsData() map[string]interface{} {
 	}
 }
 
-func createDataWithSpecialChars() interface{} {
-	return map[string]interface{}{
+func createDataWithSpecialChars() any {
+	return map[string]any{
 		"ProjectName": "<script>alert('XSS')</script>",
 		"GeneratedAt": time.Now(),
-		"Summary": map[string]interface{}{
+		"Summary": map[string]any{
 			"TotalPercentage": 85.5,
 			keyTotalLines:     1000,
 			keyCoveredLines:   855,
@@ -369,13 +369,13 @@ func createDataWithSpecialChars() interface{} {
 	}
 }
 
-func createFileList(count int) []map[string]interface{} {
-	files := make([]map[string]interface{}, count)
+func createFileList(count int) []map[string]any {
+	files := make([]map[string]any, count)
 	for i := 0; i < count; i++ {
 		totalLines := 100
 		coveredLines := 60 + i*2
 		percentage := float64(coveredLines) / float64(totalLines) * 100
-		files[i] = map[string]interface{}{
+		files[i] = map[string]any{
 			"Name":          fmt.Sprintf("file%02d.go", i),
 			"Percentage":    percentage,
 			keyTotalLines:   totalLines,
@@ -385,8 +385,8 @@ func createFileList(count int) []map[string]interface{} {
 	return files
 }
 
-func createDetailedStatistics() map[string]interface{} {
-	return map[string]interface{}{
+func createDetailedStatistics() map[string]any {
+	return map[string]any{
 		"TotalPackages":   500,
 		"TotalFiles":      10000,
 		"AverageCoverage": 72.3,
@@ -400,17 +400,17 @@ func createDetailedStatistics() map[string]interface{} {
 	}
 }
 
-func createComplexPackageData() []map[string]interface{} {
-	packages := make([]map[string]interface{}, 20)
+func createComplexPackageData() []map[string]any {
+	packages := make([]map[string]any, 20)
 	for i := 0; i < 20; i++ {
 		files := createFileList(5)
-		packages[i] = map[string]interface{}{
+		packages[i] = map[string]any{
 			"Name":          fmt.Sprintf("complex.package.%c", 'a'+i),
 			"Percentage":    float64(70 + i),
 			keyTotalLines:   200,
 			keyCoveredLines: int(float64(200) * float64(70+i) / 100),
 			"Files":         files,
-			"Metrics": map[string]interface{}{
+			"Metrics": map[string]any{
 				"Complexity":      10 + i,
 				"Maintainability": 85 - i,
 				"TestCount":       50 + i*2,
@@ -420,10 +420,10 @@ func createComplexPackageData() []map[string]interface{} {
 	return packages
 }
 
-func createHistoryData() []map[string]interface{} {
-	history := make([]map[string]interface{}, 30)
+func createHistoryData() []map[string]any {
+	history := make([]map[string]any, 30)
 	for i := 0; i < 30; i++ {
-		history[i] = map[string]interface{}{
+		history[i] = map[string]any{
 			"Date":     time.Now().Add(-time.Duration(i) * 24 * time.Hour).Format("2006-01-02"),
 			"Coverage": float64(70 + (i % 20)),
 			"Commit":   fmt.Sprintf("commit%02d", i%100),

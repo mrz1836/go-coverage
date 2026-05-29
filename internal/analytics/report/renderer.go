@@ -22,7 +22,7 @@ func NewRenderer() *Renderer {
 }
 
 // RenderReport renders the coverage report template
-func (r *Renderer) RenderReport(_ context.Context, data interface{}) ([]byte, error) {
+func (r *Renderer) RenderReport(_ context.Context, data any) ([]byte, error) {
 	// Create template functions
 	funcMap := template.FuncMap{
 		"multiply": func(a, b float64) float64 {

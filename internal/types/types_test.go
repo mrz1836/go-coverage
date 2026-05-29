@@ -199,11 +199,11 @@ func TestNotificationJSONSerialization(t *testing.T) {
 					HTML:     "<h2>Coverage Alert</h2><p>Coverage has <strong>dropped</strong>.</p>",
 					Fields:   map[string]string{"project": "go-coverage", "environment": "production"},
 				},
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"build_id":     float64(12345), // JSON unmarshaling converts int to float64
 					"build_number": "v1.2.3",
 					"duration":     300.5,
-					"tags":         []interface{}{"ci", "coverage", "test"}, // JSON unmarshaling converts []string to []interface{}
+					"tags":         []any{"ci", "coverage", "test"}, // JSON unmarshaling converts []string to []interface{}
 				},
 			},
 		},
@@ -629,7 +629,7 @@ func TestSpecialCharactersAndEdgeCases(t *testing.T) {
 			Repository: "owner/repo-with-special-chars",
 			Branch:     "feature/test-branch",
 			CommitSHA:  "abc123def456",
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"unicode_key":   "unicode_value",
 				"special_chars": "!@#$%^&*()_+-={}[]|\\:;\";'<>?,./ ",
 				"emoji":         "🚀🎉🚨",

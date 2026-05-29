@@ -392,7 +392,7 @@ func (t *Tracker) GetStatistics(ctx context.Context) (*Statistics, error) {
 
 // Add records coverage data for the specified branch and commit.
 // This is a legacy method for backward compatibility with existing code.
-func (t *Tracker) Add(branch, commit string, data interface{}) error {
+func (t *Tracker) Add(branch, commit string, data any) error {
 	ctx := context.Background()
 
 	// Convert interface{} to CoverageData if possible

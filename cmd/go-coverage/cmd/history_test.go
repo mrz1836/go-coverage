@@ -277,7 +277,7 @@ func TestShowTrendDataJSON(t *testing.T) {
 	assert.Contains(t, output, "{")
 
 	// Verify it's valid JSON
-	var trendData interface{}
+	var trendData any
 	err = json.Unmarshal([]byte(output), &trendData)
 	assert.NoError(t, err, "Output should be valid JSON")
 }
@@ -365,7 +365,7 @@ func TestShowStatisticsJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	output := buf.String()
-	var stats interface{}
+	var stats any
 	err = json.Unmarshal([]byte(output), &stats)
 	assert.NoError(t, err, "Output should be valid JSON")
 }
@@ -457,7 +457,7 @@ func TestShowLatestEntryJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	output := buf.String()
-	var entry interface{}
+	var entry any
 	err = json.Unmarshal([]byte(output), &entry)
 	assert.NoError(t, err, "Output should be valid JSON")
 }

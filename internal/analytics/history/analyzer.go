@@ -89,7 +89,7 @@ type TrendReport struct {
 	QualityMetrics QualityMetrics `json:"quality_metrics"`
 
 	// Chart data
-	ChartData interface{} `json:"chart_data,omitempty"`
+	ChartData any `json:"chart_data,omitempty"`
 
 	// Insights and recommendations
 	Insights        []Insight        `json:"insights"`
@@ -169,12 +169,12 @@ type QualityMetrics struct {
 
 // Insight represents an analytical insight
 type Insight struct {
-	Type           InsightType            `json:"type"`
-	Title          string                 `json:"title"`
-	Description    string                 `json:"description"`
-	Severity       InsightSeverity        `json:"severity"`
-	Confidence     float64                `json:"confidence"`
-	SupportingData map[string]interface{} `json:"supporting_data"`
+	Type           InsightType     `json:"type"`
+	Title          string          `json:"title"`
+	Description    string          `json:"description"`
+	Severity       InsightSeverity `json:"severity"`
+	Confidence     float64         `json:"confidence"`
+	SupportingData map[string]any  `json:"supporting_data"`
 }
 
 // Recommendation represents an actionable recommendation
@@ -807,7 +807,7 @@ func (ta *TrendAnalyzer) calculateQualityMetrics() QualityMetrics {
 }
 
 // generateChartData creates chart data for visualization
-func (ta *TrendAnalyzer) generateChartData() interface{} {
+func (ta *TrendAnalyzer) generateChartData() any {
 	// Chart functionality not implemented - return nil for now
 	// This could be implemented later with a proper charting library
 	return nil

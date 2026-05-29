@@ -575,7 +575,7 @@ func (e *PRTemplateEngine) coverageBar(percentage float64) string {
 	return e.progressBar(percentage, 100, 15)
 }
 
-func (e *PRTemplateEngine) trendChart(value interface{}) string {
+func (e *PRTemplateEngine) trendChart(value any) string {
 	if !e.config.IncludeCharts {
 		return ""
 	}
@@ -782,7 +782,7 @@ func (e *PRTemplateEngine) add(a, b int) int {
 	return a + b
 }
 
-func (e *PRTemplateEngine) slice(items interface{}, start, end int) interface{} {
+func (e *PRTemplateEngine) slice(items any, start, end int) any {
 	switch v := items.(type) {
 	case []FileCoverageData:
 		if end > len(v) {
@@ -833,7 +833,7 @@ func (e *PRTemplateEngine) slice(items interface{}, start, end int) interface{} 
 	}
 }
 
-func (e *PRTemplateEngine) length(items interface{}) int {
+func (e *PRTemplateEngine) length(items any) int {
 	switch v := items.(type) {
 	case []FileCoverageData:
 		return len(v)

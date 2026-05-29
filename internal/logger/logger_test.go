@@ -200,7 +200,7 @@ func TestWithFields(t *testing.T) {
 
 	logger := NewLogger(config)
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"field1": "value1",
 		"field2": 42,
 	}
@@ -278,7 +278,7 @@ func TestChaining(t *testing.T) {
 
 	// Test method chaining
 	logger.WithField("key1", "value1").
-		WithFields(map[string]interface{}{"key2": "value2"}).
+		WithFields(map[string]any{"key2": "value2"}).
 		WithError(errChain).
 		Info("chained message")
 
@@ -312,7 +312,7 @@ func TestJSONFormat(t *testing.T) {
 	output := buf.String()
 
 	// Parse as JSON to verify format
-	var logEntry map[string]interface{}
+	var logEntry map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &logEntry); err != nil {
 		t.Fatalf("Failed to parse JSON output: %v, output: %s", err, output)
 	}
@@ -325,7 +325,7 @@ func TestJSONFormat(t *testing.T) {
 		t.Errorf("Expected level 'INFO', got: %v", logEntry["level"])
 	}
 
-	fields, ok := logEntry["fields"].(map[string]interface{})
+	fields, ok := logEntry["fields"].(map[string]any)
 	if !ok {
 		t.Fatal("Expected fields object in JSON")
 	}
@@ -508,7 +508,7 @@ func TestLoggerEntryWithContext(t *testing.T) {
 	output := buf.String()
 
 	// Parse JSON output to verify structure
-	var logEntry map[string]interface{}
+	var logEntry map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &logEntry); err != nil {
 		t.Fatalf("Failed to parse JSON output: %v", err)
 	}

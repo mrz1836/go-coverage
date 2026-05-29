@@ -475,7 +475,7 @@ func (suite *RendererTestSuite) TestRenderReportErrorHandling() {
 	ctx := context.Background()
 
 	// Test with data that might cause template errors
-	invalidData := map[string]interface{}{
+	invalidData := map[string]any{
 		"InvalidField": func() string { return "function" }, // Functions can't be serialized
 	}
 

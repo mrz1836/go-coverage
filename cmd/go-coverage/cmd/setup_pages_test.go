@@ -1075,7 +1075,7 @@ func TestNewSetupPagesCmdValidation(t *testing.T) {
 	tests := []struct {
 		name          string
 		args          []string
-		flags         map[string]interface{}
+		flags         map[string]any
 		expectError   bool
 		errorContains string
 	}{
@@ -1088,7 +1088,7 @@ func TestNewSetupPagesCmdValidation(t *testing.T) {
 		{
 			name: "invalid repository format",
 			args: []string{"invalid-repo-format"},
-			flags: map[string]interface{}{
+			flags: map[string]any{
 				flagDryRun: true,
 			},
 			expectError:   true,
@@ -1097,7 +1097,7 @@ func TestNewSetupPagesCmdValidation(t *testing.T) {
 		{
 			name: "empty repository format",
 			args: []string{""},
-			flags: map[string]interface{}{
+			flags: map[string]any{
 				flagDryRun: true,
 			},
 			expectError:   true,
@@ -1106,7 +1106,7 @@ func TestNewSetupPagesCmdValidation(t *testing.T) {
 		{
 			name: "repository with spaces",
 			args: []string{"owner with spaces/repo"},
-			flags: map[string]interface{}{
+			flags: map[string]any{
 				flagDryRun: true,
 			},
 			expectError:   true,

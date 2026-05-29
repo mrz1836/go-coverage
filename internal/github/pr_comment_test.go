@@ -97,11 +97,11 @@ func TestCreateOrUpdatePRComment(t *testing.T) {
 					switch r.URL.Path {
 					case "/repos/testowner/testrepo/pulls/123":
 						// Mock PR response
-						pr := map[string]interface{}{
+						pr := map[string]any{
 							"number": 123,
 							"title":  "Test PR",
 							"state":  "open",
-							"head": map[string]interface{}{
+							"head": map[string]any{
 								"sha": "abc123",
 							},
 						}
@@ -112,10 +112,10 @@ func TestCreateOrUpdatePRComment(t *testing.T) {
 						case "GET":
 							// Mock existing comments (empty)
 							w.Header().Set("Content-Type", "application/json")
-							assert.NoError(t, json.NewEncoder(w).Encode([]interface{}{}))
+							assert.NoError(t, json.NewEncoder(w).Encode([]any{}))
 						case "POST":
 							// Mock comment creation
-							comment := map[string]interface{}{
+							comment := map[string]any{
 								"id":   456,
 								"body": "test comment",
 							}
@@ -200,7 +200,7 @@ func TestFindExistingCoverageComments(t *testing.T) {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == "/repos/testowner/testrepo/issues/123/comments" && r.Method == "GET" {
 						w.Header().Set("Content-Type", "application/json")
-						assert.NoError(t, json.NewEncoder(w).Encode([]interface{}{}))
+						assert.NoError(t, json.NewEncoder(w).Encode([]any{}))
 					} else {
 						w.WriteHeader(http.StatusNotFound)
 					}
@@ -213,7 +213,7 @@ func TestFindExistingCoverageComments(t *testing.T) {
 			setupMockFn: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == "/repos/testowner/testrepo/issues/123/comments" && r.Method == "GET" {
-						comments := []map[string]interface{}{
+						comments := []map[string]any{
 							{
 								"id":   1,
 								"body": "<!-- go-coverage-v1 --> Some coverage comment",
@@ -452,7 +452,7 @@ func TestCreateCoverageStatusCheck(t *testing.T) {
 			setupMockFn: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if strings.Contains(r.URL.Path, "/statuses/") && r.Method == "POST" {
-						status := map[string]interface{}{
+						status := map[string]any{
 							"id":          123,
 							"state":       "success",
 							"description": "Coverage check passed",
@@ -575,7 +575,7 @@ func TestDeletePRComments(t *testing.T) {
 			setupMockFn: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == "/repos/testowner/testrepo/issues/123/comments" && r.Method == "GET" {
-						comments := []map[string]interface{}{
+						comments := []map[string]any{
 							{
 								"id":   1,
 								"body": "<!-- go-coverage-v1 --> Coverage comment 1",
@@ -636,7 +636,7 @@ func TestGetPRCommentStats(t *testing.T) {
 			setupMockFn: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == "/repos/testowner/testrepo/issues/123/comments" && r.Method == "GET" {
-						comments := []map[string]interface{}{
+						comments := []map[string]any{
 							{
 								"id":   1,
 								"body": "<!-- go-coverage-v1 --> Coverage comment 1",

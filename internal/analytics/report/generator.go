@@ -52,7 +52,7 @@ type Data struct {
 	Packages          []PackageReport
 	LatestTag         string
 	GoogleAnalyticsID string
-	Config            map[string]interface{}
+	Config            map[string]any
 }
 
 // Summary provides high-level coverage statistics
@@ -306,7 +306,7 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 		Packages:          packages,
 		LatestTag:         getLatestGitTag(ctx),
 		GoogleAnalyticsID: googleAnalyticsID,
-		Config: map[string]interface{}{
+		Config: map[string]any{
 			"BrandingEnabled": globalConfig.Analytics.BrandingEnabled,
 		},
 	}

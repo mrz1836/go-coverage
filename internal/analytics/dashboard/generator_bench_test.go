@@ -352,8 +352,8 @@ func createLargeCoverageData() *CoverageData {
 	}
 }
 
-func createBenchmarkTemplateData() map[string]interface{} {
-	return map[string]interface{}{
+func createBenchmarkTemplateData() map[string]any {
+	return map[string]any{
 		"ProjectName":     benchProjectName,
 		"RepositoryOwner": "test",
 		"RepositoryName":  "benchmark-repo",
@@ -376,7 +376,7 @@ func createBenchmarkTemplateData() map[string]interface{} {
 	}
 }
 
-func createBenchmarkTemplateDataWithHistory() map[string]interface{} {
+func createBenchmarkTemplateDataWithHistory() map[string]any {
 	data := createBenchmarkTemplateData()
 	data["HasHistory"] = true
 	data["History"] = createBenchmarkHistoryData()
@@ -400,10 +400,10 @@ func createBenchmarkHistoryData() []history.Entry {
 	return entries
 }
 
-func createPackageList() []map[string]interface{} {
-	packages := make([]map[string]interface{}, 10)
+func createPackageList() []map[string]any {
+	packages := make([]map[string]any, 10)
 	for i := 0; i < 10; i++ {
-		packages[i] = map[string]interface{}{
+		packages[i] = map[string]any{
 			"Name":         "package" + string(rune('A'+i)),
 			"Coverage":     float64(70 + i*3),
 			"TotalLines":   500,
@@ -414,10 +414,10 @@ func createPackageList() []map[string]interface{} {
 	return packages
 }
 
-func createTopFilesList() []map[string]interface{} {
-	files := make([]map[string]interface{}, 20)
+func createTopFilesList() []map[string]any {
+	files := make([]map[string]any, 20)
 	for i := 0; i < 20; i++ {
-		files[i] = map[string]interface{}{
+		files[i] = map[string]any{
 			"Path":         "pkg/file" + string(rune('0'+i/10)) + string(rune('0'+i%10)) + ".go",
 			"Coverage":     float64(60 + i*2),
 			"TotalLines":   100,
@@ -427,10 +427,10 @@ func createTopFilesList() []map[string]interface{} {
 	return files
 }
 
-func createChartDataPoints() []map[string]interface{} {
-	points := make([]map[string]interface{}, 30)
+func createChartDataPoints() []map[string]any {
+	points := make([]map[string]any, 30)
 	for i := 0; i < 30; i++ {
-		points[i] = map[string]interface{}{
+		points[i] = map[string]any{
 			"Date":     time.Now().Add(-time.Duration(i) * 24 * time.Hour).Format("2006-01-02"),
 			"Coverage": float64(70 + (i % 20)),
 		}
