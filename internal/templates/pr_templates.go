@@ -3,12 +3,13 @@ package templates
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"html/template"
 	"math"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 )
@@ -679,9 +680,9 @@ func (e *PRTemplateEngine) filterPackages(packages []PackageCoverageData) []Pack
 
 func (e *PRTemplateEngine) filterRecommendations(recommendations []RecommendationData) []RecommendationData {
 	// Sort by priority
-	sort.Slice(recommendations, func(i, j int) bool {
+	slices.SortFunc(recommendations, func(a, b RecommendationData) int {
 		priorities := map[string]int{priorityHigh: 3, priorityMedium: 2, priorityLow: 1}
-		return priorities[recommendations[i].Priority] > priorities[recommendations[j].Priority]
+		return cmp.Compare(priorities[b.Priority], priorities[a.Priority])
 	})
 
 	// Limit the number of recommendations
@@ -696,12 +697,12 @@ func (e *PRTemplateEngine) sortFilesByRisk(files []FileCoverageData) []FileCover
 	sorted := make([]FileCoverageData, len(files))
 	copy(sorted, files)
 
-	sort.Slice(sorted, func(i, j int) bool {
+	slices.SortFunc(sorted, func(a, b FileCoverageData) int {
 		risks := map[string]int{"critical": 4, priorityHigh: 3, priorityMedium: 2, priorityLow: 1}
-		if risks[sorted[i].Risk] != risks[sorted[j].Risk] {
-			return risks[sorted[i].Risk] > risks[sorted[j].Risk]
-		}
-		return math.Abs(sorted[i].Change) > math.Abs(sorted[j].Change)
+		return cmp.Or(
+			cmp.Compare(risks[b.Risk], risks[a.Risk]),
+			cmp.Compare(math.Abs(b.Change), math.Abs(a.Change)),
+		)
 	})
 
 	return sorted
@@ -711,8 +712,8 @@ func (e *PRTemplateEngine) sortByChange(files []FileCoverageData) []FileCoverage
 	sorted := make([]FileCoverageData, len(files))
 	copy(sorted, files)
 
-	sort.Slice(sorted, func(i, j int) bool {
-		return math.Abs(sorted[i].Change) > math.Abs(sorted[j].Change)
+	slices.SortFunc(sorted, func(a, b FileCoverageData) int {
+		return cmp.Compare(math.Abs(b.Change), math.Abs(a.Change))
 	})
 
 	return sorted

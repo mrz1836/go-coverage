@@ -2,6 +2,7 @@
 package analysis
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 )
@@ -380,11 +381,14 @@ func (e *ComparisonEngine) analyzeFileChanges(base, pr *CoverageSnapshot) []File
 	}
 
 	// Sort by significance and percentage change
-	sort.Slice(changes, func(i, j int) bool {
-		if changes[i].IsSignificant != changes[j].IsSignificant {
-			return changes[i].IsSignificant
+	slices.SortFunc(changes, func(a, b FileChangeAnalysis) int {
+		if a.IsSignificant != b.IsSignificant {
+			if a.IsSignificant {
+				return -1
+			}
+			return 1
 		}
-		return math.Abs(changes[i].PercentageChange) > math.Abs(changes[j].PercentageChange)
+		return cmp.Compare(math.Abs(b.PercentageChange), math.Abs(a.PercentageChange))
 	})
 
 	// Limit the number of changes to analyze
@@ -448,11 +452,14 @@ func (e *ComparisonEngine) analyzePackageChanges(base, pr *CoverageSnapshot) []P
 	}
 
 	// Sort by significance and percentage change
-	sort.Slice(changes, func(i, j int) bool {
-		if changes[i].IsSignificant != changes[j].IsSignificant {
-			return changes[i].IsSignificant
+	slices.SortFunc(changes, func(a, b PackageChangeAnalysis) int {
+		if a.IsSignificant != b.IsSignificant {
+			if a.IsSignificant {
+				return -1
+			}
+			return 1
 		}
-		return math.Abs(changes[i].PercentageChange) > math.Abs(changes[j].PercentageChange)
+		return cmp.Compare(math.Abs(b.PercentageChange), math.Abs(a.PercentageChange))
 	})
 
 	return changes

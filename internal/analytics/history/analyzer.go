@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/mrz1836/go-coverage/internal/history"
@@ -351,8 +351,8 @@ func (ta *TrendAnalyzer) LoadHistoryData(ctx context.Context, historyTracker *hi
 	}
 
 	// Sort by timestamp
-	sort.Slice(ta.data, func(i, j int) bool {
-		return ta.data[i].Timestamp.Before(ta.data[j].Timestamp)
+	slices.SortFunc(ta.data, func(a, b AnalysisDataPoint) int {
+		return a.Timestamp.Compare(b.Timestamp)
 	})
 
 	return nil
@@ -364,8 +364,8 @@ func (ta *TrendAnalyzer) LoadCustomData(dataPoints []AnalysisDataPoint) {
 	copy(ta.data, dataPoints)
 
 	// Sort by timestamp
-	sort.Slice(ta.data, func(i, j int) bool {
-		return ta.data[i].Timestamp.Before(ta.data[j].Timestamp)
+	slices.SortFunc(ta.data, func(a, b AnalysisDataPoint) int {
+		return a.Timestamp.Compare(b.Timestamp)
 	})
 }
 

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -534,8 +534,8 @@ func (t *Tracker) loadAllEntries(ctx context.Context) ([]Entry, error) {
 	}
 
 	// Sort by timestamp (newest first)
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].Timestamp.After(entries[j].Timestamp)
+	slices.SortFunc(entries, func(a, b Entry) int {
+		return b.Timestamp.Compare(a.Timestamp)
 	})
 
 	return entries, nil

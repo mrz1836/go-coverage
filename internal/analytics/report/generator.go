@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -138,7 +138,7 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 		for name := range coverage.Packages {
 			packageNames = append(packageNames, name)
 		}
-		sort.Strings(packageNames)
+		slices.Sort(packageNames)
 
 		// Build package reports
 		for _, name := range packageNames {
@@ -150,7 +150,7 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 			for fileName := range pkg.Files {
 				fileNames = append(fileNames, fileName)
 			}
-			sort.Strings(fileNames)
+			slices.Sort(fileNames)
 
 			// Build file reports
 			for _, fileName := range fileNames {

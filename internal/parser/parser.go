@@ -3,13 +3,14 @@ package parser
 
 import (
 	"bufio"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -527,8 +528,8 @@ func (p *Parser) shouldExcludeFileForDiscovery(relPath, absPath string) bool {
 
 // calculateFileCoverage calculates coverage statistics for a single file
 func (p *Parser) calculateFileCoverage(filename string, statements []Statement) *FileCoverage {
-	sort.Slice(statements, func(i, j int) bool {
-		return statements[i].StartLine < statements[j].StartLine
+	slices.SortFunc(statements, func(a, b Statement) int {
+		return cmp.Compare(a.StartLine, b.StartLine)
 	})
 
 	totalStmts := 0
