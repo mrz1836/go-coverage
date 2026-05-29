@@ -346,7 +346,8 @@ func (g *Generator) applySVGColor(svgContent, color string) string {
 	if strings.Contains(modifiedSVG, `fill="`) {
 		// Replace existing fill attribute with the desired color
 		// Use regex to find and replace fill="any-color" with fill="desired-color"
-		re := strings.NewReplacer(`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
+		re := strings.NewReplacer(
+			`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
 			`fill="#000000"`, `fill="`+color+`"`, // black
 			`fill="#000"`, `fill="`+color+`"`, // short black
 			`fill="black"`, `fill="`+color+`"`, // named black
@@ -388,7 +389,8 @@ func applySVGColorStatic(svgContent, color string) string {
 	if strings.Contains(modifiedSVG, `fill="`) {
 		// Replace existing fill attribute with the desired color
 		// Use regex to find and replace fill="any-color" with fill="desired-color"
-		re := strings.NewReplacer(`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
+		re := strings.NewReplacer(
+			`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
 			`fill="#000000"`, `fill="`+color+`"`, // black
 			`fill="#000"`, `fill="`+color+`"`, // short black
 			`fill="black"`, `fill="`+color+`"`, // named black
@@ -670,7 +672,8 @@ func (g *Generator) renderFlatBadge(data Data, width, labelWidth, messageWidth, 
 		logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, processedLogo)
 	}
 
-	return []byte(fmt.Sprintf(template,
+	return []byte(fmt.Sprintf(
+		template,
 		width, height, data.AriaLabel, data.AriaLabel,
 		width, height,
 		logoWidth+labelWidth+8, height,
@@ -709,7 +712,8 @@ func (g *Generator) renderFlatSquareBadge(data Data, width, height, labelWidth, 
 		logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, processedLogo)
 	}
 
-	return []byte(fmt.Sprintf(template,
+	return []byte(fmt.Sprintf(
+		template,
 		width, height, data.AriaLabel, data.AriaLabel,
 		logoWidth+labelWidth+8, height,
 		logoWidth+labelWidth+8, messageWidth+20, height, data.Color,
@@ -748,7 +752,8 @@ func (g *Generator) renderForTheBadge(data Data, width, height, labelWidth, mess
 	label := strings.ToUpper(data.Label)
 	message := strings.ToUpper(data.Message)
 
-	return []byte(fmt.Sprintf(template,
+	return []byte(fmt.Sprintf(
+		template,
 		width, height, data.AriaLabel, data.AriaLabel,
 		logoWidth+labelWidth+8, height,
 		logoWidth+labelWidth+8, messageWidth+20, height, data.Color,

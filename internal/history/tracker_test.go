@@ -59,7 +59,8 @@ func TestRecord(t *testing.T) {
 	ctx := context.Background()
 	coverage := createTestCoverage()
 
-	err = tracker.Record(ctx, coverage,
+	err = tracker.Record(
+		ctx, coverage,
 		WithBranch(DefaultBranch),
 		WithCommit("abc123", "https://github.com/test/repo/commit/abc123"),
 		WithMetadata("project", "test-project"),
@@ -105,7 +106,8 @@ func TestGetTrend(t *testing.T) {
 		coverage := createTestCoverage()
 		coverage.Percentage = float64(70 + i*5) // 70%, 75%, 80%, 85%, 90%
 
-		recordErr := tracker.Record(ctx, coverage,
+		recordErr := tracker.Record(
+			ctx, coverage,
 			WithBranch(DefaultBranch),
 			WithCommit("commit"+string(rune('1'+i)), ""),
 		)
@@ -114,7 +116,8 @@ func TestGetTrend(t *testing.T) {
 	}
 
 	// Get trend data
-	trendData, err := tracker.GetTrend(ctx,
+	trendData, err := tracker.GetTrend(
+		ctx,
 		WithTrendBranch(DefaultBranch),
 		WithTrendDays(7),
 		WithMaxDataPoints(10),
@@ -207,7 +210,8 @@ func TestCleanup(t *testing.T) {
 	// Record 3 entries (more than MaxEntries)
 	for i := range 3 {
 		coverage := createTestCoverage()
-		recordErr := tracker.Record(ctx, coverage,
+		recordErr := tracker.Record(
+			ctx, coverage,
 			WithBranch(DefaultBranch),
 			WithCommit("commit"+string(rune('1'+i)), ""),
 		)
@@ -274,7 +278,8 @@ func TestGetStatistics(t *testing.T) {
 	// Record entries with different branches and projects
 	coverage := createTestCoverage()
 
-	err = tracker.Record(ctx, coverage,
+	err = tracker.Record(
+		ctx, coverage,
 		WithBranch(DefaultBranch),
 		WithMetadata("project", "project1"),
 	)
@@ -282,7 +287,8 @@ func TestGetStatistics(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	err = tracker.Record(ctx, coverage,
+	err = tracker.Record(
+		ctx, coverage,
 		WithBranch("feature"),
 		WithMetadata("project", "project2"),
 	)
@@ -290,7 +296,8 @@ func TestGetStatistics(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	err = tracker.Record(ctx, coverage,
+	err = tracker.Record(
+		ctx, coverage,
 		WithBranch(DefaultBranch),
 		WithMetadata("project", "project1"),
 	)
@@ -369,7 +376,8 @@ func TestTrendAnalysis(t *testing.T) {
 		coverage := createTestCoverage()
 		coverage.Percentage = percentage
 
-		recordErr := tracker.Record(ctx, coverage,
+		recordErr := tracker.Record(
+			ctx, coverage,
 			WithBranch(DefaultBranch),
 			WithCommit("commit"+string(rune('1'+i)), ""),
 		)
@@ -419,7 +427,8 @@ func TestBuildInfo(t *testing.T) {
 	}
 
 	coverage := createTestCoverage()
-	err = tracker.Record(ctx, coverage,
+	err = tracker.Record(
+		ctx, coverage,
 		WithBranch(DefaultBranch),
 		WithCommit("abc123", "https://github.com/test/repo/commit/abc123"),
 		WithBuildInfo(buildInfo),

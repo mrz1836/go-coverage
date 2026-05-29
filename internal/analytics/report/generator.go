@@ -176,7 +176,8 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 				if g.config != nil && g.config.RepositoryOwner != "" && g.config.RepositoryName != "" && g.config.BranchName != "" {
 					// Use the original full file path from coverage data
 					fileURL = urlutil.BuildGitHubFileURL(
-						g.config.RepositoryOwner, g.config.RepositoryName, g.config.BranchName, fileName)
+						g.config.RepositoryOwner, g.config.RepositoryName, g.config.BranchName, fileName,
+					)
 				}
 
 				files = append(files, FileReport{

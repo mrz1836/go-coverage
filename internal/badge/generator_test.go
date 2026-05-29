@@ -63,7 +63,8 @@ func TestGenerateWithOptions(t *testing.T) {
 	generator := New()
 	ctx := context.Background()
 
-	svg, err := generator.Generate(ctx, 92.3,
+	svg, err := generator.Generate(
+		ctx, 92.3,
 		WithStyle("flat-square"),
 		WithLabel("test coverage"),
 		WithLogo("https://example.com/logo.svg"),

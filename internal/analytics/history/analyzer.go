@@ -325,7 +325,8 @@ func NewTrendAnalyzer(config *AnalyzerConfig) *TrendAnalyzer {
 // LoadHistoryData loads historical data from the existing history system
 func (ta *TrendAnalyzer) LoadHistoryData(ctx context.Context, historyTracker *history.Tracker, branch string, days int) error {
 	// Get trend data which includes historical entries
-	trendData, err := historyTracker.GetTrend(ctx,
+	trendData, err := historyTracker.GetTrend(
+		ctx,
 		history.WithTrendBranch(branch),
 		history.WithTrendDays(days),
 	)

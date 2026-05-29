@@ -56,7 +56,8 @@ func BenchmarkRecordWithOptions(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := tracker.Record(ctx, coverage,
+		err := tracker.Record(
+			ctx, coverage,
 			WithBranch(DefaultBranch),
 			WithCommit("abc123", "https://github.com/test/repo/commit/abc123"),
 			WithMetadata("project", "test"),
@@ -116,7 +117,8 @@ func BenchmarkGetTrendLarge(b *testing.B) {
 	for i := range 500 {
 		coverage := createBenchmarkCoverage()
 		coverage.Percentage = float64(50 + (i % 50))
-		err := tracker.Record(ctx, coverage,
+		err := tracker.Record(
+			ctx, coverage,
 			WithBranch(DefaultBranch),
 			WithCommit("commit"+string(rune('0'+i%10)), ""),
 		)
@@ -127,7 +129,8 @@ func BenchmarkGetTrendLarge(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := tracker.GetTrend(ctx,
+		_, err := tracker.GetTrend(
+			ctx,
 			WithTrendBranch(DefaultBranch),
 			WithTrendDays(30),
 			WithMaxDataPoints(100),
@@ -237,7 +240,8 @@ func BenchmarkGetStatistics(b *testing.B) {
 		branch := branches[branchIdx]
 		project := projects[projectIdx]
 
-		err := tracker.Record(ctx, coverage,
+		err := tracker.Record(
+			ctx, coverage,
 			WithBranch(branch),
 			WithMetadata("project", project),
 		)

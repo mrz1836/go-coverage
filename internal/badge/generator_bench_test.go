@@ -259,7 +259,8 @@ func BenchmarkWithOptions(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := generator.Generate(ctx, 85.5,
+		_, err := generator.Generate(
+			ctx, 85.5,
 			WithStyle("flat"),
 			WithLabel("test coverage"),
 			WithLogo("https://example.com/logo.svg"),
