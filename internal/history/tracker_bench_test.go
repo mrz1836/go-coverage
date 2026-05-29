@@ -82,7 +82,7 @@ func BenchmarkGetTrend(b *testing.B) {
 	ctx := context.Background()
 
 	// Pre-populate with entries
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		coverage := createBenchmarkCoverage()
 		coverage.Percentage = float64(60 + i)
 		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
@@ -113,7 +113,7 @@ func BenchmarkGetTrendLarge(b *testing.B) {
 	ctx := context.Background()
 
 	// Pre-populate with many entries
-	for i := 0; i < 500; i++ {
+	for i := range 500 {
 		coverage := createBenchmarkCoverage()
 		coverage.Percentage = float64(50 + (i % 50))
 		err := tracker.Record(ctx, coverage,
@@ -151,7 +151,7 @@ func BenchmarkGetLatestEntry(b *testing.B) {
 	ctx := context.Background()
 
 	// Pre-populate with entries
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		coverage := createBenchmarkCoverage()
 		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
@@ -189,7 +189,7 @@ func BenchmarkCleanup(b *testing.B) {
 		ctx := context.Background()
 
 		// Create many entries for cleanup
-		for j := 0; j < 150; j++ {
+		for range 150 {
 			coverage := createBenchmarkCoverage()
 			recordErr := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 			if recordErr != nil {
@@ -224,7 +224,7 @@ func BenchmarkGetStatistics(b *testing.B) {
 	branches := []string{DefaultBranch, "develop", "feature-a", "feature-b"}
 	projects := []string{"project-1", "project-2", "project-3"}
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		coverage := createBenchmarkCoverage()
 		branchIdx := i % len(branches)
 		projectIdx := i % len(projects)
@@ -356,7 +356,7 @@ func BenchmarkLoadAllEntries(b *testing.B) {
 	ctx := context.Background()
 
 	// Pre-populate with entries
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		coverage := createBenchmarkCoverage()
 		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
@@ -438,7 +438,7 @@ func BenchmarkConcurrentGetTrend(b *testing.B) {
 	ctx := context.Background()
 
 	// Pre-populate with entries
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		coverage := createBenchmarkCoverage()
 		err := tracker.Record(ctx, coverage, WithBranch(DefaultBranch))
 		if err != nil {
@@ -492,11 +492,11 @@ func createBenchmarkCoverage() *parser.CoverageData {
 func createBenchmarkCoverageComplex() *parser.CoverageData {
 	packages := make(map[string]*parser.PackageCoverage)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		pkgName := "package" + string(rune('A'+i))
 		files := make(map[string]*parser.FileCoverage)
 
-		for j := 0; j < 5; j++ {
+		for j := range 5 {
 			fileName := pkgName + "/file" + string(rune('0'+j)) + ".go"
 			files[fileName] = &parser.FileCoverage{
 				Path:         fileName,
@@ -534,7 +534,7 @@ func createBenchmarkCoverageComplex() *parser.CoverageData {
 func createBenchmarkEntries(count int) []Entry {
 	entries := make([]Entry, count)
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		entries[i] = Entry{
 			Timestamp: time.Now().Add(-time.Duration(i) * time.Hour),
 			Branch:    DefaultBranch,

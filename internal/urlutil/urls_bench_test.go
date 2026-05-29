@@ -274,7 +274,7 @@ func BenchmarkComplexURLOperations(b *testing.B) {
 func BenchmarkBatchURLProcessing(b *testing.B) {
 	builder := NewURLBuilder("github.com", "test", "repo")
 	files := make([]string, 100)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		files[i] = "pkg/file" + string(rune('0'+i/10)) + string(rune('0'+i%10)) + ".go"
 	}
 

@@ -198,7 +198,7 @@ func normalizeFilePath(fullPath string) string {
 	parts := strings.Split(fullPath, "/")
 	if len(parts) >= 3 {
 		// Find the first part that contains a dot (likely a domain)
-		for i := 0; i < len(parts); i++ {
+		for i := range parts {
 			if strings.Contains(parts[i], ".") {
 				// Skip domain/owner and return the rest (including repo)
 				// For domain.com/owner/repo/path..., we want to keep from "repo/path" onwards

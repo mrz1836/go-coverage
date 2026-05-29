@@ -101,7 +101,7 @@ func TestGetTrend(t *testing.T) {
 	ctx := context.Background()
 
 	// Record multiple entries
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		coverage := createTestCoverage()
 		coverage.Percentage = float64(70 + i*5) // 70%, 75%, 80%, 85%, 90%
 
@@ -205,7 +205,7 @@ func TestCleanup(t *testing.T) {
 	ctx := context.Background()
 
 	// Record 3 entries (more than MaxEntries)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		coverage := createTestCoverage()
 		recordErr := tracker.Record(ctx, coverage,
 			WithBranch(DefaultBranch),

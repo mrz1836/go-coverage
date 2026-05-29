@@ -312,7 +312,7 @@ func createLargeSnapshot() *CoverageSnapshot {
 	packageCoverage := make(map[string]PackageMetrics)
 	fileCoverage := make(map[string]FileMetrics)
 
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		pkgName := "package" + string(rune('A'+i%26)) + string(rune('0'+i/26))
 		packageCoverage[pkgName] = PackageMetrics{
 			Package:           pkgName,
@@ -321,7 +321,7 @@ func createLargeSnapshot() *CoverageSnapshot {
 			CoveredStatements: 3000 + i*10,
 		}
 		// Add some files for each package
-		for j := 0; j < 5; j++ {
+		for j := range 5 {
 			fileName := pkgName + "/file" + string(rune('0'+j)) + ".go"
 			fileCoverage[fileName] = FileMetrics{
 				Filename:          fileName,
@@ -376,7 +376,7 @@ func createCompletelyDifferentSnapshot() *CoverageSnapshot {
 	packageCoverage := make(map[string]PackageMetrics)
 	fileCoverage := make(map[string]FileMetrics)
 
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		pkgName := "newpackage" + string(rune('X'+i%3)) + string(rune('0'+i))
 		packageCoverage[pkgName] = PackageMetrics{
 			Package:           pkgName,
@@ -386,7 +386,7 @@ func createCompletelyDifferentSnapshot() *CoverageSnapshot {
 			FileCount:         3,
 		}
 		// Add some files for each package
-		for j := 0; j < 3; j++ {
+		for j := range 3 {
 			fileName := pkgName + "/file" + string(rune('0'+j)) + ".go"
 			fileCoverage[fileName] = FileMetrics{
 				Filename:          fileName,
@@ -479,7 +479,7 @@ func createComparisonResult() *ComparisonResult {
 
 func createBenchmarkFileMetrics() map[string]FileMetrics {
 	fileMetrics := make(map[string]FileMetrics)
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		fileName := "pkg/file" + string(rune('0'+i/10)) + string(rune('0'+i%10)) + ".go"
 		fileMetrics[fileName] = FileMetrics{
 			Filename:          fileName,
@@ -494,7 +494,7 @@ func createBenchmarkFileMetrics() map[string]FileMetrics {
 
 func createBenchmarkPackageMetrics() map[string]PackageMetrics {
 	packageMetrics := make(map[string]PackageMetrics)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		pkgName := "package" + string(rune('A'+i))
 		packageMetrics[pkgName] = PackageMetrics{
 			Package:           pkgName,

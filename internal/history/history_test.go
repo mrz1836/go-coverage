@@ -144,7 +144,7 @@ func TestSaveRecord(t *testing.T) {
 		_ = os.Remove(manager.historyFile)
 
 		// Create 101 records to test the 100 record limit
-		for i := 0; i < 101; i++ {
+		for i := range 101 {
 			record := &CoverageRecord{
 				Timestamp:    time.Now().Add(time.Duration(i) * time.Minute),
 				CommitSHA:    fmt.Sprintf("commit%d", i),
@@ -783,9 +783,9 @@ func TestConcurrentAccess(t *testing.T) {
 		done := make(chan error, numGoroutines)
 
 		// Start multiple goroutines that save records concurrently
-		for i := 0; i < numGoroutines; i++ {
+		for i := range numGoroutines {
 			go func(goroutineID int) {
-				for j := 0; j < recordsPerGoroutine; j++ {
+				for j := range recordsPerGoroutine {
 					record := &CoverageRecord{
 						Timestamp:    time.Now(),
 						CommitSHA:    fmt.Sprintf("commit-%d-%d", goroutineID, j),
@@ -804,7 +804,7 @@ func TestConcurrentAccess(t *testing.T) {
 		}
 
 		// Wait for all goroutines to complete
-		for i := 0; i < numGoroutines; i++ {
+		for range numGoroutines {
 			err := <-done
 			// Some operations might fail due to file contention,
 			// but at least some should succeed
@@ -843,7 +843,7 @@ func TestConcurrentAccess(t *testing.T) {
 		done := make(chan error, numReaders)
 
 		// Start multiple goroutines that read concurrently
-		for i := 0; i < numReaders; i++ {
+		for range numReaders {
 			go func() {
 				lastRecord, err := manager.GetLastRecord()
 				if err != nil {
@@ -863,7 +863,7 @@ func TestConcurrentAccess(t *testing.T) {
 		}
 
 		// Wait for all readers to complete
-		for i := 0; i < numReaders; i++ {
+		for range numReaders {
 			err := <-done
 			require.NoError(t, err, "All read operations should succeed")
 		}
@@ -937,7 +937,7 @@ func TestErrorHandlingEdgeCases(t *testing.T) {
 	t.Run("Extremely long file path", func(t *testing.T) {
 		// Create a very long directory path
 		longPath := tempDir
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			longPath = filepath.Join(longPath, "verylongdirectoryname")
 		}
 

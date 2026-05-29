@@ -439,7 +439,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 	const baseDelay = 200 * time.Millisecond // Reduced from 500ms to 200ms
 
 	var lastErr error
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := range maxRetries {
 		// Check if context was canceled or deadline exceeded
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
 			log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
@@ -538,7 +538,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 
 	log.Printf("Attempting GitHub fallback for logo '%s'", iconName)
 	fallbackURL := fmt.Sprintf("https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/%s.svg", iconName)
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := range maxRetries {
 		// Check if context was canceled or deadline exceeded
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
 			log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())

@@ -261,7 +261,7 @@ func createSmallRenderData() any {
 func createLargeRenderData() any {
 	packages := make([]map[string]any, 500)
 	totalFiles := 0
-	for i := 0; i < 500; i++ {
+	for i := range 500 {
 		files := createFileList(20)
 		totalFiles += len(files)
 		packages[i] = map[string]any{
@@ -321,7 +321,7 @@ func createComplexRenderData() any {
 func createPackageRenderData() ([]map[string]any, int) {
 	packages := make([]map[string]any, 30)
 	totalFiles := 0
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		files := createFileList(10)
 		totalFiles += len(files)
 		packages[i] = map[string]any{
@@ -371,7 +371,7 @@ func createDataWithSpecialChars() any {
 
 func createFileList(count int) []map[string]any {
 	files := make([]map[string]any, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		totalLines := 100
 		coveredLines := 60 + i*2
 		percentage := float64(coveredLines) / float64(totalLines) * 100
@@ -402,7 +402,7 @@ func createDetailedStatistics() map[string]any {
 
 func createComplexPackageData() []map[string]any {
 	packages := make([]map[string]any, 20)
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		files := createFileList(5)
 		packages[i] = map[string]any{
 			"Name":          fmt.Sprintf("complex.package.%c", 'a'+i),
@@ -422,7 +422,7 @@ func createComplexPackageData() []map[string]any {
 
 func createHistoryData() []map[string]any {
 	history := make([]map[string]any, 30)
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		history[i] = map[string]any{
 			"Date":     time.Now().Add(-time.Duration(i) * 24 * time.Hour).Format("2006-01-02"),
 			"Coverage": float64(70 + (i % 20)),

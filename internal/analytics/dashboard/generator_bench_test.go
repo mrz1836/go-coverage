@@ -243,11 +243,11 @@ func BenchmarkStaticAssetHandling(b *testing.B) {
 
 func createBenchmarkCoverageData() *CoverageData {
 	packages := make([]PackageCoverage, 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		pkgName := "package" + string(rune('A'+i))
 		files := make([]FileCoverage, 5)
 
-		for j := 0; j < 5; j++ {
+		for j := range 5 {
 			fileName := pkgName + "/file" + string(rune('0'+j)) + ".go"
 			files[j] = FileCoverage{
 				Name:         fileName,
@@ -314,11 +314,11 @@ func createSmallCoverageData() *CoverageData {
 
 func createLargeCoverageData() *CoverageData {
 	packages := make([]PackageCoverage, 50)
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		pkgName := "package" + string(rune('A'+i%26)) + string(rune('0'+i/26))
 		files := make([]FileCoverage, 20)
 
-		for j := 0; j < 20; j++ {
+		for j := range 20 {
 			fileName := pkgName + "/file" + string(rune('0'+j/10)) + string(rune('0'+j%10)) + ".go"
 			files[j] = FileCoverage{
 				Name:         fileName,
@@ -386,7 +386,7 @@ func createBenchmarkTemplateDataWithHistory() map[string]any {
 
 func createBenchmarkHistoryData() []history.Entry {
 	entries := make([]history.Entry, 30)
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		entries[i] = history.Entry{
 			Timestamp: time.Now().Add(-time.Duration(i) * 24 * time.Hour),
 			Branch:    "master",
@@ -402,7 +402,7 @@ func createBenchmarkHistoryData() []history.Entry {
 
 func createPackageList() []map[string]any {
 	packages := make([]map[string]any, 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		packages[i] = map[string]any{
 			"Name":         "package" + string(rune('A'+i)),
 			"Coverage":     float64(70 + i*3),
@@ -416,7 +416,7 @@ func createPackageList() []map[string]any {
 
 func createTopFilesList() []map[string]any {
 	files := make([]map[string]any, 20)
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		files[i] = map[string]any{
 			"Path":         "pkg/file" + string(rune('0'+i/10)) + string(rune('0'+i%10)) + ".go",
 			"Coverage":     float64(60 + i*2),
@@ -429,7 +429,7 @@ func createTopFilesList() []map[string]any {
 
 func createChartDataPoints() []map[string]any {
 	points := make([]map[string]any, 30)
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		points[i] = map[string]any{
 			"Date":     time.Now().Add(-time.Duration(i) * 24 * time.Hour).Format("2006-01-02"),
 			"Coverage": float64(70 + (i % 20)),

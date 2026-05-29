@@ -170,7 +170,7 @@ func generateCoverageData(numFiles int) string {
 	var builder strings.Builder
 	builder.WriteString("mode: atomic\n")
 
-	for i := 0; i < numFiles; i++ {
+	for i := range numFiles {
 		pkg := fmt.Sprintf("pkg%d", i%10) // 10 different packages
 		file := fmt.Sprintf("github.com/example/%s/file%d.go", pkg, i)
 
@@ -200,12 +200,12 @@ func generateMixedCoverageData(numFiles int) string {
 		"github.com/example/testdata/helper.go", // should be excluded
 	}
 
-	for i := 0; i < numFiles; i++ {
+	for i := range numFiles {
 		file := fileTypes[i%len(fileTypes)]
 		file = strings.Replace(file, ".go", fmt.Sprintf("%d.go", i), 1)
 
 		// Generate statements
-		for j := 0; j < 3; j++ {
+		for j := range 3 {
 			line := 10 + j*5
 			fmt.Fprintf(&builder, "%s:%d.1,%d.10 1 %d\n",
 				file, line, line+2, i%2)
@@ -219,7 +219,7 @@ func generateMixedCoverageData(numFiles int) string {
 func generateStatements(numStatements int) []StatementWithFile {
 	statements := make([]StatementWithFile, numStatements)
 
-	for i := 0; i < numStatements; i++ {
+	for i := range numStatements {
 		pkg := fmt.Sprintf("pkg%d", i%5)
 		filename := fmt.Sprintf("github.com/example/%s/file%d.go", pkg, i%20)
 
