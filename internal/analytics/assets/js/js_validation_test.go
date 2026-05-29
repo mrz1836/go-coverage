@@ -27,6 +27,8 @@ func TestJavaScriptSyntaxValidation(t *testing.T) {
 
 // validateJavaScriptFile performs comprehensive syntax validation on a JavaScript file
 func validateJavaScriptFile(t *testing.T, filename string) {
+	t.Helper()
+
 	content, err := os.ReadFile(filename) // #nosec G304 - filename is from test constants, not user input
 	require.NoError(t, err, "Failed to read JavaScript file: %s", filename)
 
@@ -68,6 +70,8 @@ func validateJavaScriptFile(t *testing.T, filename string) {
 
 // validateBalancedBrackets ensures all brackets, braces, and parentheses are properly balanced
 func validateBalancedBrackets(t *testing.T, content, filename string) {
+	t.Helper()
+
 	type bracket struct {
 		char string
 		line int
@@ -140,6 +144,8 @@ func validateBalancedBrackets(t *testing.T, content, filename string) {
 
 // validateStringLiterals checks for properly terminated string literals
 func validateStringLiterals(t *testing.T, content, filename string) {
+	t.Helper()
+
 	lines := strings.Split(content, "\n")
 
 	for lineNum, line := range lines {
@@ -191,6 +197,8 @@ func validateStringLiterals(t *testing.T, content, filename string) {
 
 // validateFunctionSyntax checks for basic function declaration syntax
 func validateFunctionSyntax(t *testing.T, content, filename string) {
+	t.Helper()
+
 	// Pattern for function declarations and expressions
 	functionPattern := regexp.MustCompile(`function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(`)
 	arrowFunctionPattern := regexp.MustCompile(`(?:const|let|var)?\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*\([^)]*\)\s*=>`)
@@ -238,6 +246,8 @@ func validateFunctionSyntax(t *testing.T, content, filename string) {
 
 // validateCommonSyntaxErrors checks for common JavaScript syntax errors
 func validateCommonSyntaxErrors(t *testing.T, content, filename string) {
+	t.Helper()
+
 	lines := strings.Split(content, "\n")
 
 	// Pre-compile regexes for better performance
@@ -282,6 +292,8 @@ func validateCommonSyntaxErrors(t *testing.T, content, filename string) {
 
 // validateIIFE validates Immediately Invoked Function Expression syntax
 func validateIIFE(t *testing.T, content, filename string) {
+	t.Helper()
+
 	// Look for IIFE patterns
 	iifePattern := regexp.MustCompile(`\(\s*function\s*\([^)]*\)\s*\{`)
 	closurePattern := regexp.MustCompile(`\}\s*\)\s*\(\s*\)\s*;`)
@@ -304,6 +316,8 @@ func validateIIFE(t *testing.T, content, filename string) {
 
 // validateVariableDeclarations checks for proper variable declaration syntax
 func validateVariableDeclarations(t *testing.T, content, filename string) {
+	t.Helper()
+
 	lines := strings.Split(content, "\n")
 
 	// Pattern for variable declarations
