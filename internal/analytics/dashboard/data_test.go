@@ -212,7 +212,7 @@ func TestDashboardMetadata(t *testing.T) {
 	}
 
 	// Verify JSON contains expected fields
-	var jsonMap map[string]interface{}
+	var jsonMap map[string]any
 	err = json.Unmarshal(jsonData, &jsonMap)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal to map: %v", err)

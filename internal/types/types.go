@@ -54,21 +54,21 @@ const (
 
 // Notification represents a coverage notification
 type Notification struct {
-	ID           string                 `json:"id"`
-	Subject      string                 `json:"subject"`
-	Message      string                 `json:"message"`
-	Severity     SeverityLevel          `json:"severity"`
-	Priority     Priority               `json:"priority"`
-	Timestamp    time.Time              `json:"timestamp"`
-	Author       string                 `json:"author,omitempty"`
-	Repository   string                 `json:"repository,omitempty"`
-	Branch       string                 `json:"branch,omitempty"`
-	PRNumber     int                    `json:"pr_number,omitempty"`
-	CommitSHA    string                 `json:"commit_sha,omitempty"`
-	CoverageData *CoverageData          `json:"coverage_data,omitempty"`
-	TrendData    *TrendData             `json:"trend_data,omitempty"`
-	RichContent  *RichContent           `json:"rich_content,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	ID           string         `json:"id"`
+	Subject      string         `json:"subject"`
+	Message      string         `json:"message"`
+	Severity     SeverityLevel  `json:"severity"`
+	Priority     Priority       `json:"priority"`
+	Timestamp    time.Time      `json:"timestamp"`
+	Author       string         `json:"author,omitempty"`
+	Repository   string         `json:"repository,omitempty"`
+	Branch       string         `json:"branch,omitempty"`
+	PRNumber     int            `json:"pr_number,omitempty"`
+	CommitSHA    string         `json:"commit_sha,omitempty"`
+	CoverageData *CoverageData  `json:"coverage_data,omitempty"`
+	TrendData    *TrendData     `json:"trend_data,omitempty"`
+	RichContent  *RichContent   `json:"rich_content,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
 }
 
 // CoverageData represents coverage information in notifications

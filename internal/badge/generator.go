@@ -346,7 +346,8 @@ func (g *Generator) applySVGColor(svgContent, color string) string {
 	if strings.Contains(modifiedSVG, `fill="`) {
 		// Replace existing fill attribute with the desired color
 		// Use regex to find and replace fill="any-color" with fill="desired-color"
-		re := strings.NewReplacer(`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
+		re := strings.NewReplacer(
+			`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
 			`fill="#000000"`, `fill="`+color+`"`, // black
 			`fill="#000"`, `fill="`+color+`"`, // short black
 			`fill="black"`, `fill="`+color+`"`, // named black
@@ -388,7 +389,8 @@ func applySVGColorStatic(svgContent, color string) string {
 	if strings.Contains(modifiedSVG, `fill="`) {
 		// Replace existing fill attribute with the desired color
 		// Use regex to find and replace fill="any-color" with fill="desired-color"
-		re := strings.NewReplacer(`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
+		re := strings.NewReplacer(
+			`fill="#EC1C24"`, `fill="`+color+`"`, // 2FAS default red
 			`fill="#000000"`, `fill="`+color+`"`, // black
 			`fill="#000"`, `fill="`+color+`"`, // short black
 			`fill="black"`, `fill="`+color+`"`, // named black
@@ -439,7 +441,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 	const baseDelay = 200 * time.Millisecond // Reduced from 500ms to 200ms
 
 	var lastErr error
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := range maxRetries {
 		// Check if context was canceled or deadline exceeded
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
 			log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
@@ -477,10 +479,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			}
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -493,10 +492,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, url, attempt+1, maxRetries)
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -510,10 +506,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
 			// Wait before retry with exponential backoff
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -538,7 +531,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 
 	log.Printf("Attempting GitHub fallback for logo '%s'", iconName)
 	fallbackURL := fmt.Sprintf("https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/%s.svg", iconName)
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := range maxRetries {
 		// Check if context was canceled or deadline exceeded
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
 			log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
@@ -569,10 +562,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 				return "", ctx.Err()
 			}
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -583,10 +573,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			_ = resp.Body.Close()
 			lastErr = fmt.Errorf("%w: HTTP %d from %s (attempt %d/%d)", ErrIconFetchFailed, resp.StatusCode, fallbackURL, attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -598,10 +585,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 		if err != nil {
 			lastErr = fmt.Errorf("failed to read SVG content from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
 			if attempt < maxRetries-1 {
-				shift := uint(attempt)
-				if shift > 20 { // cap shift to prevent overflow
-					shift = 20
-				}
+				shift := min(uint(attempt), 20) // cap shift to prevent overflow
 				delay := time.Duration(1<<shift) * baseDelay
 				time.Sleep(delay)
 			}
@@ -688,7 +672,8 @@ func (g *Generator) renderFlatBadge(data Data, width, labelWidth, messageWidth, 
 		logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, processedLogo)
 	}
 
-	return []byte(fmt.Sprintf(template,
+	return []byte(fmt.Sprintf(
+		template,
 		width, height, data.AriaLabel, data.AriaLabel,
 		width, height,
 		logoWidth+labelWidth+8, height,
@@ -727,7 +712,8 @@ func (g *Generator) renderFlatSquareBadge(data Data, width, height, labelWidth, 
 		logoSvg = fmt.Sprintf(`<image x="5" y="3" width="14" height="14" xlink:href="%s"/>`, processedLogo)
 	}
 
-	return []byte(fmt.Sprintf(template,
+	return []byte(fmt.Sprintf(
+		template,
 		width, height, data.AriaLabel, data.AriaLabel,
 		logoWidth+labelWidth+8, height,
 		logoWidth+labelWidth+8, messageWidth+20, height, data.Color,
@@ -766,7 +752,8 @@ func (g *Generator) renderForTheBadge(data Data, width, height, labelWidth, mess
 	label := strings.ToUpper(data.Label)
 	message := strings.ToUpper(data.Message)
 
-	return []byte(fmt.Sprintf(template,
+	return []byte(fmt.Sprintf(
+		template,
 		width, height, data.AriaLabel, data.AriaLabel,
 		logoWidth+labelWidth+8, height,
 		logoWidth+labelWidth+8, messageWidth+20, height, data.Color,

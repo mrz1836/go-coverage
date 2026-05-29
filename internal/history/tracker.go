@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -392,7 +392,7 @@ func (t *Tracker) GetStatistics(ctx context.Context) (*Statistics, error) {
 
 // Add records coverage data for the specified branch and commit.
 // This is a legacy method for backward compatibility with existing code.
-func (t *Tracker) Add(branch, commit string, data interface{}) error {
+func (t *Tracker) Add(branch, commit string, data any) error {
 	ctx := context.Background()
 
 	// Convert interface{} to CoverageData if possible
@@ -534,8 +534,8 @@ func (t *Tracker) loadAllEntries(ctx context.Context) ([]Entry, error) {
 	}
 
 	// Sort by timestamp (newest first)
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].Timestamp.After(entries[j].Timestamp)
+	slices.SortFunc(entries, func(a, b Entry) int {
+		return b.Timestamp.Compare(a.Timestamp)
 	})
 
 	return entries, nil

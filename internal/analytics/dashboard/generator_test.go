@@ -269,7 +269,7 @@ func TestRenderer_RenderDashboard(t *testing.T) {
 	ctx := context.Background()
 
 	testBranch := "master" // Use master as test case since that's what you use
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ProjectName":     testProjectName,
 		"RepositoryOwner": testRepoOwner,
 		"RepositoryName":  testRepoName,
@@ -284,7 +284,7 @@ func TestRenderer_RenderDashboard(t *testing.T) {
 		"CoverageTrend":   "2.5",
 		"HasHistory":      false,
 		"HistoryJSON":     "[]",
-		"Packages":        []map[string]interface{}{},
+		"Packages":        []map[string]any{},
 	}
 
 	html, err := renderer.RenderDashboard(ctx, data)
@@ -602,7 +602,7 @@ func TestPrepareTemplateDataBranchFallbacks(t *testing.T) {
 		name     string
 		config   *GeneratorConfig
 		data     *CoverageData
-		expected map[string]interface{}
+		expected map[string]any
 	}{
 		{
 			name: "empty config with repository URL",
@@ -700,7 +700,7 @@ func TestRenderer_RenderDashboardError(t *testing.T) {
 	ctx := context.Background()
 
 	// Test with invalid template function call
-	data := map[string]interface{}{
+	data := map[string]any{
 		"TotalCoverage": "invalid", // Should be float64, not string
 		"Timestamp":     "invalid", // Should be time.Time, not string
 	}
@@ -1212,7 +1212,7 @@ func TestRenderDashboardTemplateErrors(t *testing.T) {
 	ctx := context.Background()
 
 	// Test with data that could cause template execution issues
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ProjectName":     nil, // Nil value might cause issues in templates
 		"TotalCoverage":   85.5,
 		"Timestamp":       time.Now(),
@@ -1222,7 +1222,7 @@ func TestRenderDashboardTemplateErrors(t *testing.T) {
 		"PackagesTracked": 2,
 		"HasHistory":      false,
 		"HistoryJSON":     "[]",
-		"Packages":        []map[string]interface{}{},
+		"Packages":        []map[string]any{},
 	}
 
 	// This should still work as our template is robust
@@ -1717,7 +1717,7 @@ func TestRenderDashboardWithSubFunction(t *testing.T) {
 	ctx := context.Background()
 
 	// Data that will exercise the "sub" template function
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ProjectName":      testProjectName,
 		"RepositoryOwner":  testRepoOwner,
 		"RepositoryName":   testRepoName,
@@ -1733,7 +1733,7 @@ func TestRenderDashboardWithSubFunction(t *testing.T) {
 		"CoverageTrend":    "2.5",
 		"HasHistory":       false,
 		"HistoryJSON":      "[]",
-		"Packages":         []map[string]interface{}{},
+		"Packages":         []map[string]any{},
 		"Title":            "owner/repo Coverage Dashboard",
 	}
 

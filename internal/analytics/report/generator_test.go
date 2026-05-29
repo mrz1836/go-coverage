@@ -366,7 +366,7 @@ func (suite *GeneratorTestSuite) TestConcurrentGeneration() {
 
 	coverageData := suite.createSampleCoverageData()
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		go func(_ int) {
 			defer func() { doneChan <- struct{}{} }()
 
@@ -402,7 +402,7 @@ func (suite *GeneratorTestSuite) TestConcurrentGeneration() {
 	}
 
 	// Wait for all goroutines to complete
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		<-doneChan
 	}
 

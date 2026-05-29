@@ -187,7 +187,7 @@ func (m *PRCommentManager) CreateOrUpdatePRComment(ctx context.Context, owner, r
 		err = m.createCoverageStatusCheck(ctx, owner, repo, pr.Head.SHA, comparison)
 		if err != nil {
 			// Don't fail the entire operation if status check fails
-			m.logger.WithError(err).WithFields(map[string]interface{}{
+			m.logger.WithError(err).WithFields(map[string]any{
 				"owner":     owner,
 				"repo":      repo,
 				"sha":       pr.Head.SHA,
@@ -231,7 +231,7 @@ func (m *PRCommentManager) CreateOrUpdatePRComment(ctx context.Context, owner, r
 
 // findExistingCoverageComments finds existing coverage comments by signature with retry logic
 func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, owner, repo string, prNumber int) ([]Comment, error) {
-	m.logger.Debug("Searching for existing coverage comments", map[string]interface{}{
+	m.logger.Debug("Searching for existing coverage comments", map[string]any{
 		"owner":     owner,
 		"repo":      repo,
 		"pr_number": prNumber,
@@ -245,7 +245,7 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 	// Retry logic for robustness
 	maxRetries := 3
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		m.logger.Debug("Attempting to fetch PR comments", map[string]interface{}{
+		m.logger.Debug("Attempting to fetch PR comments", map[string]any{
 			"attempt": attempt,
 			"url":     url,
 		})
@@ -253,7 +253,7 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to create request: %w", err)
-			m.logger.Error("Failed to create request", map[string]interface{}{
+			m.logger.Error("Failed to create request", map[string]any{
 				"error":   err,
 				"attempt": attempt,
 			})
@@ -266,7 +266,7 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 		resp, err := m.client.httpClient.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to get comments: %w", err)
-			m.logger.Error("Failed to execute request", map[string]interface{}{
+			m.logger.Error("Failed to execute request", map[string]any{
 				"error":   err,
 				"attempt": attempt,
 			})
@@ -277,7 +277,7 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			lastErr = fmt.Errorf("%w: %d", ErrGitHubAPIError, resp.StatusCode)
-			m.logger.Error("GitHub API returned error status", map[string]interface{}{
+			m.logger.Error("GitHub API returned error status", map[string]any{
 				"status_code": resp.StatusCode,
 				"attempt":     attempt,
 			})
@@ -287,7 +287,7 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 
 		if err := json.NewDecoder(resp.Body).Decode(&allComments); err != nil {
 			lastErr = fmt.Errorf("failed to decode comments: %w", err)
-			m.logger.Error("Failed to decode response", map[string]interface{}{
+			m.logger.Error("Failed to decode response", map[string]any{
 				"error":   err,
 				"attempt": attempt,
 			})
@@ -301,14 +301,14 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 	}
 
 	if lastErr != nil {
-		m.logger.Error("All attempts to fetch comments failed", map[string]interface{}{
+		m.logger.Error("All attempts to fetch comments failed", map[string]any{
 			"error":        lastErr,
 			"max_attempts": maxRetries,
 		})
 		return nil, lastErr
 	}
 
-	m.logger.Info("Successfully fetched PR comments", map[string]interface{}{
+	m.logger.Info("Successfully fetched PR comments", map[string]any{
 		"total_comments": len(allComments),
 	})
 
@@ -316,7 +316,7 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 	var coverageComments []Comment
 	for i, comment := range allComments {
 		isCoverage := m.isCoverageComment(comment.Body)
-		m.logger.Debug("Checking comment", map[string]interface{}{
+		m.logger.Debug("Checking comment", map[string]any{
 			"comment_id":  comment.ID,
 			"comment_idx": i,
 			"is_coverage": isCoverage,
@@ -335,7 +335,7 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 		}
 	}
 
-	m.logger.Info("Found coverage comments", map[string]interface{}{
+	m.logger.Info("Found coverage comments", map[string]any{
 		"coverage_comments": len(coverageComments),
 		"total_comments":    len(allComments),
 	})
@@ -364,14 +364,14 @@ func (m *PRCommentManager) isCoverageComment(body string) bool {
 	}
 
 	// Log which signatures we're checking against for debugging
-	m.logger.Debug("Checking comment signatures", map[string]interface{}{
+	m.logger.Debug("Checking comment signatures", map[string]any{
 		"signatures_count": len(signatures),
 		"comment_length":   len(body),
 	})
 
 	for i, signature := range signatures {
 		if strings.Contains(body, signature) {
-			m.logger.Debug("Comment matched signature", map[string]interface{}{
+			m.logger.Debug("Comment matched signature", map[string]any{
 				"signature_index": i,
 				"signature":       signature,
 			})
@@ -385,7 +385,7 @@ func (m *PRCommentManager) isCoverageComment(body string) bool {
 
 // determineCommentAction determines what action to take based on anti-spam rules
 func (m *PRCommentManager) determineCommentAction(existingComments []Comment, comparison *CoverageComparison) (string, bool, string) {
-	m.logger.Info("Determining comment action", map[string]interface{}{
+	m.logger.Info("Determining comment action", map[string]any{
 		"existing_comments": len(existingComments),
 		"max_comments":      m.config.MaxCommentsPerPR,
 		"min_interval_min":  m.config.MinUpdateIntervalMinutes,
@@ -398,7 +398,7 @@ func (m *PRCommentManager) determineCommentAction(existingComments []Comment, co
 
 	if len(existingComments) > m.config.MaxCommentsPerPR {
 		reason := fmt.Sprintf("Maximum comments per PR (%d) exceeded", m.config.MaxCommentsPerPR)
-		m.logger.Warn("Skipping comment creation - too many existing comments", map[string]interface{}{
+		m.logger.Warn("Skipping comment creation - too many existing comments", map[string]any{
 			"existing_comments": len(existingComments),
 			"max_allowed":       m.config.MaxCommentsPerPR,
 		})
@@ -407,7 +407,7 @@ func (m *PRCommentManager) determineCommentAction(existingComments []Comment, co
 
 	// Check time-based anti-spam
 	lastComment := existingComments[len(existingComments)-1]
-	m.logger.Debug("Checking time-based anti-spam", map[string]interface{}{
+	m.logger.Debug("Checking time-based anti-spam", map[string]any{
 		"last_comment_id":         lastComment.ID,
 		"last_comment_updated_at": lastComment.UpdatedAt,
 	})
@@ -417,7 +417,7 @@ func (m *PRCommentManager) determineCommentAction(existingComments []Comment, co
 		timeSinceUpdate := time.Since(lastUpdateTime)
 		minInterval := time.Duration(m.config.MinUpdateIntervalMinutes) * time.Minute
 
-		m.logger.Debug("Time since last update", map[string]interface{}{
+		m.logger.Debug("Time since last update", map[string]any{
 			"time_since_update": timeSinceUpdate.String(),
 			"min_interval":      minInterval.String(),
 			"should_wait":       timeSinceUpdate < minInterval,
@@ -425,14 +425,14 @@ func (m *PRCommentManager) determineCommentAction(existingComments []Comment, co
 
 		if timeSinceUpdate < minInterval {
 			reason := fmt.Sprintf("Minimum update interval (%v) not reached", minInterval)
-			m.logger.Info("Skipping comment update - minimum interval not reached", map[string]interface{}{
+			m.logger.Info("Skipping comment update - minimum interval not reached", map[string]any{
 				"time_since_update": timeSinceUpdate.String(),
 				"min_interval":      minInterval.String(),
 			})
 			return "skipped", false, reason
 		}
 	} else {
-		m.logger.Warn("Failed to parse last comment update time", map[string]interface{}{
+		m.logger.Warn("Failed to parse last comment update time", map[string]any{
 			"error":      err,
 			"updated_at": lastComment.UpdatedAt,
 		})
@@ -547,13 +547,13 @@ func (m *PRCommentManager) DeletePRComments(ctx context.Context, owner, repo str
 }
 
 // GetPRCommentStats returns statistics about PR comments
-func (m *PRCommentManager) GetPRCommentStats(ctx context.Context, owner, repo string, prNumber int) (map[string]interface{}, error) {
+func (m *PRCommentManager) GetPRCommentStats(ctx context.Context, owner, repo string, prNumber int) (map[string]any, error) {
 	existingComments, err := m.findExistingCoverageComments(ctx, owner, repo, prNumber)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find existing comments: %w", err)
 	}
 
-	stats := map[string]interface{}{
+	stats := map[string]any{
 		"total_comments":    len(existingComments),
 		"has_comments":      len(existingComments) > 0,
 		"last_update_time":  "",

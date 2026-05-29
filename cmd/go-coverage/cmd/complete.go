@@ -413,7 +413,8 @@ update history, and create GitHub PR comment if in PR context.`,
 						}
 						if cfg.GitHub.Owner != "" && cfg.GitHub.Repository != "" {
 							fileCoverage.GitHubURL = urlutil.BuildGitHubFileURL(
-								cfg.GitHub.Owner, cfg.GitHub.Repository, branch, fileName)
+								cfg.GitHub.Owner, cfg.GitHub.Repository, branch, fileName,
+							)
 						}
 						pkgCoverage.Files = append(pkgCoverage.Files, fileCoverage)
 					}

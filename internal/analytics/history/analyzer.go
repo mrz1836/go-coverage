@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/mrz1836/go-coverage/internal/history"
@@ -89,7 +89,7 @@ type TrendReport struct {
 	QualityMetrics QualityMetrics `json:"quality_metrics"`
 
 	// Chart data
-	ChartData interface{} `json:"chart_data,omitempty"`
+	ChartData any `json:"chart_data,omitempty"`
 
 	// Insights and recommendations
 	Insights        []Insight        `json:"insights"`
@@ -169,12 +169,12 @@ type QualityMetrics struct {
 
 // Insight represents an analytical insight
 type Insight struct {
-	Type           InsightType            `json:"type"`
-	Title          string                 `json:"title"`
-	Description    string                 `json:"description"`
-	Severity       InsightSeverity        `json:"severity"`
-	Confidence     float64                `json:"confidence"`
-	SupportingData map[string]interface{} `json:"supporting_data"`
+	Type           InsightType     `json:"type"`
+	Title          string          `json:"title"`
+	Description    string          `json:"description"`
+	Severity       InsightSeverity `json:"severity"`
+	Confidence     float64         `json:"confidence"`
+	SupportingData map[string]any  `json:"supporting_data"`
 }
 
 // Recommendation represents an actionable recommendation
@@ -325,7 +325,8 @@ func NewTrendAnalyzer(config *AnalyzerConfig) *TrendAnalyzer {
 // LoadHistoryData loads historical data from the existing history system
 func (ta *TrendAnalyzer) LoadHistoryData(ctx context.Context, historyTracker *history.Tracker, branch string, days int) error {
 	// Get trend data which includes historical entries
-	trendData, err := historyTracker.GetTrend(ctx,
+	trendData, err := historyTracker.GetTrend(
+		ctx,
 		history.WithTrendBranch(branch),
 		history.WithTrendDays(days),
 	)
@@ -351,8 +352,8 @@ func (ta *TrendAnalyzer) LoadHistoryData(ctx context.Context, historyTracker *hi
 	}
 
 	// Sort by timestamp
-	sort.Slice(ta.data, func(i, j int) bool {
-		return ta.data[i].Timestamp.Before(ta.data[j].Timestamp)
+	slices.SortFunc(ta.data, func(a, b AnalysisDataPoint) int {
+		return a.Timestamp.Compare(b.Timestamp)
 	})
 
 	return nil
@@ -364,8 +365,8 @@ func (ta *TrendAnalyzer) LoadCustomData(dataPoints []AnalysisDataPoint) {
 	copy(ta.data, dataPoints)
 
 	// Sort by timestamp
-	sort.Slice(ta.data, func(i, j int) bool {
-		return ta.data[i].Timestamp.Before(ta.data[j].Timestamp)
+	slices.SortFunc(ta.data, func(a, b AnalysisDataPoint) int {
+		return a.Timestamp.Compare(b.Timestamp)
 	})
 }
 
@@ -807,7 +808,7 @@ func (ta *TrendAnalyzer) calculateQualityMetrics() QualityMetrics {
 }
 
 // generateChartData creates chart data for visualization
-func (ta *TrendAnalyzer) generateChartData() interface{} {
+func (ta *TrendAnalyzer) generateChartData() any {
 	// Chart functionality not implemented - return nil for now
 	// This could be implemented later with a proper charting library
 	return nil

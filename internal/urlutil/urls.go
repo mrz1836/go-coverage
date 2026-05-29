@@ -97,7 +97,7 @@ func CleanModulePath(fullPath string) string {
 	parts := strings.Split(cleanedPath, "/")
 
 	// Look for github.com pattern
-	for i := 0; i < len(parts); i++ {
+	for i := range parts {
 		if parts[i] == "github.com" && i+2 < len(parts) {
 			// Skip github.com/owner/repo and return the rest
 			if i+3 < len(parts) {

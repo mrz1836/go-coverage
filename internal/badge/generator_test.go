@@ -63,7 +63,8 @@ func TestGenerateWithOptions(t *testing.T) {
 	generator := New()
 	ctx := context.Background()
 
-	svg, err := generator.Generate(ctx, 92.3,
+	svg, err := generator.Generate(
+		ctx, 92.3,
 		WithStyle("flat-square"),
 		WithLabel("test coverage"),
 		WithLogo("https://example.com/logo.svg"),
@@ -561,6 +562,21 @@ func TestGenerateWithResolvedLogos(t *testing.T) {
 func TestGenerateWithRealSimpleIcons(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test with external CDN in short mode")
+	}
+
+	// Skip gracefully when the Simple Icons CDN is unreachable (offline or
+	// TLS-intercepting/sandboxed environments). resolveLogo swallows fetch
+	// failures and returns an empty logo, so without this probe the test would
+	// fail its image assertion instead of skipping. When the CDN IS reachable,
+	// the real integration assertions below still run.
+	probeCtx, cancelProbe := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelProbe()
+	probeReq, probeReqErr := http.NewRequestWithContext(probeCtx, http.MethodGet, "https://cdn.simpleicons.org/github", nil)
+	require.NoError(t, probeReqErr)
+	if resp, probeErr := http.DefaultClient.Do(probeReq); probeErr != nil {
+		t.Skipf("Simple Icons CDN unreachable, skipping integration test: %v", probeErr)
+	} else {
+		_ = resp.Body.Close()
 	}
 
 	// This test uses the real CDN and is skipped in CI via -short flag

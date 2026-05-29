@@ -242,7 +242,7 @@ func (suite *TemplateTestSuite) TestReportTemplateParsingSuccess() {
 		"multiply": func(a, b float64) float64 {
 			return a * b
 		},
-		"printf": func(format string, _ ...interface{}) string {
+		"printf": func(format string, _ ...any) string {
 			return strings.ReplaceAll(format, "%", "")
 		},
 		"commas": func(_ int) string {
@@ -278,7 +278,7 @@ func (suite *TemplateTestSuite) TestReportTemplateExecutionWithSampleData() {
 		"multiply": func(a, b float64) float64 {
 			return a * b
 		},
-		"printf": func(format string, args ...interface{}) string {
+		"printf": func(format string, args ...any) string {
 			if len(args) == 0 {
 				return format
 			}

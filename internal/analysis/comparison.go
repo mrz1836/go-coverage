@@ -2,14 +2,16 @@
 package analysis
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 )
@@ -308,14 +310,10 @@ func (e *ComparisonEngine) analyzeFileChanges(base, pr *CoverageSnapshot) []File
 
 	// Create maps for efficient lookup
 	baseFiles := make(map[string]FileMetrics)
-	for filename, metrics := range base.FileCoverage {
-		baseFiles[filename] = metrics
-	}
+	maps.Copy(baseFiles, base.FileCoverage)
 
 	prFiles := make(map[string]FileMetrics)
-	for filename, metrics := range pr.FileCoverage {
-		prFiles[filename] = metrics
-	}
+	maps.Copy(prFiles, pr.FileCoverage)
 
 	// Analyze all files present in either snapshot
 	allFiles := make(map[string]bool)
@@ -383,11 +381,14 @@ func (e *ComparisonEngine) analyzeFileChanges(base, pr *CoverageSnapshot) []File
 	}
 
 	// Sort by significance and percentage change
-	sort.Slice(changes, func(i, j int) bool {
-		if changes[i].IsSignificant != changes[j].IsSignificant {
-			return changes[i].IsSignificant
+	slices.SortFunc(changes, func(a, b FileChangeAnalysis) int {
+		if a.IsSignificant != b.IsSignificant {
+			if a.IsSignificant {
+				return -1
+			}
+			return 1
 		}
-		return math.Abs(changes[i].PercentageChange) > math.Abs(changes[j].PercentageChange)
+		return cmp.Compare(math.Abs(b.PercentageChange), math.Abs(a.PercentageChange))
 	})
 
 	// Limit the number of changes to analyze
@@ -404,14 +405,10 @@ func (e *ComparisonEngine) analyzePackageChanges(base, pr *CoverageSnapshot) []P
 
 	// Create maps for efficient lookup
 	basePackages := make(map[string]PackageMetrics)
-	for packageName, metrics := range base.PackageCoverage {
-		basePackages[packageName] = metrics
-	}
+	maps.Copy(basePackages, base.PackageCoverage)
 
 	prPackages := make(map[string]PackageMetrics)
-	for packageName, metrics := range pr.PackageCoverage {
-		prPackages[packageName] = metrics
-	}
+	maps.Copy(prPackages, pr.PackageCoverage)
 
 	// Analyze all packages
 	allPackages := make(map[string]bool)
@@ -455,11 +452,14 @@ func (e *ComparisonEngine) analyzePackageChanges(base, pr *CoverageSnapshot) []P
 	}
 
 	// Sort by significance and percentage change
-	sort.Slice(changes, func(i, j int) bool {
-		if changes[i].IsSignificant != changes[j].IsSignificant {
-			return changes[i].IsSignificant
+	slices.SortFunc(changes, func(a, b PackageChangeAnalysis) int {
+		if a.IsSignificant != b.IsSignificant {
+			if a.IsSignificant {
+				return -1
+			}
+			return 1
 		}
-		return math.Abs(changes[i].PercentageChange) > math.Abs(changes[j].PercentageChange)
+		return cmp.Compare(math.Abs(b.PercentageChange), math.Abs(a.PercentageChange))
 	})
 
 	return changes

@@ -42,7 +42,7 @@ type Generator struct {
 	config           *GeneratorConfig
 	renderer         *Renderer
 	githubClient     *github.Client
-	lastTemplateData map[string]interface{} // Store template data for build status generation
+	lastTemplateData map[string]any // Store template data for build status generation
 }
 
 // GeneratorConfig contains configuration for dashboard generation
@@ -199,7 +199,7 @@ func getLatestGitTag(ctx context.Context) string {
 }
 
 // prepareTemplateData prepares data for template rendering
-func (g *Generator) prepareTemplateData(ctx context.Context, data *CoverageData) map[string]interface{} {
+func (g *Generator) prepareTemplateData(ctx context.Context, data *CoverageData) map[string]any {
 	// Get dynamic repository information
 	repoInfo := getGitRepositoryInfo(ctx)
 
@@ -307,7 +307,7 @@ func (g *Generator) prepareTemplateData(ctx context.Context, data *CoverageData)
 		globalConfig = &globalconfig.Config{}
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"BaselineCoverage":   data.BaselineCoverage,
 		"Branch":             data.Branch,
 		"BranchURL":          branchURL,
@@ -351,7 +351,7 @@ func (g *Generator) prepareTemplateData(ctx context.Context, data *CoverageData)
 		"BranchName":  data.Branch, // Alias for compatibility between both templates
 		"GeneratedAt": data.Timestamp,
 		// Config for template conditionals
-		"Config": map[string]interface{}{
+		"Config": map[string]any{
 			"BrandingEnabled": globalConfig.Analytics.BrandingEnabled,
 		},
 		"PRURL": prURL,
@@ -368,7 +368,7 @@ func (g *Generator) formatCommitSHA(sha string) string {
 }
 
 // prepareBranchData prepares branch information for display
-func (g *Generator) prepareBranchData(ctx context.Context, data *CoverageData) []map[string]interface{} {
+func (g *Generator) prepareBranchData(ctx context.Context, data *CoverageData) []map[string]any {
 	// Get dynamic repository information
 	repoInfo := getGitRepositoryInfo(ctx)
 
@@ -390,7 +390,7 @@ func (g *Generator) prepareBranchData(ctx context.Context, data *CoverageData) [
 
 	// For now, return current branch info
 	// In the future, this could load from metadata
-	branches := []map[string]interface{}{
+	branches := []map[string]any{
 		{
 			"Name":         data.Branch,
 			"Coverage":     data.TotalCoverage,
@@ -410,20 +410,20 @@ func roundToDecimals(value float64, decimals int) float64 {
 }
 
 // preparePackageData prepares package data for display
-func (g *Generator) preparePackageData(packages []PackageCoverage) []map[string]interface{} {
-	result := make([]map[string]interface{}, 0, len(packages))
+func (g *Generator) preparePackageData(packages []PackageCoverage) []map[string]any {
+	result := make([]map[string]any, 0, len(packages))
 	for _, pkg := range packages {
 		// Prepare files data
-		files := make([]map[string]interface{}, 0, len(pkg.Files))
+		files := make([]map[string]any, 0, len(pkg.Files))
 		for _, file := range pkg.Files {
-			files = append(files, map[string]interface{}{
+			files = append(files, map[string]any{
 				"Name":      file.Name,
 				"Coverage":  roundToDecimals(file.Coverage, 2),
 				"GitHubURL": file.GitHubURL,
 			})
 		}
 
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"Name":         pkg.Name,
 			"Path":         pkg.Path,
 			"Coverage":     roundToDecimals(pkg.Coverage, 2),
@@ -539,7 +539,7 @@ func NewRenderer(templateDir string) *Renderer {
 }
 
 // RenderDashboard renders the dashboard template
-func (r *Renderer) RenderDashboard(_ context.Context, data map[string]interface{}) (string, error) {
+func (r *Renderer) RenderDashboard(_ context.Context, data map[string]any) (string, error) {
 	// Create template function map
 	funcMap := template.FuncMap{
 		"sub": func(a, b float64) float64 {

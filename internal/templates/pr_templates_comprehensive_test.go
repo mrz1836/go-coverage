@@ -469,7 +469,7 @@ func TestTrendChart(t *testing.T) {
 	tests := []struct {
 		name          string
 		includeCharts bool
-		value         interface{}
+		value         any
 		expected      string
 	}{
 		{
@@ -999,7 +999,7 @@ func TestLengthFunction(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		input    interface{}
+		input    any
 		expected int
 	}{
 		{"FileCoverageData", []FileCoverageData{{}, {}}, 2},

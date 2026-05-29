@@ -475,7 +475,7 @@ func (suite *RendererTestSuite) TestRenderReportErrorHandling() {
 	ctx := context.Background()
 
 	// Test with data that might cause template errors
-	invalidData := map[string]interface{}{
+	invalidData := map[string]any{
 		"InvalidField": func() string { return "function" }, // Functions can't be serialized
 	}
 
@@ -495,7 +495,7 @@ func (suite *RendererTestSuite) TestConcurrentRendering() {
 
 	data := suite.createSampleReportData()
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			defer func() { doneChan <- struct{}{} }()
 
@@ -513,7 +513,7 @@ func (suite *RendererTestSuite) TestConcurrentRendering() {
 	}
 
 	// Wait for all goroutines to complete
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		<-doneChan
 	}
 
@@ -624,7 +624,7 @@ func (suite *RendererTestSuite) createLargeReportData() *Data {
 	totalLines := 0
 	totalCovered := 0
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		lines := 100 + i*10
 		covered := int(float64(lines) * 0.8) // 80% coverage
 

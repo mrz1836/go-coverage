@@ -347,11 +347,11 @@ func (suite *AssetsTestSuite) TestConcurrentAccess() {
 	doneChan := make(chan struct{}, numGoroutines)
 
 	// Start multiple goroutines accessing assets concurrently
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			defer func() { doneChan <- struct{}{} }()
 
-			for j := 0; j < numOperations; j++ {
+			for j := range numOperations {
 				// Test different operations
 				switch j % 4 {
 				case 0:
@@ -387,7 +387,7 @@ func (suite *AssetsTestSuite) TestConcurrentAccess() {
 	}
 
 	// Wait for all goroutines to complete
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		<-doneChan
 	}
 

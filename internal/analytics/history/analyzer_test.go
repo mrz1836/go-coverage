@@ -771,7 +771,7 @@ func (suite *AnalyzerTestSuite) TestConcurrentAnalysis() {
 
 	dataPoints := suite.createSampleDataPoints()
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			defer func() { doneChan <- struct{}{} }()
 
@@ -787,7 +787,7 @@ func (suite *AnalyzerTestSuite) TestConcurrentAnalysis() {
 	}
 
 	// Wait for all goroutines to complete
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		<-doneChan
 	}
 
@@ -893,7 +893,7 @@ func BenchmarkAnalyzeTrends(b *testing.B) {
 	// Create sample data
 	dataPoints := make([]AnalysisDataPoint, 20)
 	now := time.Now()
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		dataPoints[i] = AnalysisDataPoint{
 			Timestamp: now.Add(-time.Duration(i) * time.Hour),
 			Coverage:  70.0 + float64(i)*0.5,
@@ -924,7 +924,7 @@ func BenchmarkGeneratePredictions(b *testing.B) {
 	// Create sample data
 	dataPoints := make([]AnalysisDataPoint, 10)
 	now := time.Now()
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		dataPoints[i] = AnalysisDataPoint{
 			Timestamp: now.Add(-time.Duration(i) * time.Hour),
 			Coverage:  70.0 + float64(i)*0.5,

@@ -70,12 +70,12 @@ type StatusCheckConfig struct {
 
 // QualityGate represents a quality gate that must pass
 type QualityGate struct {
-	Name        string      // Quality gate name
-	Type        GateType    // Type of quality gate
-	Threshold   interface{} // Threshold value (type depends on gate type)
-	Required    bool        // Whether this gate is required
-	Context     string      // Status context for this gate
-	Description string      // Description when gate fails
+	Name        string   // Quality gate name
+	Type        GateType // Type of quality gate
+	Threshold   any      // Threshold value (type depends on gate type)
+	Required    bool     // Whether this gate is required
+	Context     string   // Status context for this gate
+	Description string   // Description when gate fails
 }
 
 // GateType represents different types of quality gates
@@ -718,11 +718,11 @@ func (m *StatusCheckManager) compareRiskLevels(risk1, risk2 string) int {
 }
 
 // GetStatusCheckSummary returns a summary of current status checks
-func (m *StatusCheckManager) GetStatusCheckSummary(_ context.Context, _, _, commitSHA string) (map[string]interface{}, error) {
+func (m *StatusCheckManager) GetStatusCheckSummary(_ context.Context, _, _, commitSHA string) (map[string]any, error) {
 	// This would typically query the GitHub API to get current status checks
 	// For now, returning a placeholder structure
 
-	summary := map[string]interface{}{
+	summary := map[string]any{
 		"commit_sha":     commitSHA,
 		"total_checks":   0,
 		"passed_checks":  0,

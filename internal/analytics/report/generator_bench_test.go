@@ -147,14 +147,14 @@ func BenchmarkJSONGeneration(b *testing.B) {
 
 func createBenchmarkCoverage() *parser.CoverageData {
 	packages := make(map[string]*parser.PackageCoverage)
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		pkgName := "package" + string(rune('A'+i))
 		files := make(map[string]*parser.FileCoverage)
 
-		for j := 0; j < 15; j++ {
+		for j := range 15 {
 			fileName := pkgName + "/file" + string(rune('0'+j/10)) + string(rune('0'+j%10)) + ".go"
 			statements := make([]parser.Statement, 20)
-			for k := 0; k < 20; k++ {
+			for k := range 20 {
 				statements[k] = parser.Statement{
 					StartLine: k * 5,
 					EndLine:   k*5 + 3,
@@ -219,11 +219,11 @@ func createSmallCoverage() *parser.CoverageData {
 
 func createLargeCoverage() *parser.CoverageData {
 	packages := make(map[string]*parser.PackageCoverage)
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		pkgName := "package" + string(rune('A'+i%26)) + string(rune('0'+i/26))
 		files := make(map[string]*parser.FileCoverage)
 
-		for j := 0; j < 100; j++ {
+		for j := range 100 {
 			fileName := pkgName + "/file" + string(rune('0'+j/100)) + string(rune('0'+(j/10)%10)) + string(rune('0'+j%10)) + ".go"
 			files[fileName] = &parser.FileCoverage{
 				Path:         fileName,

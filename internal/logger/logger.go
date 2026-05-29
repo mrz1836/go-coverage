@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"strings"
 	"time"
@@ -17,22 +18,22 @@ import (
 // Logger defines the interface compatible with logrus.Entry patterns from the main module
 type Logger interface {
 	// Field manipulation methods (match logrus.Entry)
-	WithField(key string, value interface{}) Logger
-	WithFields(fields map[string]interface{}) Logger
+	WithField(key string, value any) Logger
+	WithFields(fields map[string]any) Logger
 	WithError(err error) Logger
 	WithContext(ctx context.Context) Logger
 
 	// Logging methods (match logrus.Entry)
-	Debug(args ...interface{})
-	Info(args ...interface{})
-	Warn(args ...interface{})
-	Error(args ...interface{})
+	Debug(args ...any)
+	Info(args ...any)
+	Warn(args ...any)
+	Error(args ...any)
 
 	// Formatted logging methods (match logrus.Entry)
-	Debugf(format string, args ...interface{})
-	Infof(format string, args ...interface{})
-	Warnf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
+	Debugf(format string, args ...any)
+	Infof(format string, args ...any)
+	Warnf(format string, args ...any)
+	Errorf(format string, args ...any)
 }
 
 // Level represents log levels compatible with common logging libraries
@@ -79,7 +80,7 @@ type Config struct {
 // Context is stored for cancellation support, not for request scoping
 type entry struct {
 	logger *simpleLogger
-	fields map[string]interface{}
+	fields map[string]any
 	ctx    context.Context //nolint:containedctx // Context needed for cancellation support
 	err    error
 }
@@ -141,21 +142,19 @@ func NewFromEnv() Logger {
 }
 
 // WithField returns a new entry with the specified field
-func (l *simpleLogger) WithField(key string, value interface{}) Logger {
+func (l *simpleLogger) WithField(key string, value any) Logger {
 	return &entry{
 		logger: l,
-		fields: map[string]interface{}{key: value},
+		fields: map[string]any{key: value},
 		ctx:    context.Background(),
 	}
 }
 
 // WithFields returns a new entry with the specified fields
-func (l *simpleLogger) WithFields(fields map[string]interface{}) Logger {
+func (l *simpleLogger) WithFields(fields map[string]any) Logger {
 	// Copy fields to avoid mutation
-	fieldsCopy := make(map[string]interface{})
-	for k, v := range fields {
-		fieldsCopy[k] = v
-	}
+	fieldsCopy := make(map[string]any)
+	maps.Copy(fieldsCopy, fields)
 
 	return &entry{
 		logger: l,
@@ -168,7 +167,7 @@ func (l *simpleLogger) WithFields(fields map[string]interface{}) Logger {
 func (l *simpleLogger) WithError(err error) Logger {
 	return &entry{
 		logger: l,
-		fields: make(map[string]interface{}),
+		fields: make(map[string]any),
 		ctx:    context.Background(),
 		err:    err,
 	}
@@ -178,59 +177,57 @@ func (l *simpleLogger) WithError(err error) Logger {
 func (l *simpleLogger) WithContext(ctx context.Context) Logger {
 	return &entry{
 		logger: l,
-		fields: make(map[string]interface{}),
+		fields: make(map[string]any),
 		ctx:    ctx,
 	}
 }
 
 // Debug logs at debug level
-func (l *simpleLogger) Debug(args ...interface{}) {
+func (l *simpleLogger) Debug(args ...any) {
 	l.log(DebugLevel, fmt.Sprint(args...))
 }
 
 // Info logs at info level
-func (l *simpleLogger) Info(args ...interface{}) {
+func (l *simpleLogger) Info(args ...any) {
 	l.log(InfoLevel, fmt.Sprint(args...))
 }
 
 // Warn logs at warn level
-func (l *simpleLogger) Warn(args ...interface{}) {
+func (l *simpleLogger) Warn(args ...any) {
 	l.log(WarnLevel, fmt.Sprint(args...))
 }
 
 // Error logs at error level
-func (l *simpleLogger) Error(args ...interface{}) {
+func (l *simpleLogger) Error(args ...any) {
 	l.log(ErrorLevel, fmt.Sprint(args...))
 }
 
 // Debugf logs formatted message at debug level
-func (l *simpleLogger) Debugf(format string, args ...interface{}) {
+func (l *simpleLogger) Debugf(format string, args ...any) {
 	l.log(DebugLevel, fmt.Sprintf(format, args...))
 }
 
 // Infof logs formatted message at info level
-func (l *simpleLogger) Infof(format string, args ...interface{}) {
+func (l *simpleLogger) Infof(format string, args ...any) {
 	l.log(InfoLevel, fmt.Sprintf(format, args...))
 }
 
 // Warnf logs formatted message at warn level
-func (l *simpleLogger) Warnf(format string, args ...interface{}) {
+func (l *simpleLogger) Warnf(format string, args ...any) {
 	l.log(WarnLevel, fmt.Sprintf(format, args...))
 }
 
 // Errorf logs formatted message at error level
-func (l *simpleLogger) Errorf(format string, args ...interface{}) {
+func (l *simpleLogger) Errorf(format string, args ...any) {
 	l.log(ErrorLevel, fmt.Sprintf(format, args...))
 }
 
 // Entry methods - these allow method chaining like logrus.Entry
 
 // WithField returns a new entry with the specified field
-func (e *entry) WithField(key string, value interface{}) Logger {
-	newFields := make(map[string]interface{})
-	for k, v := range e.fields {
-		newFields[k] = v
-	}
+func (e *entry) WithField(key string, value any) Logger {
+	newFields := make(map[string]any)
+	maps.Copy(newFields, e.fields)
 	newFields[key] = value
 
 	return &entry{
@@ -242,14 +239,10 @@ func (e *entry) WithField(key string, value interface{}) Logger {
 }
 
 // WithFields returns a new entry with additional fields
-func (e *entry) WithFields(fields map[string]interface{}) Logger {
-	newFields := make(map[string]interface{})
-	for k, v := range e.fields {
-		newFields[k] = v
-	}
-	for k, v := range fields {
-		newFields[k] = v
-	}
+func (e *entry) WithFields(fields map[string]any) Logger {
+	newFields := make(map[string]any)
+	maps.Copy(newFields, e.fields)
+	maps.Copy(newFields, fields)
 
 	return &entry{
 		logger: e.logger,
@@ -280,42 +273,42 @@ func (e *entry) WithContext(ctx context.Context) Logger {
 }
 
 // Debug logs at debug level with accumulated fields
-func (e *entry) Debug(args ...interface{}) {
+func (e *entry) Debug(args ...any) {
 	e.logWithFields(DebugLevel, fmt.Sprint(args...))
 }
 
 // Info logs at info level with accumulated fields
-func (e *entry) Info(args ...interface{}) {
+func (e *entry) Info(args ...any) {
 	e.logWithFields(InfoLevel, fmt.Sprint(args...))
 }
 
 // Warn logs at warn level with accumulated fields
-func (e *entry) Warn(args ...interface{}) {
+func (e *entry) Warn(args ...any) {
 	e.logWithFields(WarnLevel, fmt.Sprint(args...))
 }
 
 // Error logs at error level with accumulated fields
-func (e *entry) Error(args ...interface{}) {
+func (e *entry) Error(args ...any) {
 	e.logWithFields(ErrorLevel, fmt.Sprint(args...))
 }
 
 // Debugf logs formatted message at debug level with accumulated fields
-func (e *entry) Debugf(format string, args ...interface{}) {
+func (e *entry) Debugf(format string, args ...any) {
 	e.logWithFields(DebugLevel, fmt.Sprintf(format, args...))
 }
 
 // Infof logs formatted message at info level with accumulated fields
-func (e *entry) Infof(format string, args ...interface{}) {
+func (e *entry) Infof(format string, args ...any) {
 	e.logWithFields(InfoLevel, fmt.Sprintf(format, args...))
 }
 
 // Warnf logs formatted message at warn level with accumulated fields
-func (e *entry) Warnf(format string, args ...interface{}) {
+func (e *entry) Warnf(format string, args ...any) {
 	e.logWithFields(WarnLevel, fmt.Sprintf(format, args...))
 }
 
 // Errorf logs formatted message at error level with accumulated fields
-func (e *entry) Errorf(format string, args ...interface{}) {
+func (e *entry) Errorf(format string, args ...any) {
 	e.logWithFields(ErrorLevel, fmt.Sprintf(format, args...))
 }
 
@@ -353,13 +346,11 @@ func (e *entry) logWithFields(level Level, message string) {
 		Time:    time.Now(),
 		Level:   level.String(),
 		Message: message,
-		Fields:  make(map[string]interface{}),
+		Fields:  make(map[string]any),
 	}
 
 	// Add accumulated fields
-	for k, v := range e.fields {
-		entry.Fields[k] = v
-	}
+	maps.Copy(entry.Fields, e.fields)
 
 	// Add error if present
 	if e.err != nil {
@@ -371,10 +362,10 @@ func (e *entry) logWithFields(level Level, message string) {
 
 // logEntry represents a structured log entry
 type logEntry struct {
-	Time    time.Time              `json:"time"`
-	Level   string                 `json:"level"`
-	Message string                 `json:"message"`
-	Fields  map[string]interface{} `json:"fields,omitempty"`
+	Time    time.Time      `json:"time"`
+	Level   string         `json:"level"`
+	Message string         `json:"message"`
+	Fields  map[string]any `json:"fields,omitempty"`
 }
 
 // writeEntry outputs the log entry in the configured format

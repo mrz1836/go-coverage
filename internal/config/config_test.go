@@ -1065,7 +1065,7 @@ func TestConcurrentConfigAccess(t *testing.T) {
 	results := make(chan *Config, numGoroutines)
 
 	// Load configuration concurrently
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			config, _ := Load()
 			results <- config
@@ -1074,7 +1074,7 @@ func TestConcurrentConfigAccess(t *testing.T) {
 
 	// Collect all results
 	configs := make([]*Config, 0, numGoroutines)
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		config := <-results
 		configs = append(configs, config)
 	}

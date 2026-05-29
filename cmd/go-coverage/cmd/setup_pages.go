@@ -51,7 +51,7 @@ var ErrSetupHasWarnings = errors.New("setup completed with warnings - run 'setup
 type GitHubEnvironmentResponse struct {
 	Name                   string                  `json:"name"`
 	DeploymentBranchPolicy *DeploymentBranchPolicy `json:"deployment_branch_policy,omitempty"`
-	ProtectionRules        []interface{}           `json:"protection_rules"`
+	ProtectionRules        []any                   `json:"protection_rules"`
 }
 
 // DeploymentBranchPolicy represents branch deployment policy

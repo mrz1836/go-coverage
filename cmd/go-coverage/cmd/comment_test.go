@@ -652,7 +652,7 @@ func TestNewCommentCmdValidationErrors(t *testing.T) {
 	tests := []struct {
 		name          string
 		setupEnv      func() func()
-		flags         map[string]interface{}
+		flags         map[string]any
 		expectedError error
 	}{
 		{
@@ -700,7 +700,7 @@ func TestNewCommentCmdValidationErrors(t *testing.T) {
 					}
 				}
 			},
-			flags: map[string]interface{}{
+			flags: map[string]any{
 				"pr": 123,
 			},
 			expectedError: ErrGitHubTokenRequired,
@@ -734,7 +734,7 @@ func TestNewCommentCmdValidationErrors(t *testing.T) {
 					}
 				}
 			},
-			flags: map[string]interface{}{
+			flags: map[string]any{
 				"pr": 123,
 			},
 			expectedError: ErrGitHubOwnerRequired,
@@ -788,7 +788,7 @@ func TestNewCommentCmdValidationErrors(t *testing.T) {
 					}
 				}
 			},
-			flags: map[string]interface{}{
+			flags: map[string]any{
 				"pr": 123,
 			},
 			expectedError: ErrGitHubRepoRequired,
@@ -849,7 +849,7 @@ func TestNewCommentCmdValidationErrors(t *testing.T) {
 					}
 				}
 			},
-			flags: map[string]interface{}{
+			flags: map[string]any{
 				"pr": 0, // No PR number provided
 			},
 			expectedError: ErrPRNumberRequired,
