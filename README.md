@@ -25,7 +25,6 @@
        &nbsp;&nbsp;&nbsp;&nbsp; <code>Quality</code> &nbsp;&nbsp;
     </td>
     <td align="left">
-       <a href="https://goreportcard.com/report/github.com/mrz1836/go-coverage"><img src="https://goreportcard.com/badge/github.com/mrz1836/go-coverage?style=flat-square" alt="Go Report"></a>
        <a href="https://mrz1836.github.io/go-coverage/" target="_blank"><img src="https://mrz1836.github.io/go-coverage/coverage-flat-square.svg" alt="Code Coverage"></a>
     </td>
   </tr>
