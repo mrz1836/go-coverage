@@ -227,7 +227,7 @@ func NewStatusCheckManager(client *Client, config *StatusCheckConfig) *StatusChe
 			EnableQualityGates:     true,
 			IncludeTargetURLs:      true,
 			UpdateStrategy:         UpdateAlways,
-			StatusTimeout:          30 * time.Second,
+			StatusTimeout:          DefaultTimeout,
 			RetrySettings: RetrySettings{
 				MaxRetries:    3,
 				RetryDelay:    1 * time.Second,

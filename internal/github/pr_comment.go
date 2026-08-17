@@ -5,19 +5,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"log/slog"
+	"os"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/mrz1836/go-coverage/internal/logger"
 )
 
 // PRCommentManager handles intelligent PR comment management with anti-spam and lifecycle features
 type PRCommentManager struct {
 	client *Client
 	config *PRCommentConfig
-	logger logger.Logger
+	logger *slog.Logger
 }
 
 // PRCommentConfig holds configuration for PR comment management
@@ -128,8 +127,30 @@ func NewPRCommentManager(client *Client, config *PRCommentConfig) *PRCommentMana
 	return &PRCommentManager{
 		client: client,
 		config: config,
-		logger: logger.NewFromEnv(),
+		logger: defaultLogger(),
 	}
+}
+
+// defaultLogger builds a *slog.Logger writing to stderr, honoring the same
+// environment variables the previous custom logger used: GO_COVERAGE_LOG_LEVEL
+// (DEBUG/INFO/WARN/ERROR) and GO_COVERAGE_LOG_FORMAT (json/text, default text).
+func defaultLogger() *slog.Logger {
+	level := slog.LevelInfo
+	switch strings.ToUpper(os.Getenv("GO_COVERAGE_LOG_LEVEL")) {
+	case "DEBUG":
+		level = slog.LevelDebug
+	case "WARN":
+		level = slog.LevelWarn
+	case "ERROR":
+		level = slog.LevelError
+	}
+
+	opts := &slog.HandlerOptions{Level: level}
+	var handler slog.Handler = slog.NewTextHandler(os.Stderr, opts)
+	if strings.EqualFold(os.Getenv("GO_COVERAGE_LOG_FORMAT"), "json") {
+		handler = slog.NewJSONHandler(os.Stderr, opts)
+	}
+	return slog.New(handler)
 }
 
 // CreateOrUpdatePRComment creates or updates a PR comment with coverage information
@@ -187,12 +208,13 @@ func (m *PRCommentManager) CreateOrUpdatePRComment(ctx context.Context, owner, r
 		err = m.createCoverageStatusCheck(ctx, owner, repo, pr.Head.SHA, comparison)
 		if err != nil {
 			// Don't fail the entire operation if status check fails
-			m.logger.WithError(err).WithFields(map[string]any{
-				"owner":     owner,
-				"repo":      repo,
-				"sha":       pr.Head.SHA,
-				"operation": "status_check_creation",
-			}).Warn("Failed to create GitHub status check")
+			m.logger.Warn("Failed to create GitHub status check",
+				"error", err,
+				"owner", owner,
+				"repo", repo,
+				"sha", pr.Head.SHA,
+				"operation", "status_check_creation",
+			)
 		} else {
 			statusCheckURL = fmt.Sprintf("https://github.com/%s/%s/commit/%s/checks", owner, repo, pr.Head.SHA)
 		}
@@ -231,11 +253,11 @@ func (m *PRCommentManager) CreateOrUpdatePRComment(ctx context.Context, owner, r
 
 // findExistingCoverageComments finds existing coverage comments by signature with retry logic
 func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, owner, repo string, prNumber int) ([]Comment, error) {
-	m.logger.Debug("Searching for existing coverage comments", map[string]any{
-		"owner":     owner,
-		"repo":      repo,
-		"pr_number": prNumber,
-	})
+	m.logger.Debug("Searching for existing coverage comments",
+		"owner", owner,
+		"repo", repo,
+		"pr_number", prNumber,
+	)
 
 	url := fmt.Sprintf("%s/repos/%s/%s/issues/%d/comments", m.client.baseURL, owner, repo, prNumber)
 
@@ -245,100 +267,98 @@ func (m *PRCommentManager) findExistingCoverageComments(ctx context.Context, own
 	// Retry logic for robustness
 	maxRetries := 3
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		m.logger.Debug("Attempting to fetch PR comments", map[string]any{
-			"attempt": attempt,
-			"url":     url,
-		})
+		m.logger.Debug("Attempting to fetch PR comments",
+			"attempt", attempt,
+			"url", url,
+		)
 
-		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		req, reqErr := m.client.newAuthedRequest(ctx, "GET", url, nil)
+		if reqErr != nil {
+			lastErr = reqErr
+			m.logger.Error("Failed to create request",
+				"error", reqErr,
+				"attempt", attempt,
+			)
+			continue
+		}
+
+		// fetchComments performs a single attempt and guarantees the response
+		// body is closed before the next retry, avoiding a body leak across
+		// iterations (a bare defer inside the loop would keep every attempt's
+		// body open until the whole function returns).
+		fetchComments := func() ([]Comment, error) {
+			resp, err := m.client.httpClient.Do(req)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get comments: %w", err)
+			}
+			defer func() { _ = resp.Body.Close() }()
+
+			if err := checkResponse(resp); err != nil {
+				return nil, err
+			}
+
+			var comments []Comment
+			if err := json.NewDecoder(resp.Body).Decode(&comments); err != nil {
+				return nil, fmt.Errorf("failed to decode comments: %w", err)
+			}
+			return comments, nil
+		}
+
+		comments, err := fetchComments()
 		if err != nil {
-			lastErr = fmt.Errorf("failed to create request: %w", err)
-			m.logger.Error("Failed to create request", map[string]any{
-				"error":   err,
-				"attempt": attempt,
-			})
-			continue
-		}
-
-		req.Header.Set("Authorization", "token "+m.client.token)
-		req.Header.Set("User-Agent", m.client.config.UserAgent)
-
-		resp, err := m.client.httpClient.Do(req)
-		if err != nil {
-			lastErr = fmt.Errorf("failed to get comments: %w", err)
-			m.logger.Error("Failed to execute request", map[string]any{
-				"error":   err,
-				"attempt": attempt,
-			})
-			time.Sleep(time.Duration(attempt) * time.Second) // Exponential backoff
-			continue
-		}
-		defer func() { _ = resp.Body.Close() }()
-
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			lastErr = fmt.Errorf("%w: %d", ErrGitHubAPIError, resp.StatusCode)
-			m.logger.Error("GitHub API returned error status", map[string]any{
-				"status_code": resp.StatusCode,
-				"attempt":     attempt,
-			})
-			time.Sleep(time.Duration(attempt) * time.Second) // Exponential backoff
-			continue
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&allComments); err != nil {
-			lastErr = fmt.Errorf("failed to decode comments: %w", err)
-			m.logger.Error("Failed to decode response", map[string]any{
-				"error":   err,
-				"attempt": attempt,
-			})
+			lastErr = err
+			m.logger.Error("Attempt to fetch comments failed",
+				"error", err,
+				"attempt", attempt,
+			)
 			time.Sleep(time.Duration(attempt) * time.Second) // Exponential backoff
 			continue
 		}
 
 		// Success - break out of retry loop
+		allComments = comments
 		lastErr = nil
 		break
 	}
 
 	if lastErr != nil {
-		m.logger.Error("All attempts to fetch comments failed", map[string]any{
-			"error":        lastErr,
-			"max_attempts": maxRetries,
-		})
+		m.logger.Error("All attempts to fetch comments failed",
+			"error", lastErr,
+			"max_attempts", maxRetries,
+		)
 		return nil, lastErr
 	}
 
-	m.logger.Info("Successfully fetched PR comments", map[string]any{
-		"total_comments": len(allComments),
-	})
+	m.logger.Info("Successfully fetched PR comments",
+		"total_comments", len(allComments),
+	)
 
 	// Filter for our coverage comments with detailed logging
 	var coverageComments []Comment
 	for i, comment := range allComments {
 		isCoverage := m.isCoverageComment(comment.Body)
-		m.logger.Debug("Checking comment", map[string]any{
-			"comment_id":  comment.ID,
-			"comment_idx": i,
-			"is_coverage": isCoverage,
-			"created_at":  comment.CreatedAt,
-			"updated_at":  comment.UpdatedAt,
-			"body_preview": func() string {
-				if len(comment.Body) > 100 {
-					return comment.Body[:100] + "..."
-				}
-				return comment.Body
-			}(),
-		})
+		bodyPreview := comment.Body
+		if len(bodyPreview) > 100 {
+			bodyPreview = bodyPreview[:100] + "..."
+		}
+		m.logger.Debug("Checking comment",
+			"comment_id", comment.ID,
+			"comment_idx", i,
+			"is_coverage", isCoverage,
+			"created_at", comment.CreatedAt,
+			"updated_at", comment.UpdatedAt,
+			"body_preview", bodyPreview,
+		)
 
 		if isCoverage {
 			coverageComments = append(coverageComments, comment)
 		}
 	}
 
-	m.logger.Info("Found coverage comments", map[string]any{
-		"coverage_comments": len(coverageComments),
-		"total_comments":    len(allComments),
-	})
+	m.logger.Info("Found coverage comments",
+		"coverage_comments", len(coverageComments),
+		"total_comments", len(allComments),
+	)
 
 	return coverageComments, nil
 }
@@ -364,17 +384,17 @@ func (m *PRCommentManager) isCoverageComment(body string) bool {
 	}
 
 	// Log which signatures we're checking against for debugging
-	m.logger.Debug("Checking comment signatures", map[string]any{
-		"signatures_count": len(signatures),
-		"comment_length":   len(body),
-	})
+	m.logger.Debug("Checking comment signatures",
+		"signatures_count", len(signatures),
+		"comment_length", len(body),
+	)
 
 	for i, signature := range signatures {
 		if strings.Contains(body, signature) {
-			m.logger.Debug("Comment matched signature", map[string]any{
-				"signature_index": i,
-				"signature":       signature,
-			})
+			m.logger.Debug("Comment matched signature",
+				"signature_index", i,
+				"signature", signature,
+			)
 			return true
 		}
 	}
@@ -385,11 +405,11 @@ func (m *PRCommentManager) isCoverageComment(body string) bool {
 
 // determineCommentAction determines what action to take based on anti-spam rules
 func (m *PRCommentManager) determineCommentAction(existingComments []Comment, comparison *CoverageComparison) (string, bool, string) {
-	m.logger.Info("Determining comment action", map[string]any{
-		"existing_comments": len(existingComments),
-		"max_comments":      m.config.MaxCommentsPerPR,
-		"min_interval_min":  m.config.MinUpdateIntervalMinutes,
-	})
+	m.logger.Info("Determining comment action",
+		"existing_comments", len(existingComments),
+		"max_comments", m.config.MaxCommentsPerPR,
+		"min_interval_min", m.config.MinUpdateIntervalMinutes,
+	)
 
 	if len(existingComments) == 0 {
 		m.logger.Info("No existing coverage comments found - will create new comment")
@@ -398,44 +418,44 @@ func (m *PRCommentManager) determineCommentAction(existingComments []Comment, co
 
 	if len(existingComments) > m.config.MaxCommentsPerPR {
 		reason := fmt.Sprintf("Maximum comments per PR (%d) exceeded", m.config.MaxCommentsPerPR)
-		m.logger.Warn("Skipping comment creation - too many existing comments", map[string]any{
-			"existing_comments": len(existingComments),
-			"max_allowed":       m.config.MaxCommentsPerPR,
-		})
+		m.logger.Warn("Skipping comment creation - too many existing comments",
+			"existing_comments", len(existingComments),
+			"max_allowed", m.config.MaxCommentsPerPR,
+		)
 		return "skipped", false, reason
 	}
 
 	// Check time-based anti-spam
 	lastComment := existingComments[len(existingComments)-1]
-	m.logger.Debug("Checking time-based anti-spam", map[string]any{
-		"last_comment_id":         lastComment.ID,
-		"last_comment_updated_at": lastComment.UpdatedAt,
-	})
+	m.logger.Debug("Checking time-based anti-spam",
+		"last_comment_id", lastComment.ID,
+		"last_comment_updated_at", lastComment.UpdatedAt,
+	)
 
 	lastUpdateTime, err := time.Parse(time.RFC3339, lastComment.UpdatedAt)
 	if err == nil {
 		timeSinceUpdate := time.Since(lastUpdateTime)
 		minInterval := time.Duration(m.config.MinUpdateIntervalMinutes) * time.Minute
 
-		m.logger.Debug("Time since last update", map[string]any{
-			"time_since_update": timeSinceUpdate.String(),
-			"min_interval":      minInterval.String(),
-			"should_wait":       timeSinceUpdate < minInterval,
-		})
+		m.logger.Debug("Time since last update",
+			"time_since_update", timeSinceUpdate.String(),
+			"min_interval", minInterval.String(),
+			"should_wait", timeSinceUpdate < minInterval,
+		)
 
 		if timeSinceUpdate < minInterval {
 			reason := fmt.Sprintf("Minimum update interval (%v) not reached", minInterval)
-			m.logger.Info("Skipping comment update - minimum interval not reached", map[string]any{
-				"time_since_update": timeSinceUpdate.String(),
-				"min_interval":      minInterval.String(),
-			})
+			m.logger.Info("Skipping comment update - minimum interval not reached",
+				"time_since_update", timeSinceUpdate.String(),
+				"min_interval", minInterval.String(),
+			)
 			return "skipped", false, reason
 		}
 	} else {
-		m.logger.Warn("Failed to parse last comment update time", map[string]any{
-			"error":      err,
-			"updated_at": lastComment.UpdatedAt,
-		})
+		m.logger.Warn("Failed to parse last comment update time",
+			"error", err,
+			"updated_at", lastComment.UpdatedAt,
+		)
 	}
 
 	// Check for significant changes
@@ -528,13 +548,10 @@ func (m *PRCommentManager) DeletePRComments(ctx context.Context, owner, repo str
 	for _, comment := range existingComments {
 		url := fmt.Sprintf("%s/repos/%s/%s/issues/comments/%d", m.client.baseURL, owner, repo, comment.ID)
 
-		req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+		req, err := m.client.newAuthedRequest(ctx, "DELETE", url, nil)
 		if err != nil {
 			continue // Skip this comment if request creation fails
 		}
-
-		req.Header.Set("Authorization", "token "+m.client.token)
-		req.Header.Set("User-Agent", m.client.config.UserAgent)
 
 		resp, err := m.client.httpClient.Do(req)
 		if err != nil {

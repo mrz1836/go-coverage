@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -74,6 +75,38 @@ func TestNewPRCommentManager(t *testing.T) {
 			}
 
 			require.NotNil(t, manager.logger)
+		})
+	}
+}
+
+func TestDefaultLogger(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		level   string
+		format  string
+		debugOn bool
+		infoOn  bool
+		warnOn  bool
+	}{
+		{name: "default is info text", level: "", format: "", debugOn: false, infoOn: true, warnOn: true},
+		{name: "debug level", level: "DEBUG", format: "", debugOn: true, infoOn: true, warnOn: true},
+		{name: "warn level", level: "WARN", format: "", debugOn: false, infoOn: false, warnOn: true},
+		{name: "error level", level: "ERROR", format: "", debugOn: false, infoOn: false, warnOn: false},
+		{name: "json format honored", level: "INFO", format: "json", debugOn: false, infoOn: true, warnOn: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("GO_COVERAGE_LOG_LEVEL", tt.level)
+			t.Setenv("GO_COVERAGE_LOG_FORMAT", tt.format)
+
+			l := defaultLogger()
+			require.NotNil(t, l)
+			assert.Equal(t, tt.debugOn, l.Enabled(ctx, slog.LevelDebug))
+			assert.Equal(t, tt.infoOn, l.Enabled(ctx, slog.LevelInfo))
+			assert.Equal(t, tt.warnOn, l.Enabled(ctx, slog.LevelWarn))
 		})
 	}
 }

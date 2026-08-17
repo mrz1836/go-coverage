@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -76,14 +74,10 @@ type PRFileSummary struct {
 func (c *Client) GetPRDiff(ctx context.Context, owner, repo string, pr int) (*PRDiff, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/pulls/%d/files", c.baseURL, owner, repo, pr)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := c.newAuthedRequest(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -91,9 +85,8 @@ func (c *Client) GetPRDiff(ctx context.Context, owner, repo string, pr int) (*PR
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return nil, err
 	}
 
 	var files []PRFile

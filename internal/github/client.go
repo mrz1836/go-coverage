@@ -19,6 +19,14 @@ var (
 	ErrWorkflowNotFound = errors.New("workflow not found")
 )
 
+// GitHub client defaults
+const (
+	// DefaultBaseURL is the default GitHub REST API base URL.
+	DefaultBaseURL = "https://api.github.com"
+	// DefaultTimeout is the default per-request timeout for GitHub API calls.
+	DefaultTimeout = 30 * time.Second
+)
+
 // Client handles GitHub API operations for coverage reporting
 type Client struct {
 	token      string
@@ -128,14 +136,14 @@ type Workflow struct {
 func New(token string) *Client {
 	return &Client{
 		token:   token,
-		baseURL: "https://api.github.com",
+		baseURL: DefaultBaseURL,
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: DefaultTimeout,
 		},
 		config: &Config{
 			Token:      token,
-			BaseURL:    "https://api.github.com",
-			Timeout:    30 * time.Second,
+			BaseURL:    DefaultBaseURL,
+			Timeout:    DefaultTimeout,
 			RetryCount: 3,
 			UserAgent:  "coverage-system/1.0",
 		},
@@ -175,19 +183,10 @@ func (c *Client) CreateComment(ctx context.Context, owner, repo string, pr int, 
 func (c *Client) CreateStatus(ctx context.Context, owner, repo, sha string, status *StatusRequest) error {
 	url := fmt.Sprintf("%s/repos/%s/%s/statuses/%s", c.baseURL, owner, repo, sha)
 
-	jsonData, err := json.Marshal(status)
+	req, err := c.newAuthedRequest(ctx, "POST", url, status)
 	if err != nil {
-		return fmt.Errorf("failed to marshal status: %w", err)
+		return err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -195,25 +194,17 @@ func (c *Client) CreateStatus(ctx context.Context, owner, repo, sha string, stat
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
-	}
-
-	return nil
+	return checkResponse(resp)
 }
 
 // GetPullRequest retrieves PR information
 func (c *Client) GetPullRequest(ctx context.Context, owner, repo string, pr int) (*PullRequest, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/pulls/%d", c.baseURL, owner, repo, pr)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := c.newAuthedRequest(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -221,9 +212,8 @@ func (c *Client) GetPullRequest(ctx context.Context, owner, repo string, pr int)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return nil, err
 	}
 
 	var pullRequest PullRequest
@@ -236,16 +226,53 @@ func (c *Client) GetPullRequest(ctx context.Context, owner, repo string, pr int)
 
 // Helper methods
 
-func (c *Client) findCoverageComment(ctx context.Context, owner, repo string, pr int) (*Comment, error) {
-	url := fmt.Sprintf("%s/repos/%s/%s/issues/%d/comments", c.baseURL, owner, repo, pr)
+// newAuthedRequest builds a GitHub API request with the standard Authorization,
+// Accept and User-Agent headers applied. A non-nil body is JSON-encoded as the
+// request payload and the Content-Type header is set accordingly. This
+// centralizes the header boilerplate shared by every client method.
+func (c *Client) newAuthedRequest(ctx context.Context, method, url string, body any) (*http.Request, error) {
+	var reqBody io.Reader
+	if body != nil {
+		jsonData, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		}
+		reqBody = bytes.NewBuffer(jsonData)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "token "+c.token)
+	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", c.config.UserAgent)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	return req, nil
+}
+
+// checkResponse returns an ErrGitHubAPIError (including the response body) when
+// the status code is outside the 2xx range. It centralizes the status-code
+// check that was previously duplicated byte-for-byte across client methods.
+func checkResponse(resp *http.Response) error {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	}
+	return nil
+}
+
+func (c *Client) findCoverageComment(ctx context.Context, owner, repo string, pr int) (*Comment, error) {
+	url := fmt.Sprintf("%s/repos/%s/%s/issues/%d/comments", c.baseURL, owner, repo, pr)
+
+	req, err := c.newAuthedRequest(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -253,9 +280,8 @@ func (c *Client) findCoverageComment(ctx context.Context, owner, repo string, pr
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return nil, err
 	}
 
 	var comments []Comment
@@ -276,20 +302,10 @@ func (c *Client) findCoverageComment(ctx context.Context, owner, repo string, pr
 func (c *Client) createComment(ctx context.Context, owner, repo string, pr int, body string) (*Comment, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/issues/%d/comments", c.baseURL, owner, repo, pr)
 
-	commentReq := CommentRequest{Body: body}
-	jsonData, err := json.Marshal(commentReq)
+	req, err := c.newAuthedRequest(ctx, "POST", url, CommentRequest{Body: body})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal comment: %w", err)
+		return nil, err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -297,9 +313,8 @@ func (c *Client) createComment(ctx context.Context, owner, repo string, pr int, 
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return nil, err
 	}
 
 	var comment Comment
@@ -313,20 +328,10 @@ func (c *Client) createComment(ctx context.Context, owner, repo string, pr int, 
 func (c *Client) updateComment(ctx context.Context, owner, repo string, commentID int, body string) (*Comment, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/issues/comments/%d", c.baseURL, owner, repo, commentID)
 
-	commentReq := CommentRequest{Body: body}
-	jsonData, err := json.Marshal(commentReq)
+	req, err := c.newAuthedRequest(ctx, "PATCH", url, CommentRequest{Body: body})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal comment: %w", err)
+		return nil, err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, "PATCH", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -334,9 +339,8 @@ func (c *Client) updateComment(ctx context.Context, owner, repo string, commentI
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return nil, err
 	}
 
 	var comment Comment
@@ -400,14 +404,10 @@ func (c *Client) GetWorkflowRuns(ctx context.Context, owner, repo string, limit 
 		url += fmt.Sprintf("?per_page=%d", limit)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := c.newAuthedRequest(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -415,9 +415,8 @@ func (c *Client) GetWorkflowRuns(ctx context.Context, owner, repo string, limit 
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return nil, err
 	}
 
 	var response WorkflowRunsResponse
@@ -441,14 +440,10 @@ func (c *Client) GetWorkflowRunsByWorkflow(ctx context.Context, owner, repo, wor
 		url += fmt.Sprintf("?per_page=%d", limit)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := c.newAuthedRequest(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -456,9 +451,8 @@ func (c *Client) GetWorkflowRunsByWorkflow(ctx context.Context, owner, repo, wor
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return nil, err
 	}
 
 	var response WorkflowRunsResponse
@@ -473,14 +467,10 @@ func (c *Client) GetWorkflowRunsByWorkflow(ctx context.Context, owner, repo, wor
 func (c *Client) GetWorkflowRun(ctx context.Context, owner, repo string, runID int64) (*WorkflowRun, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/actions/runs/%d", c.baseURL, owner, repo, runID)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := c.newAuthedRequest(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -488,9 +478,8 @@ func (c *Client) GetWorkflowRun(ctx context.Context, owner, repo string, runID i
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return nil, err
 	}
 
 	var workflowRun WorkflowRun
@@ -505,14 +494,10 @@ func (c *Client) GetWorkflowRun(ctx context.Context, owner, repo string, runID i
 func (c *Client) getWorkflowIDByName(ctx context.Context, owner, repo, workflowName string) (int64, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/actions/workflows", c.baseURL, owner, repo)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := c.newAuthedRequest(ctx, "GET", url, nil)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create request: %w", err)
+		return 0, err
 	}
-
-	req.Header.Set("Authorization", "token "+c.token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", c.config.UserAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -520,9 +505,8 @@ func (c *Client) getWorkflowIDByName(ctx context.Context, owner, repo, workflowN
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return 0, fmt.Errorf("%w: %d %s", ErrGitHubAPIError, resp.StatusCode, string(body))
+	if err := checkResponse(resp); err != nil {
+		return 0, err
 	}
 
 	var response struct {
