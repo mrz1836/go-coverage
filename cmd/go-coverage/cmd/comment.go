@@ -144,7 +144,7 @@ Features:
 			// Create GitHub client
 			githubConfig := &github.Config{
 				Token:      cfg.GitHub.Token,
-				BaseURL:    "https://api.github.com",
+				BaseURL:    github.DefaultBaseURL,
 				Timeout:    cfg.GitHub.Timeout,
 				RetryCount: 3,
 				UserAgent:  "go-coverage/2.0",
@@ -339,7 +339,7 @@ Features:
 					EnableQualityGates:     true,
 					IncludeTargetURLs:      true,
 					UpdateStrategy:         github.UpdateAlways,
-					StatusTimeout:          30 * time.Second,
+					StatusTimeout:          github.DefaultTimeout,
 					RetrySettings: github.RetrySettings{
 						MaxRetries:    3,
 						RetryDelay:    1 * time.Second,

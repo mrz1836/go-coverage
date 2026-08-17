@@ -752,7 +752,7 @@ update history, and create GitHub PR comment if in PR context.`,
 					// Create GitHub client
 					githubConfig := &github.Config{
 						Token:      cfg.GitHub.Token,
-						BaseURL:    "https://api.github.com",
+						BaseURL:    github.DefaultBaseURL,
 						Timeout:    cfg.GitHub.Timeout,
 						RetryCount: 3,
 						UserAgent:  "go-coverage/1.0",
@@ -901,7 +901,7 @@ update history, and create GitHub PR comment if in PR context.`,
 					// Create GitHub client to fetch PR labels
 					githubConfig := &github.Config{
 						Token:      cfg.GitHub.Token,
-						BaseURL:    "https://api.github.com",
+						BaseURL:    github.DefaultBaseURL,
 						Timeout:    cfg.GitHub.Timeout,
 						RetryCount: 3,
 						UserAgent:  "go-coverage/1.0",
