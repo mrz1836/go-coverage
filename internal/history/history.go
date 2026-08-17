@@ -42,7 +42,7 @@ func (m *Manager) SaveRecord(record *CoverageRecord) error {
 	history, err := m.loadHistory()
 	if err != nil {
 		// If file doesn't exist, start with empty history
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("failed to load existing history: %w", err)
 		}
 		history = []CoverageRecord{}
@@ -64,7 +64,7 @@ func (m *Manager) SaveRecord(record *CoverageRecord) error {
 func (m *Manager) GetLastRecord() (*CoverageRecord, error) {
 	history, err := m.loadHistory()
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return nil, ErrNoHistory
 		}
 		return nil, fmt.Errorf("failed to load history: %w", err)
@@ -106,7 +106,7 @@ func (m *Manager) GetChangeStatus(currentPercentage float64) (string, float64, e
 func (m *Manager) loadHistory() ([]CoverageRecord, error) {
 	data, err := os.ReadFile(m.historyFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read history file: %w", err)
 	}
 
 	var history []CoverageRecord

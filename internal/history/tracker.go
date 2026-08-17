@@ -473,7 +473,7 @@ func (t *Tracker) saveEntry(ctx context.Context, entry *Entry) error {
 func (t *Tracker) loadEntries(ctx context.Context, opts *TrendOptions) ([]Entry, error) {
 	entries, err := t.loadAllEntries(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load entries from storage: %w", err)
 	}
 
 	// Filter by branch

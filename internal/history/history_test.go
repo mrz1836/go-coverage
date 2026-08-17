@@ -476,7 +476,8 @@ func TestLoadHistory(t *testing.T) {
 		history, err := manager.loadHistory()
 		assert.Nil(t, history)
 		require.Error(t, err)
-		assert.True(t, os.IsNotExist(err))
+		// loadHistory wraps the underlying os error; ErrorIs unwraps it.
+		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
 
 	t.Run("Load history from corrupted JSON file", func(t *testing.T) {
