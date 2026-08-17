@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mrz1836/go-coverage/internal/urlutil"
 )
 
 // Static error definitions
@@ -179,40 +181,26 @@ func (p *Parser) Parse(ctx context.Context, reader io.Reader) (*CoverageData, er
 	return p.buildCoverageData(mode, statements)
 }
 
-// normalizeFilePath removes the module prefix from file paths to create relative paths.
-// For example: "github.com/mrz1836/go-broadcast/internal/config/config.go" becomes "internal/config/config.go"
+// normalizeFilePath removes the Go module prefix from file paths to create
+// relative paths, e.g. "github.com/owner/repo/internal/config/config.go" becomes
+// "internal/config/config.go".
+//
+// It delegates to urlutil.CleanModulePath, the canonical module-path cleaner used
+// throughout the tool, so path handling stays consistent for any repository
+// (rather than special-casing a single hardcoded module).
 func normalizeFilePath(fullPath string) string {
-	// Common Go module prefixes to strip
-	modulePrefixes := []string{
-		"github.com/mrz1836/go-broadcast/",
-		"github.com/mrz1836/go-broadcast\\", // Windows path separator
-	}
+	return urlutil.CleanModulePath(fullPath)
+}
 
-	for _, prefix := range modulePrefixes {
-		if strings.HasPrefix(fullPath, prefix) {
-			return strings.TrimPrefix(fullPath, prefix)
-		}
+// Percent returns covered/total expressed as a percentage in the range [0, 100].
+// It guards against a zero (or negative) total so callers receive 0 instead of a
+// NaN from dividing by zero, keeping coverage-percentage math consistent across
+// the tool.
+func Percent(covered, total int) float64 {
+	if total <= 0 {
+		return 0
 	}
-
-	// Generic pattern matching for any Go module path
-	// Look for pattern like "domain.com/owner/repo/path..."
-	parts := strings.Split(fullPath, "/")
-	if len(parts) >= 3 {
-		// Find the first part that contains a dot (likely a domain)
-		for i := range parts {
-			if strings.Contains(parts[i], ".") {
-				// Skip domain/owner and return the rest (including repo)
-				// For domain.com/owner/repo/path..., we want to keep from "repo/path" onwards
-				if i+2 < len(parts) {
-					// We have domain/owner/something... - return from something onwards
-					return strings.Join(parts[i+2:], "/")
-				}
-			}
-		}
-	}
-
-	// Fallback: return the original path if no pattern matched
-	return fullPath
+	return float64(covered) / float64(total) * 100
 }
 
 // parseStatement parses a single coverage statement line
@@ -405,16 +393,11 @@ func (p *Parser) buildCoverageData(mode string, statements []StatementWithFile) 
 
 	// Calculate package percentages
 	for _, pkg := range packages {
-		if pkg.TotalLines > 0 {
-			pkg.Percentage = float64(pkg.CoveredLines) / float64(pkg.TotalLines) * 100
-		}
+		pkg.Percentage = Percent(pkg.CoveredLines, pkg.TotalLines)
 	}
 
 	// Calculate total percentage
-	var percentage float64
-	if totalLines > 0 {
-		percentage = float64(coveredLines) / float64(totalLines) * 100
-	}
+	percentage := Percent(coveredLines, totalLines)
 
 	return &CoverageData{
 		Mode:         mode,
@@ -542,10 +525,7 @@ func (p *Parser) calculateFileCoverage(filename string, statements []Statement) 
 		}
 	}
 
-	var percentage float64
-	if totalStmts > 0 {
-		percentage = float64(coveredStmts) / float64(totalStmts) * 100
-	}
+	percentage := Percent(coveredStmts, totalStmts)
 
 	return &FileCoverage{
 		Path:         filename,

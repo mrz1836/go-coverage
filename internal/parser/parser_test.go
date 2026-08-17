@@ -77,9 +77,9 @@ func TestParseValidCoverage(t *testing.T) {
 	ctx := context.Background()
 
 	coverageData := `mode: atomic
-github.com/example/pkg/file.go:10.1,12.2 2 1
-github.com/example/pkg/file.go:15.1,17.16 2 0
-github.com/example/pkg/other.go:20.1,22.2 1 1`
+github.com/example/repo/pkg/file.go:10.1,12.2 2 1
+github.com/example/repo/pkg/file.go:15.1,17.16 2 0
+github.com/example/repo/pkg/other.go:20.1,22.2 1 1`
 
 	reader := strings.NewReader(coverageData)
 	coverage, err := parser.Parse(ctx, reader)
@@ -96,6 +96,51 @@ github.com/example/pkg/other.go:20.1,22.2 1 1`
 	assert.True(t, exists)
 	assert.Equal(t, "pkg", pkg.Name)
 	assert.Len(t, pkg.Files, 2)
+}
+
+func TestNormalizeFilePath(t *testing.T) {
+	tests := []struct {
+		name     string
+		fullPath string
+		want     string
+	}{
+		{
+			name:     "standard github module path",
+			fullPath: "github.com/mrz1836/go-broadcast/internal/config/config.go",
+			want:     "internal/config/config.go",
+		},
+		{
+			name:     "arbitrary github repo strips owner and repo consistently",
+			fullPath: "github.com/someuser/somerepo/pkg/util/helper.go",
+			want:     "pkg/util/helper.go",
+		},
+		{
+			name:     "root level file in module",
+			fullPath: "github.com/example/repo/main.go",
+			want:     "main.go",
+		},
+		{
+			name:     "already relative path is unchanged",
+			fullPath: "internal/parser/parser.go",
+			want:     "internal/parser/parser.go",
+		},
+		{
+			name:     "bare filename is unchanged",
+			fullPath: "main.go",
+			want:     "main.go",
+		},
+		{
+			name:     "non-github module is left intact",
+			fullPath: "gitlab.com/user/repo/internal/file.go",
+			want:     "gitlab.com/user/repo/internal/file.go",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, normalizeFilePath(tt.fullPath))
+		})
+	}
 }
 
 func TestParseInvalidMode(t *testing.T) {
