@@ -18,6 +18,7 @@ import (
 	"github.com/mrz1836/go-coverage/internal/analytics/assets"
 	globalconfig "github.com/mrz1836/go-coverage/internal/config"
 	"github.com/mrz1836/go-coverage/internal/github"
+	"github.com/mrz1836/go-coverage/internal/parser"
 )
 
 // isMainBranch checks if a branch name is one of the configured main branches
@@ -204,7 +205,7 @@ func (g *Generator) prepareTemplateData(ctx context.Context, data *CoverageData)
 	repoInfo := getGitRepositoryInfo(ctx)
 
 	// Calculate additional metrics
-	filesPercent := float64(data.CoveredFiles) / float64(data.TotalFiles) * 100
+	filesPercent := parser.Percent(data.CoveredFiles, data.TotalFiles)
 
 	// Calculate trends
 	hasHistory := data.TrendData != nil && len(data.History) > 0

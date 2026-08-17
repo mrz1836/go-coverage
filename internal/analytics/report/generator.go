@@ -166,10 +166,7 @@ func (g *Generator) buildReportData(ctx context.Context, coverage *parser.Covera
 					}
 				}
 
-				var percentage float64
-				if totalLines > 0 {
-					percentage = float64(coveredLines) / float64(totalLines) * 100
-				}
+				percentage := parser.Percent(coveredLines, totalLines)
 
 				// Generate GitHub file URL
 				fileURL := ""
