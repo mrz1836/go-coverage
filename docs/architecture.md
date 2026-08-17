@@ -213,7 +213,6 @@ cmd/go-coverage (CLI entry point)
 ├── internal/github (GitHub API integration)
 ├── internal/history (coverage history)
 ├── internal/templates (template rendering)
-├── internal/types (shared data types)
 └── internal/urlutil (URL utilities)
 ```
 
@@ -228,7 +227,6 @@ cmd/go-coverage (CLI entry point)
 | `github` | GitHub API integration | HTTP client only |
 | `history` | Coverage history tracking | JSON encoding only |
 | `templates` | Template rendering | `text/template` |
-| `types` | Shared data structures | None |
 
 ### Design Principles
 
