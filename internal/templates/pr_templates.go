@@ -410,7 +410,9 @@ func (e *PRTemplateEngine) createTemplateFuncMap() template.FuncMap {
 // Template helper functions
 
 func (e *PRTemplateEngine) formatPercent(value float64) string {
-	return fmt.Sprintf("%.1f%%", value)
+	// Delegates to the package-level formatPercentage so the "%.1f%%" formatting
+	// lives in exactly one place.
+	return formatPercentage(value)
 }
 
 func (e *PRTemplateEngine) formatChange(value float64) string {
