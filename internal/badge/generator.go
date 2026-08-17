@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"math"
 	"net/http"
 	"strings"
@@ -24,6 +24,7 @@ var ErrIconFetchFailed = errors.New("failed to fetch icon")
 type Generator struct {
 	config     *Config
 	httpClient *http.Client // Optional HTTP client for testing
+	logger     *slog.Logger // Structured logger for warnings/diagnostics
 }
 
 // Config holds badge generation configuration
@@ -92,6 +93,7 @@ func New() *Generator {
 			HTTPClient: nil, // Use default http.Client
 		},
 		httpClient: nil, // Will create default clients when needed
+		logger:     slog.Default(),
 	}
 }
 
@@ -100,6 +102,7 @@ func NewWithConfig(config *Config) *Generator {
 	return &Generator{
 		config:     config,
 		httpClient: config.HTTPClient, // Use injected client if provided
+		logger:     slog.Default(),
 	}
 }
 
@@ -239,7 +242,7 @@ func (g *Generator) resolveLogo(ctx context.Context, logo, color string) string 
 			// Load configuration to get timeout settings
 			cfg, err := config.Load()
 			if err != nil {
-				log.Printf("Warning: Failed to load config for logo timeout: %v, using defaults", err)
+				g.logger.Warn("Failed to load config for logo timeout, using defaults", "error", err)
 				cfg = &config.Config{
 					Badge: config.BadgeConfig{
 						LogoTimeout:        8 * time.Second,
@@ -258,26 +261,26 @@ func (g *Generator) resolveLogo(ctx context.Context, logo, color string) string 
 			if dataURI, err := g.fetchSimpleIcon(logoCtx, logoName, color, cfg); err == nil {
 				return dataURI
 			} else {
-				log.Printf("Warning: Failed to fetch logo '%s' with color '%s': %v", logoName, color, err)
+				g.logger.Warn("Failed to fetch logo with color", "logo", logoName, "color", color, "error", err)
 			}
 
 			// Fallback attempt: Try fetching without color if the first attempt failed and color was specified
 			if color != "" {
-				log.Printf("Retrying logo '%s' without color...", logoName)
+				g.logger.Info("Retrying logo without color", "logo", logoName)
 				if dataURI, err := g.fetchSimpleIcon(logoCtx, logoName, "", cfg); err == nil {
-					log.Printf("Success: Fetched logo '%s' without color", logoName)
+					g.logger.Info("Fetched logo without color", "logo", logoName)
 					return dataURI
 				} else {
-					log.Printf("Error: Failed to fetch logo '%s' even without color: %v", logoName, err)
+					g.logger.Error("Failed to fetch logo even without color", "logo", logoName, "error", err)
 				}
 			}
 
 			// If all attempts fail, log the failure and return empty string
-			log.Printf("Error: Unable to fetch logo '%s' from Simple Icons CDN after all attempts", logoName)
+			g.logger.Error("Unable to fetch logo from Simple Icons CDN after all attempts", "logo", logoName)
 			return ""
 		}
 		// Log invalid logo names for debugging
-		log.Printf("Warning: Invalid logo name '%s' - must contain only lowercase letters, numbers, and hyphens", logo)
+		g.logger.Warn("Invalid logo name - must contain only lowercase letters, numbers, and hyphens", "logo", logo)
 		return ""
 	}
 }
@@ -444,7 +447,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 	for attempt := range maxRetries {
 		// Check if context was canceled or deadline exceeded
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
-			log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
+			g.logger.Warn("Logo fetch canceled/timed out", "error", ctx.Err())
 			return "", ctx.Err()
 		}
 
@@ -474,7 +477,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", url, attempt+1, maxRetries, err)
 			// Check if context was canceled after request failure
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
-				log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
+				g.logger.Warn("Logo fetch canceled/timed out", "error", ctx.Err())
 				return "", ctx.Err()
 			}
 			// Wait before retry with exponential backoff
@@ -525,16 +528,16 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 
 	// CDN failed, attempt GitHub fallback only if enabled
 	if !cfg.Badge.LogoGitHubFallback {
-		log.Printf("GitHub fallback disabled, skipping fallback attempt for logo '%s'", iconName)
+		g.logger.Info("GitHub fallback disabled, skipping fallback attempt", "logo", iconName)
 		return "", fmt.Errorf("failed to fetch icon after %d attempts (GitHub fallback disabled): %w", maxRetries, lastErr)
 	}
 
-	log.Printf("Attempting GitHub fallback for logo '%s'", iconName)
+	g.logger.Info("Attempting GitHub fallback for logo", "logo", iconName)
 	fallbackURL := fmt.Sprintf("https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/%s.svg", iconName)
 	for attempt := range maxRetries {
 		// Check if context was canceled or deadline exceeded
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
-			log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
+			g.logger.Warn("Logo fetch canceled/timed out", "error", ctx.Err())
 			return "", ctx.Err()
 		}
 
@@ -558,7 +561,7 @@ func (g *Generator) fetchSimpleIcon(ctx context.Context, iconName, color string,
 			lastErr = fmt.Errorf("failed to fetch icon from %s (attempt %d/%d): %w", fallbackURL, attempt+1, maxRetries, err)
 			// Check if context was canceled after request failure
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
-				log.Printf("Logo fetch canceled/timed out: %v", ctx.Err())
+				g.logger.Warn("Logo fetch canceled/timed out", "error", ctx.Err())
 				return "", ctx.Err()
 			}
 			if attempt < maxRetries-1 {
