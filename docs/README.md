@@ -16,9 +16,6 @@ Complete documentation for the **go-coverage** system - a self-contained, Go-nat
 - **[🤝 Contributing](contributing.md)** - How to contribute code, tests, and documentation
 - **[🏗️ Architecture](architecture.md)** - Technical architecture and design decisions
 
-### Additional Resources
-- **[Claude Commands](claude-commands.md)** - Claude Code slash commands for development
-
 ## 🎯 Quick Navigation
 
 **New to go-coverage?** Start with the [Quickstart Guide](quickstart.md)

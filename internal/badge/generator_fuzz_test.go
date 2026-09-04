@@ -4,7 +4,9 @@ package badge
 
 import (
 	"context"
+	"io"
 	"math"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +15,24 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// fuzzIconTransport is an in-memory http.RoundTripper that answers every logo
+// fetch with a canned SVG. Fuzzing feeds arbitrary logo names into Generate,
+// which would otherwise make real network calls to cdn.simpleicons.org; on CI
+// those requests stall until the context deadline and surface as a flaky
+// "context deadline exceeded" fuzz failure. Serving responses in-process keeps
+// the fuzz test hermetic and fast (no httptest server per execution).
+type fuzzIconTransport struct{}
+
+func (fuzzIconTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	const iconSVG = `<svg viewBox="0 0 24 24" fill="#fff"><path d="M0 0"/></svg>`
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"image/svg+xml"}},
+		Body:       io.NopCloser(strings.NewReader(iconSVG)),
+		Request:    req,
+	}, nil
+}
 
 // FuzzGetColorForPercentage tests the getColorForPercentage method with diverse percentage inputs
 func FuzzGetColorForPercentage(f *testing.F) {
@@ -412,7 +432,18 @@ func FuzzGenerateBadgeWithOptions(f *testing.F) {
 	f.Add(math.NaN(), "flat", "coverage", "example", "white")
 
 	f.Fuzz(func(t *testing.T, percentage float64, style, label, logo, logoColor string) {
-		generator := New()
+		// Inject an in-memory HTTP client so fuzzer-generated logo names never
+		// trigger real network calls (see fuzzIconTransport). This keeps the
+		// test hermetic and avoids flaky "context deadline exceeded" failures.
+		generator := NewWithConfig(&Config{
+			ThresholdConfig: ThresholdConfig{
+				Excellent:  95.0,
+				Good:       85.0,
+				Acceptable: 75.0,
+				Low:        60.0,
+			},
+			HTTPClient: &http.Client{Transport: fuzzIconTransport{}},
+		})
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
