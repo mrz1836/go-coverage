@@ -1,6 +1,6 @@
 module github.com/mrz1836/go-coverage
 
-go 1.25
+go 1.26
 
 require (
 	github.com/spf13/cobra v1.10.2
