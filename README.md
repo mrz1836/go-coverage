@@ -454,7 +454,7 @@ The system is configured via [`.github/env/`](.github/env/README.md) and provide
 
 ## 🧪 Examples & Tests
 
-The **Go Coverage** system is thoroughly tested via [GitHub Actions](https://github.com/mrz1836/go-coverage/actions) and uses [Go version 1.25.x](https://go.dev/doc/go1.25). View the [configuration file](.github/workflows/fortress.yml).
+The **Go Coverage** system is thoroughly tested via [GitHub Actions](https://github.com/mrz1836/go-coverage/actions) and uses [Go version 1.26.x](https://go.dev/doc/go1.26). View the [configuration file](.github/workflows/fortress.yml).
 
 ### CLI Command Examples
 
